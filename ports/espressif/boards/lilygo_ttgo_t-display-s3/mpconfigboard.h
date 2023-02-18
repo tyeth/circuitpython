@@ -35,13 +35,14 @@
 // #define MICROPY_HW_NEOPIXEL (&pin_GPIO33)
 // #define CIRCUITPY_STATUS_LED_POWER (&pin_GPIO21)
 
-// #define DEFAULT_UART_BUS_RX         (&pin_GPIO20)
-// #define DEFAULT_UART_BUS_TX         (&pin_GPIO21)
-
 // #define CIRCUITPY_CONSOLE_UART_RX     DEFAULT_UART_BUS_RX
 // #define CIRCUITPY_CONSOLE_UART_TX     DEFAULT_UART_BUS_TX
 
 // #define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO0)
+
+// // UART pins attached to the USB-serial converter chip
+// #define CIRCUITPY_CONSOLE_UART_TX (&pin_GPIO1)
+// #define CIRCUITPY_CONSOLE_UART_RX (&pin_GPIO3)
 
 #define DEFAULT_UART_BUS_RX         (&pin_GPIO44)
 #define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
@@ -57,8 +58,6 @@
 
 // #define AUTORESET_DELAY_MS          500
 
-
-
 #define CIRCUITPY_BOARD_I2C         (2)
 #define CIRCUITPY_BOARD_I2C_PIN     {{.scl = &pin_GPIO44, .sda = &pin_GPIO43}, \
                                      {.scl = &pin_GPIO17, .sda = &pin_GPIO18}}
@@ -69,8 +68,3 @@
 // #define CIRCUITPY_BOARD_UART        (1)
 // #define CIRCUITPY_BOARD_UART_PIN    {{.tx = &pin_GPIO32, .rx = &pin_GPIO7}}
 
-// #define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO0)
-
-// // UART pins attached to the USB-serial converter chip
-// #define CIRCUITPY_CONSOLE_UART_TX (&pin_GPIO1)
-// #define CIRCUITPY_CONSOLE_UART_RX (&pin_GPIO3)
