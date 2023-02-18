@@ -35,10 +35,10 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_IO45), MP_ROM_PTR(&pin_GPIO45) },
     { MP_ROM_QSTR(MP_QSTR_IO46), MP_ROM_PTR(&pin_GPIO46) },
  
-    // { MP_ROM_QSTR(MP_QSTR_TX), MP_ROM_PTR(&pin_GPIO43) },
-    // { MP_ROM_QSTR(MP_QSTR_RX), MP_ROM_PTR(&pin_GPIO44) },
-    // { MP_ROM_QSTR(MP_QSTR_TX1), MP_ROM_PTR(&pin_GPIO17) },
-    // { MP_ROM_QSTR(MP_QSTR_RX1), MP_ROM_PTR(&pin_GPIO18) },
+    { MP_ROM_QSTR(MP_QSTR_TX), MP_ROM_PTR(&pin_GPIO43) },
+    { MP_ROM_QSTR(MP_QSTR_RX), MP_ROM_PTR(&pin_GPIO44) },
+    { MP_ROM_QSTR(MP_QSTR_TX1), MP_ROM_PTR(&pin_GPIO17) },
+    { MP_ROM_QSTR(MP_QSTR_RX1), MP_ROM_PTR(&pin_GPIO18) },
 
     // // SD Card
     // { MP_ROM_QSTR(MP_QSTR_SD_MISO), MP_ROM_PTR(&pin_GPIO13) },
@@ -79,14 +79,23 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
     // // Battery Sense
     // { MP_ROM_QSTR(MP_QSTR_BATTERY), MP_ROM_PTR(&pin_GPIO9) },
 
-/ * ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+/* ------------===========--------------============------------- */
+
 { MP_OBJ_NEW_QSTR(MP_QSTR_BUTTON_1), MP_ROM_PTR(&pin_GPIO0) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_BUTTON_2), MP_ROM_PTR(&pin_GPIO14) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_BAT_VOLT), MP_ROM_PTR(&pin_GPIO4) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_BATTERY), MP_ROM_PTR(&pin_GPIO4) },
 
-{ MP_OBJ_NEW_QSTR(MP_QSTR_TX), MP_ROM_PTR(&pin_GPIO43) },
-{ MP_OBJ_NEW_QSTR(MP_QSTR_RX), MP_ROM_PTR(&pin_GPIO44) },
+// TX/RX 0+1 defined above
+// { MP_OBJ_NEW_QSTR(MP_QSTR_TX), MP_ROM_PTR(&pin_GPIO43) },
+// { MP_OBJ_NEW_QSTR(MP_QSTR_RX), MP_ROM_PTR(&pin_GPIO44) },
 
 { MP_OBJ_NEW_QSTR(MP_QSTR_SDA), MP_ROM_PTR(&pin_GPIO18) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_SCL), MP_ROM_PTR(&pin_GPIO17) },
