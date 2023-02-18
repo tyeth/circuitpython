@@ -14,7 +14,7 @@
 // limitations under the License.
 
 #include "sdkconfig.h"
-#if CONFIG_IDF_TARGET_ESP32S2
+#if CONFIG_IDF_TARGET_ESP32S3
 
 #include <stdio.h>
 #include <string.h>
@@ -25,12 +25,12 @@
 #include "driver/gpio.h"
 #include "driver/i2s.h"
 #include "esp_heap_caps.h"
-#include "esp32s2/rom/lldesc.h"
+#include "esp32s3/rom/lldesc.h"
 #include "soc/system_reg.h"
 #include "i2s_lcd_driver.h"
 
 
-static const char *TAG = "ESP32S2_I2S_LCD";
+static const char *TAG = "ESP32S3_I2S_LCD";
 
 #define I2S_CHECK(a, str, ret) if (!(a)) {                                              \
         ESP_LOGE(TAG,"%s:%d (%s):%s", __FILE__, __LINE__, __FUNCTION__, str);       \
@@ -486,4 +486,4 @@ esp_err_t i2s_lcd_release(i2s_lcd_handle_t handle) {
     return ESP_OK;
 }
 
-#endif // CONFIG_IDF_TARGET_ESP32S2
+#endif // CONFIG_IDF_TARGET_ESP32S3
