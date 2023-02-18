@@ -27,123 +27,93 @@
 #include "supervisor/board.h"
 #include "mpconfigboard.h"
 #include "shared-bindings/microcontroller/Pin.h"
-// #include "shared-module/displayio/__init__.h"
-// #include "shared-module/displayio/mipi_constants.h"
+#include "shared-module/displayio/__init__.h"
+#include "shared-module/displayio/mipi_constants.h"
 
 #define DELAY 0x80
 
 
-// //TODO:Tyeth: double check with t-displayS3, this is from lilygo_ttgo_t8_s2_st7789
-// // display init sequence according to LilyGO example app
-// uint8_t display_init_sequence[] = {
-//     // sw reset
-//     0x01, 0 | DELAY, 150,
-//     // sleep out
-//     0x11, 0 | DELAY, 255,
-//     // normal display mode on
-//     0x13, 0,
-//     // display and color format settings
-//     0x36, 1, 0x08,
-//     0xB6, 2, 0x0A, 0x82,
-//     0x3A, 1 | DELAY,  0x55, 10,
-//     // ST7789V frame rate setting
-//     0xB2, 5, 0x0C, 0x0C, 0x00, 0x33, 0x33,
-//     // voltages: VGH / VGL
-//     0xB7, 1, 0x35,
-//     // ST7789V power setting
-//     0xBB, 1, 0x28,
-//     0xC0, 1, 0x0C,
-//     0xC2, 2, 0x01, 0xFF,
-//     0xC3, 1, 0x10,
-//     0xC4, 1, 0x20,
-//     0xC6, 1, 0x0F,
-//     0xD0, 2, 0xA4, 0xA1,
-//     // ST7789V gamma setting
-//     0xE0, 14, 0xD0, 0x00, 0x02, 0x07, 0x0A, 0x28, 0x32, 0x44, 0x42, 0x06, 0x0E, 0x12, 0x14, 0x17,
-//     0xE1, 14, 0xD0, 0x00, 0x02, 0x07, 0x0A, 0x28, 0x31, 0x54, 0x47, 0x0E, 0x1C, 0x17, 0x1B, 0x1E,
-//     0x21, 0,
-//     // display on
-//     0x29, 0 | DELAY, 255,
-// };
+//TODO:Tyeth: double check with t-displayS3, this is from lilygo_ttgo_t8_s2_st7789
+// display init sequence according to LilyGO example app
+uint8_t display_init_sequence[] = {
+    // sw reset
+    0x01, 0 | DELAY, 150,
+    // sleep out
+    0x11, 0 | DELAY, 255,
+    // normal display mode on
+    0x13, 0,
+    // display and color format settings
+    0x36, 1, 0x08,
+    0xB6, 2, 0x0A, 0x82,
+    0x3A, 1 | DELAY,  0x55, 10,
+    // ST7789V frame rate setting
+    0xB2, 5, 0x0C, 0x0C, 0x00, 0x33, 0x33,
+    // voltages: VGH / VGL
+    0xB7, 1, 0x35,
+    // ST7789V power setting
+    0xBB, 1, 0x28,
+    0xC0, 1, 0x0C,
+    0xC2, 2, 0x01, 0xFF,
+    0xC3, 1, 0x10,
+    0xC4, 1, 0x20,
+    0xC6, 1, 0x0F,
+    0xD0, 2, 0xA4, 0xA1,
+    // ST7789V gamma setting
+    0xE0, 14, 0xD0, 0x00, 0x02, 0x07, 0x0A, 0x28, 0x32, 0x44, 0x42, 0x06, 0x0E, 0x12, 0x14, 0x17,
+    0xE1, 14, 0xD0, 0x00, 0x02, 0x07, 0x0A, 0x28, 0x31, 0x54, 0x47, 0x0E, 0x1C, 0x17, 0x1B, 0x1E,
+    0x21, 0,
+    // display on
+    0x29, 0 | DELAY, 255,
+};
 
-// static void display_init(void) {
-//     // busio_spi_obj_t *spi = &displays[0].fourwire_bus.inline_bus;
+static void display_init(void) {
+    paralleldisplay_parallelbus_obj_t *bus = &displays[0].parallel_bus;
+    bus->base.type = &paralleldisplay_parallelbus_type;
 
-//     //parallel_bus
-//     paralleldisplay_parallelbus_obj_t *bus = &displays[0].parallel_bus;
-//     bus->base.type = &paralleldisplay_parallelbus_type;
+    common_hal_paralleldisplay_parallelbus_construct(bus,
+        &pin_GPIO39, // Data0
+        &pin_GPIO7, // Command or data -- unsure on this one
+        &pin_GPIO6, // Chip select
+        &pin_GPIO8, // Write
+        &pin_GPIO9, // Read
+        &pin_GPIO5, // Reset
+        0); // Frequency
 
-// //TODO:TYETH:double check wiring for SPI
-//     common_hal_paralleldisplay_parallelbus_construct(bus,
-//         &pin_PA16, // Data0
-//         &pin_PB05, // Command or data
-//         &pin_PB06, // Chip select
-//         &pin_PB09, // Write
-//         &pin_PB04, // Read
-//         &pin_PA00, // Reset
-//         0); // Frequency
+    displayio_display_obj_t *display = &displays[0].display;
+    display->base.type = &displayio_display_type;
 
-//     // common_hal_busio_spi_construct(
-//     //     spi,
-//     //     &pin_GPIO36,    // CLK
-//     //     &pin_GPIO35,    // MOSI
-//     //     NULL,           // MISO not connected
-//     //     false);         // Not half-duplex
-
-//     // common_hal_busio_spi_never_reset(spi);
-
-//     // //paralleldisplay_parallelbus_obj_t
-//     // displayio_fourwire_obj_t *bus = &displays[0].fourwire_bus;
-//     // displayio_fourwire_obj_t *bus = &displays[0].fourwire_bus;
-//     // bus->base.type = &displayio_fourwire_type;
-
-// // //TODO:TYETH:double check wiring for displayio/fourwire
-// //     common_hal_displayio_fourwire_construct(
-// //         bus,
-// //         spi,
-// //         &pin_GPIO37,    // DC
-// //         &pin_GPIO34,    // CS
-// //         &pin_GPIO38,    // RST
-// //         40000000,       // baudrate
-// //         0,              // polarity
-// //         0               // phase
-// //         );
-
-//     displayio_display_obj_t *display = &displays[0].display;
-//     display->base.type = &displayio_display_type;
-
-// //TODO:TYETH:Double check this, only updated W+H so far...
-//     common_hal_displayio_display_construct(
-//         display,
-//         bus,
-//         320,            // width (after rotation)
-//         170,            // height (after rotation)
-//         52,             // column start
-//         40,             // row start
-//         90,             // rotation
-//         16,             // color depth
-//         false,          // grayscale
-//         false,          // pixels in a byte share a row. Only valid for depths < 8
-//         1,              // bytes per cell. Only valid for depths < 8
-//         false,          // reverse_pixels_in_byte. Only valid for depths < 8
-//         true,           // reverse_pixels_in_word
-//         MIPI_COMMAND_SET_COLUMN_ADDRESS, // set column command
-//         MIPI_COMMAND_SET_PAGE_ADDRESS,   // set row command
-//         MIPI_COMMAND_WRITE_MEMORY_START, // write memory command
-//         display_init_sequence,
-//         sizeof(display_init_sequence),
-//         &pin_GPIO33,    // backlight pin
-//         NO_BRIGHTNESS_COMMAND,
-//         1.0f,           // brightness
-//         false,          // single_byte_bounds
-//         false,          // data_as_commands
-//         true,           // auto_refresh
-//         60,             // native_frames_per_second
-//         true,           // backlight_on_high
-//         false,          // SH1107_addressing
-//         50000           // backlight pwm frequency
-//         );
-// }
+//TODO:TYETH:Double check this, only updated W+H+BL so far...
+    common_hal_displayio_display_construct(
+        display,
+        bus,
+        320,            // width (after rotation)
+        170,            // height (after rotation)
+        52,             // column start
+        40,             // row start
+        90,             // rotation
+        16,             // color depth
+        false,          // grayscale
+        false,          // pixels in a byte share a row. Only valid for depths < 8
+        1,              // bytes per cell. Only valid for depths < 8
+        false,          // reverse_pixels_in_byte. Only valid for depths < 8
+        true,           // reverse_pixels_in_word
+        MIPI_COMMAND_SET_COLUMN_ADDRESS, // set column command
+        MIPI_COMMAND_SET_PAGE_ADDRESS,   // set row command
+        MIPI_COMMAND_WRITE_MEMORY_START, // write memory command
+        display_init_sequence,
+        sizeof(display_init_sequence),
+        &pin_GPIO38,    // backlight pin -- checked
+        NO_BRIGHTNESS_COMMAND,
+        1.0f,           // brightness
+        false,          // single_byte_bounds
+        false,          // data_as_commands
+        true,           // auto_refresh
+        60,             // native_frames_per_second
+        true,           // backlight_on_high
+        false,          // SH1107_addressing
+        50000           // backlight pwm frequency
+        );
+}
 
 void board_init(void) {
     // Debug UART
@@ -153,7 +123,13 @@ void board_init(void) {
     #endif /* DEBUG */
 
     // Display
-    // display_init();
+    display_init();
 }
+
+// This is done by FUNHOUSE board, but not yet by reverse s3 tft feather:
+//
+// void board_deinit(void) {
+//     common_hal_displayio_release_displays();
+// }
 
 // Use the MP_WEAK supervisor/shared/board.c versions of routines not defined here.
