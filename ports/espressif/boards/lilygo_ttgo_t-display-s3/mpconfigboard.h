@@ -47,8 +47,8 @@
 #define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
 
 // Second I2C bus(Wire1) in arduino, the Qwiic connector / StemmaQT port
-#define DEFAULT_I2C_BUS_SCL (&pin_GPIO43)
-#define DEFAULT_I2C_BUS_SDA (&pin_GPIO44)
+#define DEFAULT_I2C_BUS_SCL (&pin_GPIO44)
+#define DEFAULT_I2C_BUS_SDA (&pin_GPIO43)
 
 #define DEFAULT_SPI_BUS_SS (&pin_GPIO10)
 #define DEFAULT_SPI_BUS_SCK (&pin_GPIO12)
@@ -56,3 +56,21 @@
 #define DEFAULT_SPI_BUS_MISO (&pin_GPIO13)
 
 // #define AUTORESET_DELAY_MS          500
+
+
+
+#define CIRCUITPY_BOARD_I2C         (2)
+#define CIRCUITPY_BOARD_I2C_PIN     {{.scl = &pin_GPIO44, .sda = &pin_GPIO43}, \
+                                     {.scl = &pin_GPIO17, .sda = &pin_GPIO18}}
+
+// #define CIRCUITPY_BOARD_SPI         (1)
+// #define CIRCUITPY_BOARD_SPI_PIN     {{.clock = &pin_GPIO14, .mosi = &pin_GPIO13, .miso = &pin_GPIO12}}
+
+// #define CIRCUITPY_BOARD_UART        (1)
+// #define CIRCUITPY_BOARD_UART_PIN    {{.tx = &pin_GPIO32, .rx = &pin_GPIO7}}
+
+// #define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO0)
+
+// // UART pins attached to the USB-serial converter chip
+// #define CIRCUITPY_CONSOLE_UART_TX (&pin_GPIO1)
+// #define CIRCUITPY_CONSOLE_UART_RX (&pin_GPIO3)
