@@ -25,11 +25,11 @@
  */
 
 // Micropython setup
-
+// USB_PID = 0x813F VendorID 0x303a ProductID 0x1001
 #define MICROPY_HW_BOARD_NAME       "LILYGO TTGO T-Display-S3"
 #define MICROPY_HW_MCU_NAME         "ESP32S3"
 
-
+// #define CIRCUITPY_PARALLELDISPLAY  // seems defined in mpconfigboard.mk
 
 // #define MICROPY_HW_LED_STATUS       (&pin_GPIO3)
 
