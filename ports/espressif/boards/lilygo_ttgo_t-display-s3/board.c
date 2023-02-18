@@ -26,9 +26,15 @@
 
 #include "supervisor/board.h"
 #include "mpconfigboard.h"
+// #include "shared-bindings/busio/SPI.h"
+// #include "shared-bindings/displayio/FourWire.h"
+#include "shared-bindings/displayio/Display.h"
+#include "shared-bindings/paralleldisplay/ParallelBus.h"
 #include "shared-bindings/microcontroller/Pin.h"
 #include "shared-module/displayio/__init__.h"
 #include "shared-module/displayio/mipi_constants.h"
+#include "shared-bindings/board/__init__.h"
+
 
 #define DELAY 0x80
 
