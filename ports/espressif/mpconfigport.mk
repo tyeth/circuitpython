@@ -73,7 +73,7 @@ CIRCUITPY_BLEIO = 0
 
 else ifeq ($(IDF_TARGET),esp32s3)
 # Modules
-CIRCUITPY_PARALLELDISPLAY = 0
+CIRCUITPY_PARALLELDISPLAY ?= 0
 endif
 
 # No room for dualbank on boards with 2MB flash
