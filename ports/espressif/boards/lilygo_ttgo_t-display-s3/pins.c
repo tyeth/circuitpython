@@ -40,6 +40,7 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_TX1), MP_ROM_PTR(&pin_GPIO17) },
     { MP_ROM_QSTR(MP_QSTR_RX1), MP_ROM_PTR(&pin_GPIO18) },
 
+    { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&board_uart_obj) },
     // // SD Card
     // { MP_ROM_QSTR(MP_QSTR_SD_MISO), MP_ROM_PTR(&pin_GPIO13) },
     // { MP_ROM_QSTR(MP_QSTR_SD_MOSI), MP_ROM_PTR(&pin_GPIO11) },
@@ -133,12 +134,12 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
 { MP_OBJ_NEW_QSTR(MP_QSTR_LCD_DC), MP_ROM_PTR(&pin_GPIO7) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_LCD_CS), MP_ROM_PTR(&pin_GPIO6) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_LCD_RES), MP_ROM_PTR(&pin_GPIO5) },
+{ MP_OBJ_NEW_QSTR(MP_QSTR_LCD_POWER_ON), MP_ROM_PTR(&pin_GPIO15) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_WR), MP_ROM_PTR(&pin_GPIO8) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_RD), MP_ROM_PTR(&pin_GPIO9) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_DC), MP_ROM_PTR(&pin_GPIO7) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_CS), MP_ROM_PTR(&pin_GPIO6) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_RESET), MP_ROM_PTR(&pin_GPIO5) },
-{ MP_OBJ_NEW_QSTR(MP_QSTR_LCD_POWER_ON), MP_ROM_PTR(&pin_GPIO15) },
 // { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_RS), MP_ROM_PTR(&pin_PB05) },
 // { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_TE), MP_ROM_PTR(&pin_PB07) },
 

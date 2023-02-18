@@ -42,7 +42,7 @@
 
 // #define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO0)
 
-// #define DEFAULT_UART_BUS_RX         (&pin_GPIO44)
-// #define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
+#define DEFAULT_UART_BUS_RX         (&pin_GPIO44)
+#define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
 
 // #define AUTORESET_DELAY_MS          500

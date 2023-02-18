@@ -27,8 +27,8 @@
 #include "supervisor/board.h"
 #include "mpconfigboard.h"
 #include "shared-bindings/microcontroller/Pin.h"
-#include "shared-module/displayio/__init__.h"
-#include "shared-module/displayio/mipi_constants.h"
+// #include "shared-module/displayio/__init__.h"
+// #include "shared-module/displayio/mipi_constants.h"
 
 #define DELAY 0x80
 
