@@ -31,18 +31,28 @@
 
 // #define CIRCUITPY_PARALLELDISPLAY  // seems defined in mpconfigboard.mk
 
-// #define MICROPY_HW_LED_STATUS       (&pin_GPIO3)
+// #define MICROPY_HW_LED_STATUS (&pin_GPIO13)
+// #define MICROPY_HW_NEOPIXEL (&pin_GPIO33)
+// #define CIRCUITPY_STATUS_LED_POWER (&pin_GPIO21)
 
 // #define DEFAULT_UART_BUS_RX         (&pin_GPIO20)
 // #define DEFAULT_UART_BUS_TX         (&pin_GPIO21)
 
 // #define CIRCUITPY_CONSOLE_UART_RX     DEFAULT_UART_BUS_RX
 // #define CIRCUITPY_CONSOLE_UART_TX     DEFAULT_UART_BUS_TX
-// #define MICROPY_HW_NEOPIXEL         (&pin_GPIO48)
 
 // #define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO0)
 
 #define DEFAULT_UART_BUS_RX         (&pin_GPIO44)
 #define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
+
+// Second I2C bus(Wire1) in arduino, the Qwiic connector / StemmaQT port
+#define DEFAULT_I2C_BUS_SCL (&pin_GPIO43)
+#define DEFAULT_I2C_BUS_SDA (&pin_GPIO44)
+
+#define DEFAULT_SPI_BUS_SS (&pin_GPIO10)
+#define DEFAULT_SPI_BUS_SCK (&pin_GPIO12)
+#define DEFAULT_SPI_BUS_MOSI (&pin_GPIO11)
+#define DEFAULT_SPI_BUS_MISO (&pin_GPIO13)
 
 // #define AUTORESET_DELAY_MS          500

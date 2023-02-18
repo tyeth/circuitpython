@@ -1,6 +1,19 @@
 #include "shared-bindings/board/__init__.h"
 #include "shared-module/displayio/__init__.h"
 
+/*
+powershell and bash commands to go back and forth between WSL and powershell
+#POWERSHELL
+$BOARD="lilygo_ttgo_t-display-s3"; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --after no_reset erase_flash ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --before no_reset --after hard_reset write_flash 0x0 C:\dev\python\circuitpython-VIEWonly\build-$BOARD\firmware.bin
+
+#BASH
+export BOARD=lilygo_ttgo_t-display-s3 && git pull && make BOARD=$BOARD V=1 -j8 clean &&  make BOARD=$BOARD V=1 -j8 && mkdir -p /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/ && cp build-$BOARD/firmware.* /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/
+
+Circup powershell commands commands for batch search / optional-install:
+ $install=1;$term="motor";circup show | % { if($_.contains($term)){ return $_} else {return $null }} | % { if(-not ($_ -eq $null)){ if($install -eq 1) { circup install $_ } else {write-host $_ }} }
+
+*/
+
 // pins taken from https://github.com/espressif/arduino-esp32/commit/d03217af47a21c13e12eabf148df644d5f811d8e
 
 STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
@@ -40,7 +53,6 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_TX1), MP_ROM_PTR(&pin_GPIO17) },
     { MP_ROM_QSTR(MP_QSTR_RX1), MP_ROM_PTR(&pin_GPIO18) },
 
-    { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&board_uart_obj) },
     // // SD Card
     // { MP_ROM_QSTR(MP_QSTR_SD_MISO), MP_ROM_PTR(&pin_GPIO13) },
     // { MP_ROM_QSTR(MP_QSTR_SD_MOSI), MP_ROM_PTR(&pin_GPIO11) },
@@ -100,6 +112,8 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
 
 { MP_OBJ_NEW_QSTR(MP_QSTR_SDA), MP_ROM_PTR(&pin_GPIO18) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_SCL), MP_ROM_PTR(&pin_GPIO17) },
+{ MP_OBJ_NEW_QSTR(MP_QSTR_SDA1), MP_ROM_PTR(&pin_GPIO44) },
+{ MP_OBJ_NEW_QSTR(MP_QSTR_SCL1), MP_ROM_PTR(&pin_GPIO43) },
 
 { MP_OBJ_NEW_QSTR(MP_QSTR_SS), MP_ROM_PTR(&pin_GPIO10) },
 { MP_OBJ_NEW_QSTR(MP_QSTR_MOSI), MP_ROM_PTR(&pin_GPIO11) },
@@ -143,6 +157,11 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
 // { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_RS), MP_ROM_PTR(&pin_PB05) },
 // { MP_OBJ_NEW_QSTR(MP_QSTR_TFT_TE), MP_ROM_PTR(&pin_PB07) },
 
+    
+    { MP_ROM_QSTR(MP_QSTR_I2C), MP_ROM_PTR(&board_i2c_obj) },
+    { MP_ROM_QSTR(MP_QSTR_STEMMA_I2C), MP_ROM_PTR(&board_i2c_obj) },
+    { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&board_spi_obj) },
+    { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&board_uart_obj) },
 
 };
 MP_DEFINE_CONST_DICT(board_module_globals, board_module_globals_table);
