@@ -38,6 +38,7 @@
 
 #define DELAY 0x80
 
+#ifdef CIRCUITPYTHON_PARALLELDISPLAY
 
 //TODO:Tyeth: double check with t-displayS3, this is from lilygo_ttgo_t8_s2_st7789
 // display init sequence according to LilyGO example app
@@ -85,6 +86,8 @@ static void display_init(void) {
         &pin_GPIO5, // Reset
         0); // Frequency
 
+paralleldisplay_parallelbus_make_new
+
     displayio_display_obj_t *display = &displays[0].display;
     display->base.type = &displayio_display_type;
 
@@ -121,6 +124,9 @@ static void display_init(void) {
         );
 }
 
+#endif 
+
+
 void board_init(void) {
     // Debug UART
     #ifdef DEBUG
@@ -128,8 +134,10 @@ void board_init(void) {
     common_hal_never_reset_pin(&pin_GPIO44);
     #endif /* DEBUG */
 
+#ifdef CIRCUITPYTHON_PARALLELDISPLAY
     // Display
     display_init();
+#endif
 }
 
 // This is done by FUNHOUSE board, but not yet by reverse s3 tft feather:
