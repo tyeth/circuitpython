@@ -3,11 +3,10 @@
 
 /*
 powershell and bash commands to go back and forth between WSL and powershell
-#POWERSHELL
-$BOARD="lilygo_ttgo_t-display-s3"; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --after no_reset erase_flash ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --before no_reset --after hard_reset write_flash 0x0 C:\dev\python\circuitpython-VIEWonly\build-$BOARD\firmware.bin
+## POWERSHELL -- assumes linux and windows path, adjust accordingly...
 
-#BASH
-export BOARD=lilygo_ttgo_t-display-s3 && git pull && make BOARD=$BOARD V=1 -j8 clean &&  make BOARD=$BOARD V=1 -j8 && mkdir -p /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/ && cp build-$BOARD/firmware.* /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/
+$BOARD="lilygo_ttgo_t-display-s3"; wsl --cd ~/dev-proj/python/circuitpython-tyeth/ports/espressif -e /bin/bash -c "export BOARD=$BOARD && git pull && source ./esp-idf/export.sh && make BOARD=$BOARD V=1 -j8 clean &&  make BOARD=$BOARD V=1 -j8 && mkdir -p /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/ && cp build-$BOARD/firmware.* /mnt/c/dev/python/circuitpython-VIEWonly/build-\$BOARD/firmware" ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --after no_reset erase_flash ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --before no_reset --after hard_reset write_flash 0x0 C:\dev\python\circuitpython-VIEWonly\build-$BOARD\firmware.bin
+
 
 Circup powershell commands commands for batch search / optional-install:
  $install=1;$term="motor";circup show | % { if($_.contains($term)){ return $_} else {return $null }} | % { if(-not ($_ -eq $null)){ if($install -eq 1) { circup install $_ } else {write-host $_ }} }
@@ -99,6 +98,36 @@ STATIC const mp_rom_map_elem_t board_module_globals_table[] = {
     /* ------------===========--------------============------------- */
     /* ------------===========--------------============------------- */
     /* ------------===========--------------============------------- */
+   
+    {MP_ROM_QSTR(MP_QSTR_D0), MP_ROM_PTR(&pin_GPIO0)},
+    {MP_ROM_QSTR(MP_QSTR_D1), MP_ROM_PTR(&pin_GPIO1)},
+    {MP_ROM_QSTR(MP_QSTR_D2), MP_ROM_PTR(&pin_GPIO2)},
+    {MP_ROM_QSTR(MP_QSTR_D3), MP_ROM_PTR(&pin_GPIO3)},
+    {MP_ROM_QSTR(MP_QSTR_D4), MP_ROM_PTR(&pin_GPIO4)},
+    {MP_ROM_QSTR(MP_QSTR_D5), MP_ROM_PTR(&pin_GPIO5)},
+    {MP_ROM_QSTR(MP_QSTR_D6), MP_ROM_PTR(&pin_GPIO6)},
+    {MP_ROM_QSTR(MP_QSTR_D7), MP_ROM_PTR(&pin_GPIO7)},
+    {MP_ROM_QSTR(MP_QSTR_D8), MP_ROM_PTR(&pin_GPIO8)},
+    {MP_ROM_QSTR(MP_QSTR_D9), MP_ROM_PTR(&pin_GPIO9)},
+    {MP_ROM_QSTR(MP_QSTR_D10), MP_ROM_PTR(&pin_GPIO10)},
+    {MP_ROM_QSTR(MP_QSTR_D11), MP_ROM_PTR(&pin_GPIO11)},
+    {MP_ROM_QSTR(MP_QSTR_D12), MP_ROM_PTR(&pin_GPIO12)},
+    {MP_ROM_QSTR(MP_QSTR_D13), MP_ROM_PTR(&pin_GPIO13)},
+    {MP_ROM_QSTR(MP_QSTR_D14), MP_ROM_PTR(&pin_GPIO14)},
+    {MP_ROM_QSTR(MP_QSTR_D15), MP_ROM_PTR(&pin_GPIO15)},
+    {MP_ROM_QSTR(MP_QSTR_D16), MP_ROM_PTR(&pin_GPIO16)},
+    {MP_ROM_QSTR(MP_QSTR_D17), MP_ROM_PTR(&pin_GPIO17)},
+    {MP_ROM_QSTR(MP_QSTR_D18), MP_ROM_PTR(&pin_GPIO18)},
+    {MP_ROM_QSTR(MP_QSTR_D19), MP_ROM_PTR(&pin_GPIO19)},
+    {MP_ROM_QSTR(MP_QSTR_D20), MP_ROM_PTR(&pin_GPIO20)},
+    {MP_ROM_QSTR(MP_QSTR_D21), MP_ROM_PTR(&pin_GPIO21)},
+    {MP_ROM_QSTR(MP_QSTR_D39), MP_ROM_PTR(&pin_GPIO39)},
+    {MP_ROM_QSTR(MP_QSTR_D40), MP_ROM_PTR(&pin_GPIO40)},
+    {MP_ROM_QSTR(MP_QSTR_D41), MP_ROM_PTR(&pin_GPIO41)},
+    {MP_ROM_QSTR(MP_QSTR_D42), MP_ROM_PTR(&pin_GPIO42)},
+    {MP_ROM_QSTR(MP_QSTR_D45), MP_ROM_PTR(&pin_GPIO45)},
+    {MP_ROM_QSTR(MP_QSTR_D46), MP_ROM_PTR(&pin_GPIO46)},
+   
     /* ------------===========--------------============------------- */
     /* ------------===========--------------============------------- */
     /* ------------===========--------------============------------- */
