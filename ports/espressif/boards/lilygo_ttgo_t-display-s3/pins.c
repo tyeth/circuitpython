@@ -5,7 +5,7 @@
 powershell and bash commands to go back and forth between WSL and powershell
 ## POWERSHELL -- assumes linux and windows path, adjust accordingly...
 
- $BOARD="lilygo_ttgo_t-display-s3"; wsl --cd ~/dev-proj/python/circuitpython-tyeth/ports/espressif -e /bin/bash -c "export BOARD=$BOARD && git pull && source ./esp-idf/export.sh && make BOARD=$BOARD V=1 -j8 clean &&  make BOARD=$BOARD V=1 -j8 && mkdir -p /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/firmware/ && cp build-$BOARD/firmware.* /mnt/c/dev/python/circuitpython-VIEWonly/build-\$BOARD/firmware" ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --after no_reset erase_flash ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --before no_reset --after hard_reset write_flash 0x0 C:\dev\python\circuitpython-VIEWonly\build-$BOARD\firmware.bin 
+ $BOARD="lilygo_ttgo_t-display-s3"; wsl --cd ~/dev-proj/python/circuitpython-tyeth/ports/espressif -e /bin/bash -c "export BOARD=$BOARD && git pull && source ./esp-idf/export.sh && make BOARD=$BOARD V=1 -j8 clean &&  make BOARD=$BOARD V=1 -j8 && mkdir -p /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/firmware/ && cp build-$BOARD/firmware.* /mnt/c/dev/python/circuitpython-VIEWonly/build-$BOARD/firmware" ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --after no_reset erase_flash ; python $ENV:IDF_PATH\components\esptool_py\esptool\esptool.py --before no_reset --after hard_reset write_flash 0x0 C:\dev\python\circuitpython-VIEWonly\build-$BOARD\firmware.bin
 
 
 Circup powershell commands commands for batch search / optional-install:
