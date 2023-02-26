@@ -91,10 +91,10 @@ void board_init(void) {
     common_hal_displayio_display_construct(
         display,
         bus,
-        240,            // width (after rotation)
-        135,            // height (after rotation)
+        128,            // width (after rotation)
+        128,            // height (after rotation)
         40,             // column start
-        53,             // row start
+        40,             // row start
         0,              // rotation
         16,             // color depth
         false,          // grayscale
@@ -121,13 +121,12 @@ void board_init(void) {
 }
 
 
-//TODO:Tyeth double check pin21 for LDO / I2C/TFT Power
 bool espressif_board_reset_pin_number(gpio_num_t pin_number) {
-    // Override the I2C/TFT power pin reset to prevent resetting the display.
-    if (pin_number == 21) {
-        // Turn on TFT and I2C
-        gpio_set_direction(21, GPIO_MODE_DEF_OUTPUT);
-        gpio_set_level(21, true);
+    // Override the TFT power pin reset to prevent resetting the display.
+    if (pin_number == 10) {
+        // Turn on TFT
+        gpio_set_direction(10, GPIO_MODE_DEF_OUTPUT);
+        gpio_set_level(10, true);
         return true;
     }
     return false;

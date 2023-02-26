@@ -48,4 +48,16 @@
 // #define DEFAULT_UART_BUS_RX         (&pin_GPIO44)
 // #define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
 
-#define DOUBLE_TAP_PIN (&pin_GPIO0)
+// #define DOUBLE_TAP_PIN (&pin_GPIO0)
+
+#define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO0)
+
+#define CIRCUITPY_BOARD_I2C         (2)
+#define CIRCUITPY_BOARD_I2C_PIN     {{.scl = &pin_GPIO44, .sda = &pin_GPIO43}, \
+                                     {.scl = &pin_GPIO17, .sda = &pin_GPIO18}}
+
+#define CIRCUITPY_BOARD_SPI         (1)
+#define CIRCUITPY_BOARD_SPI_PIN     {{.clock = &pin_GPIO36, .mosi = &pin_GPIO35, .miso = &pin_GPIO37}}
+
+// #define CIRCUITPY_BOARD_UART        (1)
+// #define CIRCUITPY_BOARD_UART_PIN    {{.tx = &pin_GPIO32, .rx = &pin_GPIO7}}
