@@ -22,20 +22,23 @@ displayio.release_displays()
 
 # display_bus = displayio.FourWire(spi, command=tft_dc, chip_select=tft_cs, reset=board.TFT_RESET)
 
-display = board.display() #ST7789(board.display, width=128, height=128, rowstart=40)
+display = board.DISPLAY #ST7789(board.display, width=128, height=128, rowstart=40)
 
-# Make the display context
-splash = displayio.Group()
-display.show(splash)
+display.root_group = displayio.CIRCUITPYTHON_TERMINAL # Set to terminal
 
-color_bitmap = displayio.Bitmap(240, 240, 1)
-color_palette = displayio.Palette(1)
-color_palette[0] = 0xFF0000
 
-bg_sprite = displayio.TileGrid(color_bitmap,
-                               pixel_shader=color_palette,
-                               x=0, y=0)
-splash.append(bg_sprite)
+# # Make the display context
+# splash = displayio.Group()
+# display.root_group=splash
+
+# color_bitmap = displayio.Bitmap(240, 240, 1)
+# color_palette = displayio.Palette(1)
+# color_palette[0] = 0xFF0000
+
+# bg_sprite = displayio.TileGrid(color_bitmap,
+#                                pixel_shader=color_palette,
+#                                x=0, y=0)
+# splash.append(bg_sprite)
 
 while True:
     print(".")
