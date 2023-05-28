@@ -11,13 +11,14 @@ import time
 import board
 import displayio
 import gc9a01
+import busio
 # Raspberry Pi Pico pinout, one possibility, at "southwest" of board
-tft_clk = board.TFT_SCLK # must be a SPI CLK
-tft_mosi= board.TFT_MOSI # must be a SPI TX
-tft_rst = board.TFT_RST
+tft_clk = board.LCD_CLK # must be a SPI CLK
+tft_mosi= board.LCD_MOSI # must be a SPI TX
+tft_rst = board.TFT_RESET
 tft_dc  = board.TFT_DC
 tft_cs  = board.TFT_CS
-tft_bl  = board.TFT_BL
+tft_bl  = board.TFT_BACKLIGHT
 spi = busio.SPI(clock=tft_clk, MOSI=tft_mosi)
 display_bus = displayio.FourWire(spi, command=tft_dc, chip_select=tft_cs, reset=tft_rst)
 display = gc9a01.GC9A01(display_bus, width=128, height=128, backlight_pin=tft_bl)
