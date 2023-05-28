@@ -71,65 +71,65 @@ uint8_t display_init_sequence[] = {
 
 
 void board_init(void) {
-    busio_spi_obj_t *spi = common_hal_board_create_spi(0);
-    displayio_fourwire_obj_t *bus = &displays[0].fourwire_bus;
-    bus->base.type = &displayio_fourwire_type;
+    // busio_spi_obj_t *spi = common_hal_board_create_spi(0);
+    // displayio_fourwire_obj_t *bus = &displays[0].fourwire_bus;
+    // bus->base.type = &displayio_fourwire_type;
 
-    common_hal_displayio_fourwire_construct(
-        bus,
-        spi,
-        &pin_GPIO6,    // DC
-        &pin_GPIO5,     // CS
-        &pin_GPIO1,    // RST
-        40000000,       // baudrate
-        0,              // polarity
-        0               // phase
-        );
-    displayio_display_obj_t *display = &displays[0].display;
-    display->base.type = &displayio_display_type;
+    // common_hal_displayio_fourwire_construct(
+    //     bus,
+    //     spi,
+    //     &pin_GPIO6,    // DC
+    //     &pin_GPIO5,     // CS
+    //     &pin_GPIO1,    // RST
+    //     40000000,       // baudrate
+    //     0,              // polarity
+    //     0               // phase
+    //     );
+    // displayio_display_obj_t *display = &displays[0].display;
+    // display->base.type = &displayio_display_type;
 
-    common_hal_displayio_display_construct(
-        display,
-        bus,
-        128,            // width (after rotation)
-        128,            // height (after rotation)
-        40,             // column start
-        40,             // row start
-        0,              // rotation
-        16,             // color depth
-        false,          // grayscale
-        false,          // pixels in a byte share a row. Only valid for depths < 8
-        1,              // bytes per cell. Only valid for depths < 8
-        false,          // reverse_pixels_in_byte. Only valid for depths < 8
-        true,           // reverse_pixels_in_word
-        MIPI_COMMAND_SET_COLUMN_ADDRESS, // set column command
-        MIPI_COMMAND_SET_PAGE_ADDRESS,   // set row command
-        MIPI_COMMAND_WRITE_MEMORY_START, // write memory command
-        display_init_sequence,
-        sizeof(display_init_sequence),
-        &pin_GPIO10,    // backlight pin
-        NO_BRIGHTNESS_COMMAND,
-        1.0f,           // brightness
-        false,          // single_byte_bounds
-        false,          // data_as_commands
-        true,           // auto_refresh
-        60,             // native_frames_per_second
-        true,           // backlight_on_high
-        false,          // SH1107_addressing
-        50000           // backlight pwm frequency
-        );
+    // common_hal_displayio_display_construct(
+    //     display,
+    //     bus,
+    //     128,            // width (after rotation)
+    //     128,            // height (after rotation)
+    //     40,             // column start
+    //     40,             // row start
+    //     0,              // rotation
+    //     16,             // color depth
+    //     false,          // grayscale
+    //     false,          // pixels in a byte share a row. Only valid for depths < 8
+    //     1,              // bytes per cell. Only valid for depths < 8
+    //     false,          // reverse_pixels_in_byte. Only valid for depths < 8
+    //     true,           // reverse_pixels_in_word
+    //     MIPI_COMMAND_SET_COLUMN_ADDRESS, // set column command
+    //     MIPI_COMMAND_SET_PAGE_ADDRESS,   // set row command
+    //     MIPI_COMMAND_WRITE_MEMORY_START, // write memory command
+    //     display_init_sequence,
+    //     sizeof(display_init_sequence),
+    //     &pin_GPIO10,    // backlight pin
+    //     NO_BRIGHTNESS_COMMAND,
+    //     1.0f,           // brightness
+    //     false,          // single_byte_bounds
+    //     false,          // data_as_commands
+    //     true,           // auto_refresh
+    //     60,             // native_frames_per_second
+    //     true,           // backlight_on_high
+    //     false,          // SH1107_addressing
+    //     50000           // backlight pwm frequency
+    //     );
 }
 
 
 bool espressif_board_reset_pin_number(gpio_num_t pin_number) {
     // Override the TFT power pin reset to prevent resetting the display.
-    if (pin_number == 10) {
-        // Turn on TFT
-        gpio_set_direction(10, GPIO_MODE_DEF_OUTPUT);
-        gpio_set_level(10, true);
-        return true;
-    }
-    return false;
+    // if (pin_number == 10) {
+    //     // Turn on TFT
+    //     gpio_set_direction(10, GPIO_MODE_DEF_OUTPUT);
+    //     gpio_set_level(10, true);
+    //     return true;
+    // }
+    // return false;
 }
 
 // Use the MP_WEAK supervisor/shared/board.c versions of routines not defined here.
