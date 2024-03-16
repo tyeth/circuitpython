@@ -349,7 +349,7 @@ typedef long mp_off_t;
 
 #if CIRCUITPY_DISPLAYIO
 #ifndef CIRCUITPY_DISPLAY_LIMIT
-#define CIRCUITPY_DISPLAY_LIMIT (1)
+#define CIRCUITPY_DISPLAY_LIMIT (3)
 #endif
 
 // Framebuffer area size in bytes. Rounded down to power of four for alignment.
