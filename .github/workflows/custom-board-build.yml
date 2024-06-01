@@ -41,8 +41,7 @@ jobs:
     - name: Set up repository
       run: |
         git clone --filter=tree:0 https://github.com/adafruit/circuitpython.git $GITHUB_WORKSPACE
-    - name: Checkout head
-      if: github.repository_owner == 'adafruit'
+    - name: Checkout head / tag
       run: |
         git checkout ${{ inputs.version == 'latest' && 'HEAD' || inputs.version }}
     - name: fork compatibility
