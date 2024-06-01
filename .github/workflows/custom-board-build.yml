@@ -52,7 +52,7 @@ jobs:
     - name: branch compatibility
       if: inputs.branch != ''
       run: |
-        git checkout fork-branch fork/${{inputs.branch}}
+        git checkout -b fork-branch fork/${{inputs.branch}}
     - name: Set up identifier
       if: inputs.debug || inputs.flags != ''
       run: |
