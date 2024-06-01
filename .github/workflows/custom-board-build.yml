@@ -35,7 +35,7 @@ jobs:
     steps:
     - name: Set up repository
       run: |
-        git clone --filter=tree:0 https://github.com/adafruit/circuitpython.git $GITHUB_WORKSPACE
+        git clone --filter=tree:0 https://github.com/tyeth/circuitpython.git $GITHUB_WORKSPACE
         git checkout ${{ inputs.version == 'latest' && 'HEAD' || inputs.version }}
     - name: Set up identifier
       if: inputs.debug || inputs.flags != ''
