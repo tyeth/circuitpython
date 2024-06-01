@@ -1,4 +1,4 @@
-name: Custom board build
+name: Build board (custom)
 
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ on:
         required: false
         type: string
       branch:
-        description: 'Branch (defaults to main)'
+        description: 'Branch (only if tag="latest" - defaults to main)'
         required: false
         default: 'main'
         type: string
@@ -50,7 +50,7 @@ jobs:
         git remote add fork https://github.com/${{github.repository}}.git
         git fetch fork --filter=tree:0
     - name: branch compatibility
-      if: inputs.branch != ''
+      if: inputs.branch != '' && inputs.version == 'latest'
       run: |
         git checkout -b fork-branch fork/${{inputs.branch}}
     - name: Set up identifier
