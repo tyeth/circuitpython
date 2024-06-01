@@ -167,9 +167,9 @@ else ifeq ($(IDF_TARGET),esp32s3)
 CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 0
 
 # No room for _bleio on boards with 4MB flash
-# ifeq ($(CIRCUITPY_ESP_FLASH_SIZE),4MB)
-# CIRCUITPY_BLEIO = 0
-# endif
+ifeq ($(CIRCUITPY_ESP_FLASH_SIZE),4MB)
+CIRCUITPY_BLEIO ?= 0
+endif
 
 endif
 
