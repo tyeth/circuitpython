@@ -21,6 +21,11 @@ on:
         description: 'Flags: Build flags (e.g. CIRCUITPY_WIFI=1)'
         required: false
         type: string
+      branch:
+        description: 'Branch (defaults to main)'
+        required: false
+        default: 'main'
+        type: string
       debug:
         description: 'Make a debug build'
         required: false
@@ -35,8 +40,20 @@ jobs:
     steps:
     - name: Set up repository
       run: |
-        git clone --filter=tree:0 https://github.com/tyeth/circuitpython.git $GITHUB_WORKSPACE
+        git clone --filter=tree:0 https://github.com/adafruit/circuitpython.git $GITHUB_WORKSPACE
+    - name: Checkout head
+      if: github.repository_owner == 'adafruit'
+      run: |
         git checkout ${{ inputs.version == 'latest' && 'HEAD' || inputs.version }}
+    - name: fork compatibility
+      if: github.repository_owner != 'adafruit'
+      run: |
+        git remote add fork https://github.com/${{github.repository}}.git
+        git fetch --all
+    - name: branch compatibility
+      if: inputs.branch != ''
+      run: |
+        git checkout fork-branch fork/${{inputs.branch}}
     - name: Set up identifier
       if: inputs.debug || inputs.flags != ''
       run: |
