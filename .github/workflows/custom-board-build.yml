@@ -48,7 +48,7 @@ jobs:
       if: github.repository_owner != 'adafruit'
       run: |
         git remote add fork https://github.com/${{github.repository}}.git
-        git fetch fork
+        git fetch fork --filter=tree:0
     - name: branch compatibility
       if: inputs.branch != ''
       run: |
