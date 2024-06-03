@@ -44,19 +44,19 @@ jobs:
     - name: Checkout head / tag
       run: |
         git checkout ${{ inputs.version == 'latest' && 'HEAD' || inputs.version }}
-    - name: fork compatibility
+    - name: user-fork compatibility
       if: github.repository_owner != 'adafruit'
       run: |
-        git remote add fork https://github.com/${{github.repository}}.git
-        git fetch fork --filter=tree:0
+        git remote add user-fork https://github.com/${{github.repository}}.git
+        git fetch user-fork --filter=tree:0
     - name: branch compatibility
       if: inputs.branch != 'main' && inputs.version == 'latest' && github.repository_owner == 'adafruit'
       run: |
         git checkout ${{inputs.branch}}
-    - name: branch compatibility (fork)
+    - name: branch compatibility (user-fork)
       if: inputs.branch != '' && inputs.version == 'latest' && github.repository_owner != 'adafruit'
       run: |
-        git checkout -b fork-branch fork/${{inputs.branch}}
+        git checkout -b user-fork-branch user-fork/${{inputs.branch}}
     - name: Set up identifier
       if: inputs.debug || inputs.flags != ''
       run: |
