@@ -36,5 +36,7 @@ runs:
         echo Git dir: $GIT_DIR
         echo Worktree: $GIT_WORK_TREE
         git config --list --show-origin
-        GIT_CEILING_DIRECTORIES=$IDF_PATH/.git GIT_TRACE=2 GIT_TRACE_PERFORMANCE=2 GIT_TRACE_PACK_ACCESS=2 GIT_TRACE_PACKFILE=2 GIT_TRACE_SETUP=2 GIT_TRACE_SHALLOW=2 git -c protocol.file.allow=always submodule update --init --depth=1 -v -v --recursive $IDF_PATH
+        echo ** Global Git config:
+        git config --global --list --show-origin
+        GIT_CEILING_DIRECTORIES=$IDF_PATH/.git GIT_TRACE=1 GIT_TRACE_PERFORMANCE=1 GIT_TRACE_PACK_ACCESS=1 GIT_TRACE_PACKFILE=1 GIT_TRACE_SETUP=1 GIT_TRACE_SHALLOW=1 git -c protocol.file.allow=always submodule update --init --depth=1 -v -v --recursive $IDF_PATH
       shell: bash
