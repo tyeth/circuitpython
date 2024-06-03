@@ -32,5 +32,5 @@ runs:
         key: ${{ runner.os }}-${{ env.pythonLocation }}-tools-idf-${{ steps.idf-commit.outputs.commit }}
 
     - name: Initialize IDF submodules
-      run: GIT_TRACE=2 GIT_CURL_VERBOSE=2 GIT_TRACE_PERFORMANCE=2 GIT_TRACE_PACK_ACCESS=2 GIT_TRACE_PACKET=2 GIT_TRACE_PACKFILE=2 GIT_TRACE_SETUP=2 GIT_TRACE_SHALLOW=2 git -c protocol.file.allow=always submodule update --init --depth=1 --recursive $IDF_PATH -v -v
+      run: GIT_TRACE=2 GIT_CURL_VERBOSE=2 GIT_TRACE_PERFORMANCE=2 GIT_TRACE_PACK_ACCESS=2 GIT_TRACE_PACKET=2 GIT_TRACE_PACKFILE=2 GIT_TRACE_SETUP=2 GIT_TRACE_SHALLOW=2 git -c protocol.file.allow=always submodule update --init --depth=1 -v -v --recursive $IDF_PATH
       shell: bash
