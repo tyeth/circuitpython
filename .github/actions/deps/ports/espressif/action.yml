@@ -38,5 +38,5 @@ runs:
         git config --list --show-origin
         echo Global Git config:
         git config --global --list --show-origin || true
-        GIT_TRACE=1 GIT_TRACE_PERFORMANCE=1 GIT_TRACE_PACK_ACCESS=1 GIT_TRACE_SETUP=1 GIT_TRACE_SHALLOW=1 git submodule update --init --depth=1 -v -v --recursive $IDF_PATH
+        GIT_TRACE=1 GIT_TRACE_PERFORMANCE=1 GIT_TRACE_SETUP=1 GIT_TRACE_SHALLOW=1 git submodule update --init --depth=1 -v -v --recursive $IDF_PATH
       shell: bash
