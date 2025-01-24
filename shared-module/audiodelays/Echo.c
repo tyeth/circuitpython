@@ -306,7 +306,7 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
 
         // get the effect values we need from the BlockInput. These may change at run time so you need to do bounds checking if required
         shared_bindings_synthio_lfo_tick(self->sample_rate, n / self->channel_count);
-        mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
+        mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0)) * MICROPY_FLOAT_CONST(2.0);
         mp_float_t decay = synthio_block_slot_get_limited(&self->decay, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
 
         mp_float_t f_delay_ms = synthio_block_slot_get(&self->delay_ms);
@@ -361,7 +361,7 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
                         echo_buffer[self->echo_buffer_write_pos++] = word;
                     }
 
-                    word = (int16_t)(echo * mix);
+                    word = (int16_t)(echo * MIN(mix, MICROPY_FLOAT_CONST(1.0)));
 
                     if (MP_LIKELY(self->bits_per_sample == 16)) {
                         word_buffer[i] = word;
@@ -452,16 +452,17 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
                         }
                     }
 
-                    word = echo + sample_word;
+                    word = (sample_word * MIN(MICROPY_FLOAT_CONST(2.0) - mix, MICROPY_FLOAT_CONST(1.0)))
+                        + (echo * MIN(mix, MICROPY_FLOAT_CONST(1.0)));
                     word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
 
                     if (MP_LIKELY(self->bits_per_sample == 16)) {
-                        word_buffer[i] = (int16_t)((sample_word * (MICROPY_FLOAT_CONST(1.0) - mix)) + (word * mix));
+                        word_buffer[i] = (int16_t)word;
                         if (!self->samples_signed) {
                             word_buffer[i] ^= 0x8000;
                         }
                     } else {
-                        int8_t mixed = (int16_t)((sample_word * (MICROPY_FLOAT_CONST(1.0) - mix)) + (word * mix));
+                        int8_t mixed = (int16_t)word;
                         if (self->samples_signed) {
                             hword_buffer[i] = mixed;
                         } else {
