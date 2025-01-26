@@ -17,7 +17,7 @@
 #include "shared-module/synthio/block.h"
 
 #define DECAY_DEFAULT 0.7f
-#define MIX_DEFAULT 0.5f
+#define MIX_DEFAULT 0.25f
 
 //| class Echo:
 //|     """An Echo effect"""
@@ -27,7 +27,7 @@
 //|         max_delay_ms: int = 500,
 //|         delay_ms: synthio.BlockInput = 250.0,
 //|         decay: synthio.BlockInput = 0.7,
-//|         mix: synthio.BlockInput = 0.5,
+//|         mix: synthio.BlockInput = 0.25,
 //|         buffer_size: int = 512,
 //|         sample_rate: int = 8000,
 //|         bits_per_sample: int = 16,
