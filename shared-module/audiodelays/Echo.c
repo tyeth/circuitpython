@@ -452,8 +452,8 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
                         }
                     }
 
-                    word = (sample_word * MIN(MICROPY_FLOAT_CONST(2.0) - mix, MICROPY_FLOAT_CONST(1.0)))
-                        + (echo * MIN(mix, MICROPY_FLOAT_CONST(1.0)));
+                    word = (int32_t)((sample_word * MIN(MICROPY_FLOAT_CONST(2.0) - mix, MICROPY_FLOAT_CONST(1.0)))
+                        + (echo * MIN(mix, MICROPY_FLOAT_CONST(1.0))));
                     word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
 
                     if (MP_LIKELY(self->bits_per_sample == 16)) {
