@@ -162,7 +162,7 @@ MP_PROPERTY_GETSET(audiodelays_echo_delay_ms_obj,
     (mp_obj_t)&audiodelays_echo_set_delay_ms_obj);
 
 //|     decay: synthio.BlockInput
-//|     """The rate the echo decays between 0 and 1 where 1 is forever and 0 is no echo."""
+//|     """The rate the echo fades between 0 and 1 where 0 is instant and 1 is never."""
 static mp_obj_t audiodelays_echo_obj_get_decay(mp_obj_t self_in) {
     return common_hal_audiodelays_echo_get_decay(self_in);
 }
@@ -180,7 +180,7 @@ MP_PROPERTY_GETSET(audiodelays_echo_decay_obj,
     (mp_obj_t)&audiodelays_echo_set_decay_obj);
 
 //|     mix: synthio.BlockInput
-//|     """The rate the echo mix between 0 and 1 where 0 is only sample and 1 is all effect."""
+//|     """The rate the echo mix between 0 and 1 where 0 is only sample, 0.5 is an equal mix of the sample and the effect and 1 is all effect."""
 static mp_obj_t audiodelays_echo_obj_get_mix(mp_obj_t self_in) {
     return common_hal_audiodelays_echo_get_mix(self_in);
 }
