@@ -16,8 +16,6 @@
 #include "shared-bindings/util.h"
 #include "shared-module/synthio/block.h"
 
-#define MIX_DEFAULT 1.0f
-
 //| class Filter:
 //|     """A Filter effect"""
 //|

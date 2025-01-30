@@ -16,9 +16,6 @@
 #include "shared-bindings/util.h"
 #include "shared-module/synthio/block.h"
 
-#define DECAY_DEFAULT 0.7f
-#define MIX_DEFAULT 0.25f
-
 //| class Echo:
 //|     """An Echo effect"""
 //|

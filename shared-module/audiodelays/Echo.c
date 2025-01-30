@@ -68,7 +68,7 @@ void common_hal_audiodelays_echo_construct(audiodelays_echo_obj_t *self, uint32_
     synthio_block_assign_slot(delay_ms, &self->delay_ms, MP_QSTR_delay_ms);
 
     if (mix == MP_OBJ_NULL) {
-        mix = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
+        mix = mp_obj_new_float(MICROPY_FLOAT_CONST(0.25));
     }
     synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
 
