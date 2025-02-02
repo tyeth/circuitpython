@@ -36,10 +36,10 @@
 //| In some cases there may be no decrease in power consumption.
 //|
 //| .. note::
-//| **Implementation note for RP2xxx**: light sleep uses aggressive power-saving. For the W-variants,
-//| It shuts down WiFi and restarts it after wakeup. User code has to reconnect after wakeup to an
-//| AP if necessary. From a power-saving perspective, light and deep sleep are identical (< 2mA@5V),
-//| but light sleep does not reset after wakeup like deep sleep does.
+//|   **Implementation note for RP2xxx**: light sleep uses aggressive power-saving. For the W-variants,
+//|   It shuts down WiFi and restarts it after wakeup. User code has to reconnect after wakeup to an
+//|   AP if necessary. From a power-saving perspective, light and deep sleep are identical (< 2mA@5V),
+//|   but light sleep does not reset after wakeup like deep sleep does.
 //|
 //| Deep sleep shuts down power to nearly all of the microcontroller including the CPU and RAM. This can save
 //| a more significant amount of power, but CircuitPython must restart ``code.py`` from the beginning when
