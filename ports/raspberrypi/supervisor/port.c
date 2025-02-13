@@ -52,6 +52,10 @@
 #include "pico/bootrom.h"
 #include "hardware/watchdog.h"
 
+#ifdef PICO_RP2350
+#include "src/rp2_common/cmsis/stub/CMSIS/Device/RP2350/Include/RP2350.h"
+#endif
+
 #include "supervisor/shared/serial.h"
 
 #include "tusb.h"
@@ -497,6 +501,7 @@ void port_interrupt_after_ticks(uint32_t ticks) {
 }
 
 void port_idle_until_interrupt(void) {
+    #ifdef PICO_RP2040
     common_hal_mcu_disable_interrupts();
     #if CIRCUITPY_USB_HOST
     if (!background_callback_pending() && !tud_task_event_ready() && !tuh_task_event_ready() && !_woken_up) {
@@ -507,6 +512,31 @@ void port_idle_until_interrupt(void) {
         __WFI();
     }
     common_hal_mcu_enable_interrupts();
+    #else
+    // because we use interrupt priority, don't use
+    // common_hal_mcu_disable_interrupts (because an interrupt masked by
+    // BASEPRI will not occur)
+    uint32_t state = save_and_disable_interrupts();
+
+    // Ensure BASEPRI is at 0...
+    uint32_t oldBasePri = __get_BASEPRI();
+    __set_BASEPRI(0);
+    __isb();
+    #if CIRCUITPY_USB_HOST
+    if (!background_callback_pending() && !tud_task_event_ready() && !tuh_task_event_ready() && !_woken_up) {
+    #else
+    if (!background_callback_pending() && !tud_task_event_ready() && !_woken_up) {
+        #endif
+        __DSB();
+        __WFI();
+    }
+
+    // and restore basepri before reenabling interrupts
+    __set_BASEPRI(oldBasePri);
+    __isb();
+
+    restore_interrupts(state);
+    #endif
 }
 
 /**
