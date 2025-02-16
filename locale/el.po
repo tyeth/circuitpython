@@ -609,6 +609,10 @@ msgstr "H παράταξη πρέπει να περιέχει halfwords (τύπ�
 msgid "Array values should be single bytes."
 msgstr "Η τιμές της παράταξη πρέπει να είναι μονά bytes."
 
+#: ports/atmel-samd/common-hal/spitarget/SPITarget.c
+msgid "Async SPI transfer in progress on this bus, keep awaiting."
+msgstr ""
+
 #: shared-module/memorymonitor/AllocationAlarm.c
 #, c-format
 msgid "Attempt to allocate %d blocks"
@@ -1751,6 +1755,10 @@ msgstr ""
 msgid "PWM slice channel A already in use"
 msgstr ""
 
+#: shared-bindings/spitarget/SPITarget.c
+msgid "Packet buffers for an SPI transfer must have the same length."
+msgstr ""
+
 #: shared-module/jpegio/JpegDecoder.c
 msgid "Parameter error"
 msgstr ""
@@ -2045,8 +2053,8 @@ msgstr ""
 msgid "The length of rgb_pins must be 6, 12, 18, 24, or 30"
 msgstr ""
 
-#: shared-module/audiodelays/Echo.c shared-module/audiofilters/Filter.c
-#: shared-module/audiomixer/MixerVoice.c
+#: shared-module/audiodelays/Echo.c shared-module/audiofilters/Distortion.c
+#: shared-module/audiofilters/Filter.c shared-module/audiomixer/MixerVoice.c
 msgid "The sample's %q does not match"
 msgstr ""
 
@@ -2598,8 +2606,8 @@ msgstr ""
 msgid "bits must be 32 or less"
 msgstr ""
 
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Filter.c
-#: shared-bindings/audiomixer/Mixer.c
+#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
+#: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
 msgstr ""
 

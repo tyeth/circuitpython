@@ -83,6 +83,7 @@ sdcardio = false
 sdioio = false
 sharpdisplay = false
 socketpool = true # Zephyr networking enabled
+spitarget = false
 ssl = true # Zephyr networking enabled
 storage = true # Zephyr board has flash
 struct = true

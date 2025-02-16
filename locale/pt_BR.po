@@ -609,6 +609,10 @@ msgstr "Array deve conter meias palavras (tipo 'H')"
 msgid "Array values should be single bytes."
 msgstr "Os valores das matrizes devem ser bytes simples."
 
+#: ports/atmel-samd/common-hal/spitarget/SPITarget.c
+msgid "Async SPI transfer in progress on this bus, keep awaiting."
+msgstr ""
+
 #: shared-module/memorymonitor/AllocationAlarm.c
 #, c-format
 msgid "Attempt to allocate %d blocks"
@@ -1770,6 +1774,10 @@ msgstr "A fatia do PWM já está em uso"
 msgid "PWM slice channel A already in use"
 msgstr "O canal A da fatia do PWM já está em uso"
 
+#: shared-bindings/spitarget/SPITarget.c
+msgid "Packet buffers for an SPI transfer must have the same length."
+msgstr ""
+
 #: shared-module/jpegio/JpegDecoder.c
 msgid "Parameter error"
 msgstr "Erro de parâmetro"
@@ -2072,8 +2080,8 @@ msgstr "A exceção acima foi a causa direta da seguinte exceção:"
 msgid "The length of rgb_pins must be 6, 12, 18, 24, or 30"
 msgstr "O comprimento dos rgb_pins devem ser 6, 12, 18, 24, ou 30"
 
-#: shared-module/audiodelays/Echo.c shared-module/audiofilters/Filter.c
-#: shared-module/audiomixer/MixerVoice.c
+#: shared-module/audiodelays/Echo.c shared-module/audiofilters/Distortion.c
+#: shared-module/audiofilters/Filter.c shared-module/audiomixer/MixerVoice.c
 msgid "The sample's %q does not match"
 msgstr "Não há correspondência nas amostras %q"
 
@@ -2644,8 +2652,8 @@ msgstr "os tamanhos do bitmap devem coincidir"
 msgid "bits must be 32 or less"
 msgstr "bits deve ser 32 ou menos"
 
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Filter.c
-#: shared-bindings/audiomixer/Mixer.c
+#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
+#: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
 msgstr "bits_per_sample deve ser 8 ou 16"
 

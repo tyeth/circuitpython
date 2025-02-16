@@ -134,6 +134,7 @@ static MP_DEFINE_CONST_DICT(memorymap_addressrange_locals_dict, memorymap_addres
 //|
 //|     @overload
 //|     def __setitem__(self, index: slice, value: ReadableBuffer) -> None: ...
+//|
 //|     @overload
 //|     def __setitem__(self, index: int, value: int) -> None:
 //|         """Set the value(s) at the given index.

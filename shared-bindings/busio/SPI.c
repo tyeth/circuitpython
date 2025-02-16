@@ -92,7 +92,7 @@ static mp_obj_t busio_spi_make_new(const mp_obj_type_t *type, size_t n_args, siz
         { MP_QSTR_clock, MP_ARG_REQUIRED | MP_ARG_OBJ },
         { MP_QSTR_MOSI, MP_ARG_OBJ, {.u_obj = mp_const_none} },
         { MP_QSTR_MISO, MP_ARG_OBJ, {.u_obj = mp_const_none} },
-        { MP_QSTR_half_duplex, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_bool = false} },
+        { MP_QSTR_half_duplex, MP_ARG_BOOL | MP_ARG_KW_ONLY, {.u_bool = false} },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -135,12 +135,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(busio_spi_deinit_obj, busio_spi_obj_deinit);
 //|         :ref:`lifetime-and-contextmanagers` for more info."""
 //|         ...
 //|
-static mp_obj_t busio_spi_obj___exit__(size_t n_args, const mp_obj_t *args) {
-    (void)n_args;
-    common_hal_busio_spi_deinit(MP_OBJ_TO_PTR(args[0]));
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(busio_spi_obj___exit___obj, 4, 4, busio_spi_obj___exit__);
+//  Provided by context manager helper.
 
 static void check_lock(busio_spi_obj_t *self) {
     asm ("");
@@ -462,6 +457,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(busio_spi_get_frequency_obj, busio_spi_obj_get_frequen
 
 MP_PROPERTY_GETTER(busio_spi_frequency_obj,
     (mp_obj_t)&busio_spi_get_frequency_obj);
+
 #endif // CIRCUITPY_BUSIO_SPI
 
 
@@ -469,7 +465,7 @@ static const mp_rom_map_elem_t busio_spi_locals_dict_table[] = {
     #if CIRCUITPY_BUSIO_SPI
     { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&busio_spi_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR___enter__), MP_ROM_PTR(&default___enter___obj) },
-    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&busio_spi_obj___exit___obj) },
+    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&default___exit___obj) },
 
     { MP_ROM_QSTR(MP_QSTR_configure), MP_ROM_PTR(&busio_spi_configure_obj) },
     { MP_ROM_QSTR(MP_QSTR_try_lock), MP_ROM_PTR(&busio_spi_try_lock_obj) },
@@ -479,6 +475,7 @@ static const mp_rom_map_elem_t busio_spi_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&busio_spi_write_obj) },
     { MP_ROM_QSTR(MP_QSTR_write_readinto), MP_ROM_PTR(&busio_spi_write_readinto_obj) },
     { MP_ROM_QSTR(MP_QSTR_frequency), MP_ROM_PTR(&busio_spi_frequency_obj) }
+
     #endif // CIRCUITPY_BUSIO_SPI
 };
 static MP_DEFINE_CONST_DICT(busio_spi_locals_dict, busio_spi_locals_dict_table);

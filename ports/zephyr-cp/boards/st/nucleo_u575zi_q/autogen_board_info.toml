@@ -83,6 +83,7 @@ sdcardio = false
 sdioio = false
 sharpdisplay = false
 socketpool = false
+spitarget = false
 ssl = false
 storage = false
 struct = true

@@ -152,6 +152,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(pixelmap_pixelmap_indices_obj, pixelmap_pixelmap_indic
 //|
 //|     @overload
 //|     def __setitem__(self, index: slice, value: PixelSequence) -> None: ...
+//|
 //|     @overload
 //|     def __setitem__(self, index: int, value: PixelType) -> None:
 //|         """Sets the pixel value at the given index.  Value can either be a tuple or integer.  Tuples are

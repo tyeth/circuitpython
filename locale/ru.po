@@ -609,6 +609,10 @@ msgstr "Массив должен содержать полуслова (тип 
 msgid "Array values should be single bytes."
 msgstr "Значения массива должны быть однобайтовыми."
 
+#: ports/atmel-samd/common-hal/spitarget/SPITarget.c
+msgid "Async SPI transfer in progress on this bus, keep awaiting."
+msgstr ""
+
 #: shared-module/memorymonitor/AllocationAlarm.c
 #, c-format
 msgid "Attempt to allocate %d blocks"
@@ -1774,6 +1778,10 @@ msgstr "PWM уже используется"
 msgid "PWM slice channel A already in use"
 msgstr "PWM канал среза A уже используется"
 
+#: shared-bindings/spitarget/SPITarget.c
+msgid "Packet buffers for an SPI transfer must have the same length."
+msgstr ""
+
 #: shared-module/jpegio/JpegDecoder.c
 msgid "Parameter error"
 msgstr "Ошибка параметра"
@@ -2075,8 +2083,8 @@ msgstr ""
 msgid "The length of rgb_pins must be 6, 12, 18, 24, or 30"
 msgstr "Длина rgb_pins должна быть 6, 12, 18, 24 или 30"
 
-#: shared-module/audiodelays/Echo.c shared-module/audiofilters/Filter.c
-#: shared-module/audiomixer/MixerVoice.c
+#: shared-module/audiodelays/Echo.c shared-module/audiofilters/Distortion.c
+#: shared-module/audiofilters/Filter.c shared-module/audiomixer/MixerVoice.c
 msgid "The sample's %q does not match"
 msgstr "%q образца не совпадает"
 
@@ -2644,8 +2652,8 @@ msgstr "Размеры растровых изображений должны с
 msgid "bits must be 32 or less"
 msgstr "биты должны быть 32 или менее"
 
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Filter.c
-#: shared-bindings/audiomixer/Mixer.c
+#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
+#: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
 msgstr "bits_per_sample должно быть 8 или 16"
 

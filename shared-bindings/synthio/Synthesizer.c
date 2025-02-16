@@ -203,12 +203,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(synthio_synthesizer_deinit_obj, synthio_synthes
 //|         :ref:`lifetime-and-contextmanagers` for more info."""
 //|         ...
 //|
-static mp_obj_t synthio_synthesizer_obj___exit__(size_t n_args, const mp_obj_t *args) {
-    (void)n_args;
-    common_hal_synthio_synthesizer_deinit(args[0]);
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(synthio_synthesizer___exit___obj, 4, 4, synthio_synthesizer_obj___exit__);
+//  Provided by context manager helper.
 
 //|     envelope: Optional[Envelope]
 //|     """The envelope to apply to all notes. `None`, the default envelope, instantly turns notes on and off. The envelope may be changed dynamically, but it affects all notes (even currently playing notes)"""
@@ -295,6 +290,8 @@ MP_PROPERTY_GETTER(synthio_synthesizer_blocks_obj,
 //|         of the filter.
 //|
 //|         ``Q`` controls how peaked the response will be at the cutoff frequency. A large value makes the response more peaked.
+//|
+//|         .. note:: This is deprecated in ``9.x.x`` and will be removed in ``10.0.0``. Use `BlockBiquad` objects instead.
 //|         """
 //|
 
@@ -337,6 +334,8 @@ MP_DEFINE_CONST_FUN_OBJ_KW(synthio_synthesizer_lpf_fun_obj, 1, synthio_synthesiz
 //|         of the filter.
 //|
 //|         ``Q`` controls how peaked the response will be at the cutoff frequency. A large value makes the response more peaked.
+//|
+//|         .. note:: This is deprecated in ``9.x.x`` and will be removed in ``10.0.0``. Use `BlockBiquad` objects instead.
 //|         """
 //|
 
@@ -368,6 +367,8 @@ static mp_obj_t synthio_synthesizer_hpf(size_t n_pos, const mp_obj_t *pos_args, 
 //|         ``Q`` Controls how peaked the response will be at the cutoff frequency. A large value makes the response more peaked.
 //|
 //|         The coefficients are scaled such that the filter has a 0dB peak gain.
+//|
+//|         .. note:: This is deprecated in ``9.x.x`` and will be removed in ``10.0.0``. Use `BlockBiquad` objects instead.
 //|         """
 //|
 //|
@@ -405,7 +406,7 @@ static const mp_rom_map_elem_t synthio_synthesizer_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_release_all_then_press), MP_ROM_PTR(&synthio_synthesizer_release_all_then_press_obj) },
     { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&synthio_synthesizer_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR___enter__), MP_ROM_PTR(&default___enter___obj) },
-    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&synthio_synthesizer___exit___obj) },
+    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&default___exit___obj) },
 
     { MP_ROM_QSTR(MP_QSTR_low_pass_filter), MP_ROM_PTR(&synthio_synthesizer_lpf_fun_obj) },
     { MP_ROM_QSTR(MP_QSTR_high_pass_filter), MP_ROM_PTR(&synthio_synthesizer_hpf_fun_obj) },

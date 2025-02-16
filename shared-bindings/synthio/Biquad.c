@@ -47,6 +47,8 @@ static const mp_arg_t biquad_properties[] = {
 //|         rather than directly from coefficients.
 //|
 //|         https://github.com/WebAudio/Audio-EQ-Cookbook/blob/main/Audio-EQ-Cookbook.txt
+//|
+//|         .. note:: This is deprecated in ``9.x.x`` and will be removed in ``10.0.0``. Use `BlockBiquad` objects instead.
 //|         """
 //|
 //|
