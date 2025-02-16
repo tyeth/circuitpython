@@ -23,7 +23,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_A4),           MP_ROM_PTR(&pin_P0_02) },   // Feather
 
-    { MP_ROM_QSTR(MP_QSTR_A5),           MP_ROM_PTR(&pin_P0_03) },   // Feather	
+    { MP_ROM_QSTR(MP_QSTR_A5),           MP_ROM_PTR(&pin_P0_03) },   // Feather
 
     { MP_ROM_QSTR(MP_QSTR_VOLTAGE_MONITOR), MP_ROM_PTR(&pin_P0_29) },
     { MP_ROM_QSTR(MP_QSTR_A6),              MP_ROM_PTR(&pin_P0_29) },
@@ -42,13 +42,13 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_D5),           MP_ROM_PTR(&pin_P1_08) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_TX),  MP_ROM_PTR(&pin_P1_08) },   // mikroBUS
 
-	
+
     { MP_ROM_QSTR(MP_QSTR_D6),           MP_ROM_PTR(&pin_P0_07) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_RX),  MP_ROM_PTR(&pin_P0_07) },   // mikroBUS
     
     { MP_ROM_QSTR(MP_QSTR_D9),           MP_ROM_PTR(&pin_P0_26) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_INT), MP_ROM_PTR(&pin_P0_26) },   // mikroBUS
-	
+
     { MP_ROM_QSTR(MP_QSTR_D10),          MP_ROM_PTR(&pin_P0_27) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_PWM), MP_ROM_PTR(&pin_P0_27) },   // mikroBUS
 
@@ -65,13 +65,13 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_MOSI),         MP_ROM_PTR(&pin_P0_13) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_RST), MP_ROM_PTR(&pin_P0_13) },   // mikroBUS
-	
+
     { MP_ROM_QSTR(MP_QSTR_MISO),         MP_ROM_PTR(&pin_P0_15) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_CS),  MP_ROM_PTR(&pin_P0_15) },   // mikroBUS
 
     { MP_ROM_QSTR(MP_QSTR_TX),           MP_ROM_PTR(&pin_P0_25) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_MISO), MP_ROM_PTR(&pin_P0_25) },  // mikroBUS
-	
+
     { MP_ROM_QSTR(MP_QSTR_RX),           MP_ROM_PTR(&pin_P0_24) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_SCK), MP_ROM_PTR(&pin_P0_24) },   // mikroBUS
 
@@ -85,11 +85,11 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_PMOD6),        MP_ROM_PTR(&pin_P1_01) },   // PMOD
     { MP_ROM_QSTR(MP_QSTR_PMOD7),        MP_ROM_PTR(&pin_P1_03) },   // PMOD
     { MP_ROM_QSTR(MP_QSTR_PMOD8),        MP_ROM_PTR(&pin_P1_05) },   // PMOD
-	
+
     { MP_ROM_QSTR(MP_QSTR_LED1),         MP_ROM_PTR(&pin_P1_10) },
     { MP_ROM_QSTR(MP_QSTR_L),            MP_ROM_PTR(&pin_P1_10) },
     { MP_ROM_QSTR(MP_QSTR_LED),          MP_ROM_PTR(&pin_P1_10) },
-    { MP_ROM_QSTR(MP_QSTR_RED_LED),      MP_ROM_PTR(&pin_P1_10) }, 
+    { MP_ROM_QSTR(MP_QSTR_RED_LED),      MP_ROM_PTR(&pin_P1_10) },
     { MP_ROM_QSTR(MP_QSTR_D3),           MP_ROM_PTR(&pin_P1_10) },
 
     { MP_ROM_QSTR(MP_QSTR_LED2),         MP_ROM_PTR(&pin_P1_15) },
