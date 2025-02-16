@@ -38,7 +38,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_NFC2),         MP_ROM_PTR(&pin_P0_10) },
 
     { MP_ROM_QSTR(MP_QSTR_D2),           MP_ROM_PTR(&pin_P1_09) },   // Feather
-	
+
     { MP_ROM_QSTR(MP_QSTR_D5),           MP_ROM_PTR(&pin_P1_08) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_TX),  MP_ROM_PTR(&pin_P1_08) },   // mikroBUS
 
@@ -62,7 +62,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_A7),           MP_ROM_PTR(&pin_P0_31) },
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_AN),  MP_ROM_PTR(&pin_P0_31) },   // mikroBUS
-	
+
     { MP_ROM_QSTR(MP_QSTR_MOSI),         MP_ROM_PTR(&pin_P0_13) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_RST), MP_ROM_PTR(&pin_P0_13) },   // mikroBUS
 	
@@ -100,7 +100,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_QWIIC_SDA),    MP_ROM_PTR(&pin_P0_08) },
 
     { MP_ROM_QSTR(MP_QSTR_VOUTEN),       MP_ROM_PTR(&pin_P1_04) },
-    
+
     { MP_ROM_QSTR(MP_QSTR_D43),       MP_ROM_PTR(&pin_P1_06) },
 
     { MP_ROM_QSTR(MP_QSTR_UART),         MP_ROM_PTR(&board_uart_obj) },
@@ -109,7 +109,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
     ///  For Qwiic
     { MP_ROM_QSTR(MP_QSTR_QWIIC),        MP_ROM_PTR(&board_i2c_obj) },
-	
+
 };
 
 MP_DEFINE_CONST_DICT(board_module_globals, board_module_globals_table);
