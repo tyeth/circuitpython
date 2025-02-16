@@ -45,7 +45,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_D6),           MP_ROM_PTR(&pin_P0_07) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_RX),  MP_ROM_PTR(&pin_P0_07) },   // mikroBUS
-    
+
     { MP_ROM_QSTR(MP_QSTR_D9),           MP_ROM_PTR(&pin_P0_26) },   // Feather
     { MP_ROM_QSTR(MP_QSTR_mikroBUS_INT), MP_ROM_PTR(&pin_P0_26) },   // mikroBUS
 
