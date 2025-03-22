@@ -9,9 +9,9 @@
 #include "py/runtime.h"
 #include <math.h>
 
-void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self,
+void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_obj_t roomsize, mp_obj_t damp, mp_obj_t mix,
     uint32_t buffer_size, uint8_t bits_per_sample,
-    bool samples_signed, uint8_t channel_count, uint32_t sample_rate, bool freq_shift) {
+    bool samples_signed, uint8_t channel_count, uint32_t sample_rate) {
 
     // Basic settings every effect and audio sample has
     // These are the effects values, not the source sample(s)
@@ -53,6 +53,60 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self,
     self->more_data = false; // Is there still more data to read from the sample or did we finish
 
     // The below section sets up the reverb effect's starting values. For a different effect this section will change
+    if (roomsize == MP_OBJ_NULL) {
+        roomsize = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
+    }
+    synthio_block_assign_slot(roomsize, &self->roomsize, MP_QSTR_roomsize);
+    common_hal_audiodelays_reverb_set_roomsize(self, roomsize);
+
+    if (damp == MP_OBJ_NULL) {
+        damp = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
+    }
+    synthio_block_assign_slot(damp, &self->damp, MP_QSTR_damp);
+    common_hal_audiodelays_reverb_set_damp(self, damp);
+
+    if (mix == MP_OBJ_NULL) {
+        mix = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
+    }
+    synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
+    common_hal_audiodelays_reverb_set_mix(self, mix);
+
+    // Set up the comb filters
+    self->combbuffersizes[0] = 1116;
+    self->combbuffersizes[1] = 1188;
+    self->combbuffersizes[2] = 1277;
+    self->combbuffersizes[3] = 1356;
+    self->combbuffersizes[4] = 1422;
+    self->combbuffersizes[5] = 1491;
+    self->combbuffersizes[6] = 1557;
+    self->combbuffersizes[7] = 1617;
+    for (uint32_t i = 0; i < 8; i++) {
+        self->combbuffers[i] = m_malloc(self->combbuffersizes[i] * sizeof(uint16_t));
+        if (self->combbuffers[i] == NULL) {
+            common_hal_audiodelays_reverb_deinit(self);
+            m_malloc_fail(self->combbuffersizes[i]);
+        }
+        memset(self->combbuffers[i], 0, self->combbuffersizes[i]);
+
+        self->combbufferindex[i] = 0;
+        self->combfitlers[i] = 0;
+    }
+
+    // Set up the allpass filters
+    self->allpassbuffersizes[0] = 556;
+    self->allpassbuffersizes[1] = 441;
+    self->allpassbuffersizes[2] = 341;
+    self->allpassbuffersizes[3] = 225;
+    for (uint32_t i = 0; i < 4; i++) {
+        self->allpassbuffers[i] = m_malloc(self->allpassbuffersizes[i] * sizeof(uint16_t));
+        if (self->allpassbuffers[i] == NULL) {
+            common_hal_audiodelays_reverb_deinit(self);
+            m_malloc_fail(self->allpassbuffersizes[i]);
+        }
+        memset(self->allpassbuffers[i], 0, self->allpassbuffersizes[i]);
+
+        self->allpassbufferindex[i] = 0;
+    }
 }
 
 bool common_hal_audiodelays_reverb_deinited(audiodelays_reverb_obj_t *self) {
@@ -68,6 +122,51 @@ void common_hal_audiodelays_reverb_deinit(audiodelays_reverb_obj_t *self) {
     }
     self->buffer[0] = NULL;
     self->buffer[1] = NULL;
+}
+
+mp_obj_t common_hal_audiodelays_reverb_get_roomsize(audiodelays_reverb_obj_t *self) {
+    return self->roomsize.obj;
+}
+
+void common_hal_audiodelays_reverb_set_roomsize(audiodelays_reverb_obj_t *self, mp_obj_t roomsize_obj) {
+    synthio_block_assign_slot(roomsize_obj, &self->roomsize, MP_QSTR_roomsize);
+}
+
+int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n) {
+    if (n > 1.0f) {
+        n = 1.0f;
+    } else if (n < 0.0f) {
+        n = 0.0f;
+    }
+
+    return (int16_t)(n * 9175.04f) + 22937;     // 9175.04 = 0.28f in fixed point 22937 = 0.7f
+}
+
+mp_obj_t common_hal_audiodelays_reverb_get_damp(audiodelays_reverb_obj_t *self) {
+    return self->damp.obj;
+}
+
+void common_hal_audiodelays_reverb_set_damp(audiodelays_reverb_obj_t *self, mp_obj_t damp) {
+    synthio_block_assign_slot(damp, &self->damp, MP_QSTR_damp);
+}
+
+void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2) {
+    if (n > 1.0f) {
+        n = 1.0f;
+    } else if (n < 0.0f) {
+        n = 0.0f;
+    }
+
+    *damp1 = (int16_t)(n * 13107.2f); // 13107.2 = 0.4f scaling factor
+    *damp2 = (int16_t)(32768 - *damp1); // inverse of x1 damp2 = 1.0 - damp1
+}
+
+mp_obj_t common_hal_audiodelays_reverb_get_mix(audiodelays_reverb_obj_t *self) {
+    return self->mix.obj;
+}
+
+void common_hal_audiodelays_reverb_set_mix(audiodelays_reverb_obj_t *self, mp_obj_t mix) {
+    synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
 }
 
 void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
@@ -104,6 +203,27 @@ void common_hal_audiodelays_reverb_stop(audiodelays_reverb_obj_t *self) {
     // For reverb we clear the sample but the reverb continues until the object reading our effect stops
     self->sample = NULL;
     return;
+}
+
+// cleaner sat16 by http://www.moseleyinstruments.com/
+static int16_t sat16(int32_t n, int rshift) {
+    // we should always round towards 0
+    // to avoid recirculating round-off noise
+    //
+    // a 2s complement positive number is always
+    // rounded down, so we only need to take
+    // care of negative numbers
+    if (n < 0) {
+        n = n + (~(0xFFFFFFFFUL << rshift));
+    }
+    n = n >> rshift;
+    if (n > 32767) {
+        return 32767;
+    }
+    if (n < -32768) {
+        return -32768;
+    }
+    return n;
 }
 
 audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj_t *self, bool single_channel_output, uint8_t channel,
@@ -150,6 +270,12 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
         // get the effect values we need from the BlockInput. These may change at run time so you need to do bounds checking if required
         shared_bindings_synthio_lfo_tick(self->base.sample_rate, n / self->base.channel_count);
+        mp_float_t damp = synthio_block_slot_get_limited(&self->damp, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
+        int16_t damp1, damp2;
+        audiodelays_reverb_get_damp_fixedpoint(damp, &damp1, &damp2);
+
+        mp_float_t roomsize = synthio_block_slot_get_limited(&self->roomsize, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
+        int16_t feedback = audiodelays_reverb_get_roomsize_fixedpoint(roomsize);
 
         // If we have no sample keep the reverb reverbing
         if (self->sample == NULL) {
@@ -164,10 +290,38 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
             for (uint32_t i = 0; i < n; i++) {
                 int32_t sample_word = sample_src[i];
-
                 int32_t word;
-                word = synthio_mix_down_sample(sample_word, SYNTHIO_MIX_DOWN_SCALE(2));
+                int16_t input, bufout, output;
+                int32_t sum;
 
+                input = sat16(sample_word * 8738, 17);
+                sum = 0;
+
+                for (uint32_t j = 0; j < 8; j++) {
+                    bufout = self->combbuffers[j][self->combbufferindex[j]];
+                    sum += bufout;
+                    self->combfitlers[j] = sat16(bufout * damp2 + self->combfitlers[j] * damp1, 15);
+                    self->combbuffers[j][self->combbufferindex[j]] = sat16(input + sat16(self->combfitlers[j] * feedback, 15), 0);
+                    if (++self->combbufferindex[j] >= self->combbuffersizes[j]) {
+                        self->combbufferindex[j] = 0;
+                    }
+                }
+
+                output = sat16(sum * 31457, 17); // 31457 = 0.96f
+
+                for (uint32_t j = 0; j < 4; j++) {
+                    bufout = self->allpassbuffers[j][self->allpassbufferindex[j]];
+                    self->allpassbuffers[j][self->allpassbufferindex[j]] = output + (bufout >> 1); // bufout >> 1 same as bufout*0.5f
+                    output = sat16(bufout - output, 1);
+                    if (++self->allpassbufferindex[j] >= self->allpassbuffersizes[j]) {
+                        self->allpassbufferindex[j] = 0;
+                    }
+                }
+
+                word = sat16(output * 30, 0);
+
+
+                word = synthio_mix_down_sample(sample_word, SYNTHIO_MIX_DOWN_SCALE(2));
                 word_buffer[i] = (int16_t)word;
             }
 

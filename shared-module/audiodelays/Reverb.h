@@ -15,6 +15,9 @@ extern const mp_obj_type_t audiodelays_reverb_type;
 
 typedef struct {
     audiosample_base_t base;
+    synthio_block_slot_t roomsize;
+    synthio_block_slot_t damp;
+    synthio_block_slot_t mix;
 
     int8_t *buffer[2];
     uint8_t last_buf_idx;
@@ -25,6 +28,15 @@ typedef struct {
 
     bool loop;
     bool more_data;
+
+    int16_t combbuffersizes[8];
+    int16_t *combbuffers[8];
+    int16_t combbufferindex[8];
+    int16_t combfitlers[8];
+
+    int16_t allpassbuffersizes[4];
+    int16_t *allpassbuffers[4];
+    int16_t allpassbufferindex[4];
 
     mp_obj_t sample;
 } audiodelays_reverb_obj_t;
@@ -38,3 +50,6 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
     uint8_t channel,
     uint8_t **buffer,
     uint32_t *buffer_length);  // length in bytes
+
+int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n);
+void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2);
