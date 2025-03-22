@@ -71,15 +71,15 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
     common_hal_audiodelays_reverb_set_mix(self, mix);
 
-    // Set up the comb filters
-    self->combbuffersizes[0] = 1116;
-    self->combbuffersizes[1] = 1188;
-    self->combbuffersizes[2] = 1277;
-    self->combbuffersizes[3] = 1356;
-    self->combbuffersizes[4] = 1422;
-    self->combbuffersizes[5] = 1491;
-    self->combbuffersizes[6] = 1557;
-    self->combbuffersizes[7] = 1617;
+    // Set up the comb filters * 2 for L/R (for now)
+    self->combbuffersizes[0] = 1116 * 2;
+    self->combbuffersizes[1] = 1188 * 2;
+    self->combbuffersizes[2] = 1277 * 2;
+    self->combbuffersizes[3] = 1356 * 2;
+    self->combbuffersizes[4] = 1422 * 2;
+    self->combbuffersizes[5] = 1491 * 2;
+    self->combbuffersizes[6] = 1557 * 2;
+    self->combbuffersizes[7] = 1617 * 2;
     for (uint32_t i = 0; i < 8; i++) {
         self->combbuffers[i] = m_malloc(self->combbuffersizes[i] * sizeof(uint16_t));
         if (self->combbuffers[i] == NULL) {
@@ -93,10 +93,10 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     }
 
     // Set up the allpass filters
-    self->allpassbuffersizes[0] = 556;
-    self->allpassbuffersizes[1] = 441;
-    self->allpassbuffersizes[2] = 341;
-    self->allpassbuffersizes[3] = 225;
+    self->allpassbuffersizes[0] = 556 * 2;
+    self->allpassbuffersizes[1] = 441 * 2;
+    self->allpassbuffersizes[2] = 341 * 2;
+    self->allpassbuffersizes[3] = 225 * 2;
     for (uint32_t i = 0; i < 4; i++) {
         self->allpassbuffers[i] = m_malloc(self->allpassbuffersizes[i] * sizeof(uint16_t));
         if (self->allpassbuffers[i] == NULL) {
@@ -318,10 +318,9 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
                     }
                 }
 
-                word = sat16(output * 30, 0);
+                word = output * 30;
 
-
-                word = synthio_mix_down_sample(sample_word, SYNTHIO_MIX_DOWN_SCALE(2));
+                word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
                 word_buffer[i] = (int16_t)word;
             }
 
