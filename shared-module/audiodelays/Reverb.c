@@ -71,16 +71,16 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
     common_hal_audiodelays_reverb_set_mix(self, mix);
 
-    // Set up the comb filters * 2 for L/R (for now)
-    self->combbuffersizes[0] = 1116 * 2;
-    self->combbuffersizes[1] = 1188 * 2;
-    self->combbuffersizes[2] = 1277 * 2;
-    self->combbuffersizes[3] = 1356 * 2;
-    self->combbuffersizes[4] = 1422 * 2;
-    self->combbuffersizes[5] = 1491 * 2;
-    self->combbuffersizes[6] = 1557 * 2;
-    self->combbuffersizes[7] = 1617 * 2;
-    for (uint32_t i = 0; i < 8; i++) {
+    // Set up the comb filters
+    self->combbuffersizes[0] = self->combbuffersizes[8] = 1116;
+    self->combbuffersizes[1] = self->combbuffersizes[9] = 1188;
+    self->combbuffersizes[2] = self->combbuffersizes[10] = 1277;
+    self->combbuffersizes[3] = self->combbuffersizes[11] = 1356;
+    self->combbuffersizes[4] = self->combbuffersizes[12] = 1422;
+    self->combbuffersizes[5] = self->combbuffersizes[13] = 1491;
+    self->combbuffersizes[6] = self->combbuffersizes[14] = 1557;
+    self->combbuffersizes[7] = self->combbuffersizes[15] = 1617;
+    for (uint32_t i = 0; i < 8 * channel_count; i++) {
         self->combbuffers[i] = m_malloc(self->combbuffersizes[i] * sizeof(uint16_t));
         if (self->combbuffers[i] == NULL) {
             common_hal_audiodelays_reverb_deinit(self);
@@ -93,11 +93,11 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     }
 
     // Set up the allpass filters
-    self->allpassbuffersizes[0] = 556 * 2;
-    self->allpassbuffersizes[1] = 441 * 2;
-    self->allpassbuffersizes[2] = 341 * 2;
-    self->allpassbuffersizes[3] = 225 * 2;
-    for (uint32_t i = 0; i < 4; i++) {
+    self->allpassbuffersizes[0] = self->allpassbuffersizes[4] = 556;
+    self->allpassbuffersizes[1] = self->allpassbuffersizes[5] = 441;
+    self->allpassbuffersizes[2] = self->allpassbuffersizes[6] = 341;
+    self->allpassbuffersizes[3] = self->allpassbuffersizes[7] = 225;
+    for (uint32_t i = 0; i < 4 * channel_count; i++) {
         self->allpassbuffers[i] = m_malloc(self->allpassbuffersizes[i] * sizeof(uint16_t));
         if (self->allpassbuffers[i] == NULL) {
             common_hal_audiodelays_reverb_deinit(self);
@@ -290,14 +290,15 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
             for (uint32_t i = 0; i < n; i++) {
                 int32_t sample_word = sample_src[i];
-                int32_t word;
+
+                int32_t word, sum;
                 int16_t input, bufout, output;
-                int32_t sum;
+                uint32_t channel_comb_offset = 0, channel_allpass_offset = 0;
 
                 input = sat16(sample_word * 8738, 17);
                 sum = 0;
 
-                for (uint32_t j = 0; j < 8; j++) {
+                for (uint32_t j = 0 + channel_comb_offset; j < 8 + channel_comb_offset; j++) {
                     bufout = self->combbuffers[j][self->combbufferindex[j]];
                     sum += bufout;
                     self->combfitlers[j] = sat16(bufout * damp2 + self->combfitlers[j] * damp1, 15);
@@ -309,7 +310,7 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
                 output = sat16(sum * 31457, 17); // 31457 = 0.96f
 
-                for (uint32_t j = 0; j < 4; j++) {
+                for (uint32_t j = 0 + channel_allpass_offset; j < 4 + channel_allpass_offset; j++) {
                     bufout = self->allpassbuffers[j][self->allpassbufferindex[j]];
                     self->allpassbuffers[j][self->allpassbufferindex[j]] = output + (bufout >> 1); // bufout >> 1 same as bufout*0.5f
                     output = sat16(bufout - output, 1);
@@ -322,6 +323,14 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
                 word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
                 word_buffer[i] = (int16_t)word;
+
+                if ((self->base.channel_count == 2) && (channel_comb_offset == 0)) {
+                    channel_comb_offset = 8;
+                    channel_allpass_offset = 4;
+                } else {
+                    channel_comb_offset = 0;
+                    channel_allpass_offset = 0;
+                }
             }
 
             // Update the remaining length and the buffer positions based on how much we wrote into our buffer
