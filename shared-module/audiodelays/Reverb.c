@@ -273,6 +273,7 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
         mp_float_t damp = synthio_block_slot_get_limited(&self->damp, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t damp1, damp2;
         audiodelays_reverb_get_damp_fixedpoint(damp, &damp1, &damp2);
+        mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
 
         mp_float_t roomsize = synthio_block_slot_get_limited(&self->roomsize, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t feedback = audiodelays_reverb_get_roomsize_fixedpoint(roomsize);
@@ -321,6 +322,7 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
                 word = output * 30;
 
+                word = (sample_word * (MICROPY_FLOAT_CONST(1.0) - mix)) + (word * mix);
                 word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
                 word_buffer[i] = (int16_t)word;
 
