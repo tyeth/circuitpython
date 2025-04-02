@@ -3,6 +3,10 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025 Mark Komus
 //
 // SPDX-License-Identifier: MIT
+//
+// Based on FreeVerb - https://github.com/sinshu/freeverb/tree/main
+// Fixed point ideas from - Paul Stoffregen in the Teensy audio library https://github.com/PaulStoffregen/Audio/blob/master/effect_freeverb.cpp
+//
 #include "shared-bindings/audiodelays/Reverb.h"
 
 #include <stdint.h>
@@ -278,69 +282,62 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
         mp_float_t roomsize = synthio_block_slot_get_limited(&self->roomsize, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t feedback = audiodelays_reverb_get_roomsize_fixedpoint(roomsize);
 
-        // If we have no sample keep the reverb reverbing
-        if (self->sample == NULL) {
-            // Since we have no sample we can just iterate over the our entire remaining buffer and finish
-            for (uint32_t i = 0; i < n; i++) {
-                int16_t word = 0;
-                word_buffer[i] = word;
+        int16_t *sample_src = (int16_t *)self->sample_remaining_buffer;
+
+        for (uint32_t i = 0; i < n; i++) {
+            int32_t sample_word = 0;
+            if (self->sample != NULL) {
+                sample_word = sample_src[i];
             }
-        } else {
-            // we have a sample to play
-            int16_t *sample_src = (int16_t *)self->sample_remaining_buffer;
 
-            for (uint32_t i = 0; i < n; i++) {
-                int32_t sample_word = sample_src[i];
+            int32_t word, sum;
+            int16_t input, bufout, output;
+            uint32_t channel_comb_offset = 0, channel_allpass_offset = 0;
 
-                int32_t word, sum;
-                int16_t input, bufout, output;
-                uint32_t channel_comb_offset = 0, channel_allpass_offset = 0;
+            input = sat16(sample_word * 8738, 17);
+            sum = 0;
 
-                input = sat16(sample_word * 8738, 17);
-                sum = 0;
-
-                for (uint32_t j = 0 + channel_comb_offset; j < 8 + channel_comb_offset; j++) {
-                    bufout = self->combbuffers[j][self->combbufferindex[j]];
-                    sum += bufout;
-                    self->combfitlers[j] = sat16(bufout * damp2 + self->combfitlers[j] * damp1, 15);
-                    self->combbuffers[j][self->combbufferindex[j]] = sat16(input + sat16(self->combfitlers[j] * feedback, 15), 0);
-                    if (++self->combbufferindex[j] >= self->combbuffersizes[j]) {
-                        self->combbufferindex[j] = 0;
-                    }
-                }
-
-                output = sat16(sum * 31457, 17); // 31457 = 0.96f
-
-                for (uint32_t j = 0 + channel_allpass_offset; j < 4 + channel_allpass_offset; j++) {
-                    bufout = self->allpassbuffers[j][self->allpassbufferindex[j]];
-                    self->allpassbuffers[j][self->allpassbufferindex[j]] = output + (bufout >> 1); // bufout >> 1 same as bufout*0.5f
-                    output = sat16(bufout - output, 1);
-                    if (++self->allpassbufferindex[j] >= self->allpassbuffersizes[j]) {
-                        self->allpassbufferindex[j] = 0;
-                    }
-                }
-
-                word = output * 30;
-
-                word = (sample_word * (MICROPY_FLOAT_CONST(1.0) - mix)) + (word * mix);
-                word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
-                word_buffer[i] = (int16_t)word;
-
-                if ((self->base.channel_count == 2) && (channel_comb_offset == 0)) {
-                    channel_comb_offset = 8;
-                    channel_allpass_offset = 4;
-                } else {
-                    channel_comb_offset = 0;
-                    channel_allpass_offset = 0;
+            for (uint32_t j = 0 + channel_comb_offset; j < 8 + channel_comb_offset; j++) {
+                bufout = self->combbuffers[j][self->combbufferindex[j]];
+                sum += bufout;
+                self->combfitlers[j] = sat16(bufout * damp2 + self->combfitlers[j] * damp1, 15);
+                self->combbuffers[j][self->combbufferindex[j]] = sat16(input + sat16(self->combfitlers[j] * feedback, 15), 0);
+                if (++self->combbufferindex[j] >= self->combbuffersizes[j]) {
+                    self->combbufferindex[j] = 0;
                 }
             }
 
-            // Update the remaining length and the buffer positions based on how much we wrote into our buffer
-            length -= n;
-            word_buffer += n;
-            self->sample_remaining_buffer += (n * (self->base.bits_per_sample / 8));
-            self->sample_buffer_length -= n;
+            output = sat16(sum * 31457, 17); // 31457 = 0.96f
+
+            for (uint32_t j = 0 + channel_allpass_offset; j < 4 + channel_allpass_offset; j++) {
+                bufout = self->allpassbuffers[j][self->allpassbufferindex[j]];
+                self->allpassbuffers[j][self->allpassbufferindex[j]] = output + (bufout >> 1); // bufout >> 1 same as bufout*0.5f
+                output = sat16(bufout - output, 1);
+                if (++self->allpassbufferindex[j] >= self->allpassbuffersizes[j]) {
+                    self->allpassbufferindex[j] = 0;
+                }
+            }
+
+            word = output * 30;
+
+            word = (sample_word * (MICROPY_FLOAT_CONST(1.0) - mix)) + (word * mix);
+            word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
+            word_buffer[i] = (int16_t)word;
+
+            if ((self->base.channel_count == 2) && (channel_comb_offset == 0)) {
+                channel_comb_offset = 8;
+                channel_allpass_offset = 4;
+            } else {
+                channel_comb_offset = 0;
+                channel_allpass_offset = 0;
+            }
         }
+
+        // Update the remaining length and the buffer positions based on how much we wrote into our buffer
+        length -= n;
+        word_buffer += n;
+        self->sample_remaining_buffer += (n * (self->base.bits_per_sample / 8));
+        self->sample_buffer_length -= n;
     }
 
     // Finally pass our buffer and length to the calling audio function
