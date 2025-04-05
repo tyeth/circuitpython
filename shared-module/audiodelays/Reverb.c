@@ -76,6 +76,7 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     common_hal_audiodelays_reverb_set_mix(self, mix);
 
     // Set up the comb filters
+    // These values come from FreeVerb and are selected for the best reverb sound
     self->combbuffersizes[0] = self->combbuffersizes[8] = 1116;
     self->combbuffersizes[1] = self->combbuffersizes[9] = 1188;
     self->combbuffersizes[2] = self->combbuffersizes[10] = 1277;
@@ -97,6 +98,7 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     }
 
     // Set up the allpass filters
+    // These values come from FreeVerb and are selected for the best reverb sound
     self->allpassbuffersizes[0] = self->allpassbuffersizes[4] = 556;
     self->allpassbuffersizes[1] = self->allpassbuffersizes[5] = 441;
     self->allpassbuffersizes[2] = self->allpassbuffersizes[6] = 341;
@@ -137,13 +139,13 @@ void common_hal_audiodelays_reverb_set_roomsize(audiodelays_reverb_obj_t *self, 
 }
 
 int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n) {
-    if (n > 1.0f) {
-        n = 1.0f;
-    } else if (n < 0.0f) {
-        n = 0.0f;
+    if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) {
+        n = MICROPY_FLOAT_CONST(1.0f);
+    } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0f)) {
+        n = MICROPY_FLOAT_CONST(0.0f);
     }
 
-    return (int16_t)(n * 9175.04f) + 22937;     // 9175.04 = 0.28f in fixed point 22937 = 0.7f
+    return (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(9175.04f)) + 22937; // 9175.04 = 0.28f in fixed point 22937 = 0.7f
 }
 
 mp_obj_t common_hal_audiodelays_reverb_get_damp(audiodelays_reverb_obj_t *self) {
@@ -155,13 +157,13 @@ void common_hal_audiodelays_reverb_set_damp(audiodelays_reverb_obj_t *self, mp_o
 }
 
 void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2) {
-    if (n > 1.0f) {
-        n = 1.0f;
-    } else if (n < 0.0f) {
-        n = 0.0f;
+    if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) {
+        n = MICROPY_FLOAT_CONST(1.0f);
+    } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0f)) {
+        n = MICROPY_FLOAT_CONST(0.0f);
     }
 
-    *damp1 = (int16_t)(n * 13107.2f); // 13107.2 = 0.4f scaling factor
+    *damp1 = (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(13107.2f)); // 13107.2 = 0.4f scaling factor
     *damp2 = (int16_t)(32768 - *damp1); // inverse of x1 damp2 = 1.0 - damp1
 }
 
@@ -174,9 +176,9 @@ void common_hal_audiodelays_reverb_set_mix(audiodelays_reverb_obj_t *self, mp_ob
 }
 
 void audiodelays_reverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect) {
-    mix = mix * MICROPY_FLOAT_CONST(2.0);
-    *mix_sample = MIN(MICROPY_FLOAT_CONST(2.0) - mix, MICROPY_FLOAT_CONST(1.0)) * 32767;
-    *mix_effect = MIN(mix, MICROPY_FLOAT_CONST(1.0)) * 32767;
+    mix = mix * (mp_float_t)MICROPY_FLOAT_CONST(2.0f);
+    *mix_sample = (int16_t)MIN((mp_float_t)MICROPY_FLOAT_CONST(2.0f) - mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) * 32767;
+    *mix_effect = (int16_t)MIN(mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) * 32767;
 }
 
 void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
@@ -239,10 +241,6 @@ static int16_t sat16(int32_t n, int rshift) {
 audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj_t *self, bool single_channel_output, uint8_t channel,
     uint8_t **buffer, uint32_t *buffer_length) {
 
-    if (!single_channel_output) {
-        channel = 0;
-    }
-
     // Switch our buffers to the other buffer
     self->last_buf_idx = !self->last_buf_idx;
 
@@ -303,9 +301,10 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
             int16_t input, bufout, output;
             uint32_t channel_comb_offset = 0, channel_allpass_offset = 0;
 
-            input = sat16(sample_word * 8738, 17);
+            input = sat16(sample_word * 8738, 17); // Initial input scaled down so we can add reverb
             sum = 0;
 
+            // Calculate each of the 8 comb buffers
             for (uint32_t j = 0 + channel_comb_offset; j < 8 + channel_comb_offset; j++) {
                 bufout = self->combbuffers[j][self->combbufferindex[j]];
                 sum += bufout;
@@ -316,8 +315,9 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
                 }
             }
 
-            output = sat16(sum * 31457, 17); // 31457 = 0.96f
+            output = sat16(sum * 31457, 17); // 31457 = 0.24f with shift of 17
 
+            // Calculate each of the 4 all pass buffers
             for (uint32_t j = 0 + channel_allpass_offset; j < 4 + channel_allpass_offset; j++) {
                 bufout = self->allpassbuffers[j][self->allpassbufferindex[j]];
                 self->allpassbuffers[j][self->allpassbufferindex[j]] = output + (bufout >> 1); // bufout >> 1 same as bufout*0.5f
@@ -327,7 +327,7 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
                 }
             }
 
-            word = output * 30;
+            word = output * 30; // Add some volume back don't have to saturate as next step will
 
             word = sat16(sample_word * mix_sample, 15) + sat16(word * mix_effect, 15);
             word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
