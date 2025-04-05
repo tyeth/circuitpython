@@ -139,13 +139,13 @@ void common_hal_audiodelays_reverb_set_roomsize(audiodelays_reverb_obj_t *self, 
 }
 
 int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n) {
-    if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) {
-        n = MICROPY_FLOAT_CONST(1.0f);
-    } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0f)) {
-        n = MICROPY_FLOAT_CONST(0.0f);
+    if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0)) {
+        n = MICROPY_FLOAT_CONST(1.0);
+    } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0)) {
+        n = MICROPY_FLOAT_CONST(0.0);
     }
 
-    return (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(9175.04f)) + 22937; // 9175.04 = 0.28f in fixed point 22937 = 0.7f
+    return (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(9175.04)) + 22937; // 9175.04 = 0.28f in fixed point 22937 = 0.7f
 }
 
 mp_obj_t common_hal_audiodelays_reverb_get_damp(audiodelays_reverb_obj_t *self) {
@@ -157,13 +157,13 @@ void common_hal_audiodelays_reverb_set_damp(audiodelays_reverb_obj_t *self, mp_o
 }
 
 void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2) {
-    if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) {
-        n = MICROPY_FLOAT_CONST(1.0f);
-    } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0f)) {
-        n = MICROPY_FLOAT_CONST(0.0f);
+    if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0)) {
+        n = MICROPY_FLOAT_CONST(1.0);
+    } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0)) {
+        n = MICROPY_FLOAT_CONST(0.0);
     }
 
-    *damp1 = (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(13107.2f)); // 13107.2 = 0.4f scaling factor
+    *damp1 = (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(13107.2)); // 13107.2 = 0.4f scaling factor
     *damp2 = (int16_t)(32768 - *damp1); // inverse of x1 damp2 = 1.0 - damp1
 }
 
@@ -176,9 +176,9 @@ void common_hal_audiodelays_reverb_set_mix(audiodelays_reverb_obj_t *self, mp_ob
 }
 
 void audiodelays_reverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect) {
-    mix = mix * (mp_float_t)MICROPY_FLOAT_CONST(2.0f);
-    *mix_sample = (int16_t)MIN((mp_float_t)MICROPY_FLOAT_CONST(2.0f) - mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) * 32767;
-    *mix_effect = (int16_t)MIN(mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0f)) * 32767;
+    mix = mix * (mp_float_t)MICROPY_FLOAT_CONST(2.0);
+    *mix_sample = (int16_t)MIN((mp_float_t)MICROPY_FLOAT_CONST(2.0) - mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767;
+    *mix_effect = (int16_t)MIN(mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767;
 }
 
 void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
