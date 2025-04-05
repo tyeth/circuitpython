@@ -173,6 +173,12 @@ void common_hal_audiodelays_reverb_set_mix(audiodelays_reverb_obj_t *self, mp_ob
     synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
 }
 
+void audiodelays_reverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect) {
+    mix = mix * MICROPY_FLOAT_CONST(2.0);
+    *mix_sample = MIN(MICROPY_FLOAT_CONST(2.0) - mix, MICROPY_FLOAT_CONST(1.0)) * 32767;
+    *mix_effect = MIN(mix, MICROPY_FLOAT_CONST(1.0)) * 32767;
+}
+
 void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
     bool single_channel_output,
     uint8_t channel) {
@@ -277,7 +283,10 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
         mp_float_t damp = synthio_block_slot_get_limited(&self->damp, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t damp1, damp2;
         audiodelays_reverb_get_damp_fixedpoint(damp, &damp1, &damp2);
+
         mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
+        int16_t mix_sample, mix_effect;
+        audiodelays_reverb_get_mix_fixedpoint(mix, &mix_sample, &mix_effect);
 
         mp_float_t roomsize = synthio_block_slot_get_limited(&self->roomsize, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t feedback = audiodelays_reverb_get_roomsize_fixedpoint(roomsize);
@@ -320,7 +329,7 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
             word = output * 30;
 
-            word = (sample_word * (MICROPY_FLOAT_CONST(1.0) - mix)) + (word * mix);
+            word = sat16(sample_word * mix_sample, 15) + sat16(word * mix_effect, 15);
             word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
             word_buffer[i] = (int16_t)word;
 

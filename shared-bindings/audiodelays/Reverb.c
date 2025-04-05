@@ -17,17 +17,13 @@
 #include "shared-bindings/util.h"
 #include "shared-module/synthio/block.h"
 
-#define DECAY_DEFAULT 0.7f
-#define MIX_DEFAULT 0.5f
-
 //| class Reverb:
 //|     """An Reverb effect"""
 //|
 //|     def __init__(
 //|         self,
-//|         max_delay_ms: int = 500,
-//|         delay_ms: synthio.BlockInput = 250.0,
-//|         decay: synthio.BlockInput = 0.7,
+//|         roomsize: synthio.BlockInput = 0.5,
+//|         damp: synthio.BlockInput = 0.5,
 //|         mix: synthio.BlockInput = 0.5,
 //|         buffer_size: int = 512,
 //|         sample_rate: int = 8000,
@@ -35,26 +31,21 @@
 //|         samples_signed: bool = True,
 //|         channel_count: int = 1,
 //|     ) -> None:
-//|         """Create a Reverb effect where you hear the original sample play back, at a lesser volume after
-//|            a set number of millisecond delay. The delay timing of the reverb can be changed at runtime
-//|            with the delay_ms parameter but the delay can never exceed the max_delay_ms parameter. The
-//|            maximum delay you can set is limited by available memory.
-//|
-//|            Each time the reverb plays back the volume is reduced by the decay setting (reverb * decay).
+//|         """Create a Reverb effect simulating the audio taking place in a large room where you get echos
+//|            off of various surfaces at various times. The size of the room can be adjusted as well as how
+//|            much the higher frequencies get absorbed by the walls.
 //|
 //|            The mix parameter allows you to change how much of the unchanged sample passes through to
 //|            the output to how much of the effect audio you hear as the output.
 //|
-//|         :param int max_delay_ms: The maximum time the reverb can be in milliseconds
-//|         :param synthio.BlockInput delay_ms: The current time of the reverb delay in milliseconds. Must be less the max_delay_ms
-//|         :param synthio.BlockInput decay: The rate the reverb fades. 0.0 = instant; 1.0 = never.
+//|         :param synthio.BlockInput roomsize: The size of the room. 0.0 = smallest; 1.0 = largest.
+//|         :param synthio.BlockInput damp: How much the walls absorb. 0.0 = least; 1.0 = most.
 //|         :param synthio.BlockInput mix: The mix as a ratio of the sample (0.0) to the effect (1.0).
 //|         :param int buffer_size: The total size in bytes of each of the two playback buffers to use
 //|         :param int sample_rate: The sample rate to be used
 //|         :param int channel_count: The number of channels the source samples contain. 1 = mono; 2 = stereo.
-//|         :param int bits_per_sample: The bits per sample of the effect
-//|         :param bool samples_signed: Effect is signed (True) or unsigned (False)
-//|         :param bool freq_shift: Do reverbs change frequency as the reverb delay changes
+//|         :param int bits_per_sample: The bits per sample of the effect. Reverb requires 16 bits.
+//|         :param bool samples_signed: Effect is signed (True) or unsigned (False). Reverb requires signed (True).
 //|
 //|         Playing adding an reverb to a synth::
 //|
@@ -66,14 +57,14 @@
 //|
 //|           audio = audiobusio.I2SOut(bit_clock=board.GP20, word_select=board.GP21, data=board.GP22)
 //|           synth = synthio.Synthesizer(channel_count=1, sample_rate=44100)
-//|           reverb = audiodelays.Reverb(max_delay_ms=1000, delay_ms=850, decay=0.65, buffer_size=1024, channel_count=1, sample_rate=44100, mix=0.7, freq_shift=False)
+//|           reverb = audiodelays.Reverb(roomsize=0.7, damp=0.3, buffer_size=1024, channel_count=1, sample_rate=44100, mix=0.7)
 //|           reverb.play(synth)
 //|           audio.play(reverb)
 //|
 //|           note = synthio.Note(261)
 //|           while True:
 //|               synth.press(note)
-//|               time.sleep(0.25)
+//|               time.sleep(0.55)
 //|               synth.release(note)
 //|               time.sleep(5)"""
 //|         ...
@@ -139,7 +130,7 @@ static void check_for_deinit(audiodelays_reverb_obj_t *self) {
 //  Provided by context manager helper.
 
 //|     roomsize: synthio.BlockInput
-//|     """TODO. Apparent roomsize 0.0-1.0"""
+//|     """Apparent size of the room 0.0-1.0"""
 static mp_obj_t audiodelays_reverb_obj_get_roomsize(mp_obj_t self_in) {
     return common_hal_audiodelays_reverb_get_roomsize(self_in);
 }
@@ -157,7 +148,7 @@ MP_PROPERTY_GETSET(audiodelays_reverb_roomsize_obj,
     (mp_obj_t)&audiodelays_reverb_set_roomsize_obj);
 
 //|     damp: synthio.BlockInput
-//|     """TODO. How reverbrent the area is. 0.0-1.0"""
+//|     """How reverbrent the area is. 0.0-1.0"""
 static mp_obj_t audiodelays_reverb_obj_get_damp(mp_obj_t self_in) {
     return common_hal_audiodelays_reverb_get_damp(self_in);
 }

@@ -53,3 +53,4 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
 
 int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n);
 void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2);
+void audiodelays_reverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect);
