@@ -66,7 +66,8 @@ CIRCUITPY_PICODVI ?= 1
 
 # Our generic touchio uses a pull down and RP2350 A2 hardware doesn't work correctly.
 # So, turn touchio off because it doesn't work.
-CIRCUITPY_TOUCHIO = 0
+CIRCUITPY_TOUCHIO = 1
+CIRCUITPY_TOUCHIO_USE_NATIVE ?= 1
 
 # delay in ms before calling cyw43_arch_init_with_country
 CIRCUITPY_CYW43_INIT_DELAY ?= 0
