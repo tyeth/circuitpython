@@ -8,10 +8,6 @@
 
 #include "mphalport.h"
 
-#if defined(CIRCUITPY_BOOT_BUTTON)
-#include "shared-bindings/digitalio/DigitalInOut.h"
-#include "shared-bindings/time/__init__.h"
-#endif
 #include "shared-bindings/microcontroller/Processor.h"
 #include "shared-bindings/microcontroller/ResetReason.h"
 
@@ -78,19 +74,10 @@ safe_mode_t wait_for_safe_mode_reset(void) {
             new_status_color(BLACK);
         }
         #endif
-        // Init the boot button every time in case it is used for LEDs.
-        #ifdef CIRCUITPY_BOOT_BUTTON
-        digitalio_digitalinout_obj_t boot_button;
-        common_hal_digitalio_digitalinout_construct(&boot_button, CIRCUITPY_BOOT_BUTTON);
-        common_hal_digitalio_digitalinout_switch_to_input(&boot_button, PULL_UP);
-        common_hal_time_delay_ms(1);
-        bool button_pressed = !common_hal_digitalio_digitalinout_get_value(&boot_button);
-        common_hal_digitalio_digitalinout_deinit(&boot_button);
-        if (button_pressed) {
+        if (port_boot_button_pressed()) {
             boot_in_safe_mode = true;
             break;
         }
-        #endif
         diff = supervisor_ticks_ms64() - start_ticks;
     }
     #if CIRCUITPY_STATUS_LED
