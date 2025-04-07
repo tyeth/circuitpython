@@ -65,7 +65,8 @@ CIRCUITPY_ALARM = 0
 CIRCUITPY_PICODVI ?= 1
 
 # Our generic touchio uses a pull down and RP2350 A2 hardware doesn't work correctly.
-# So, turn touchio off because it doesn't work.
+# So, turn generic touchio off because it doesn't work.
+# And use a "native" touchio that expects 1M pull-up resistor instead of pull-down
 CIRCUITPY_TOUCHIO = 1
 CIRCUITPY_TOUCHIO_USE_NATIVE ?= 1
 
