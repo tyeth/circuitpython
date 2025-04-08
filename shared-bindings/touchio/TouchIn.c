@@ -34,8 +34,9 @@
 //|     def __init__(self, pin: microcontroller.Pin, pull: Optional[digitalio.Pull] = None) -> None:
 //|         """Use the TouchIn on the given pin.
 //|
-//|         :param ~microcontroller.Pin pin: the pin to read from"""
-//|         :param Optional[digitalio.Pull] pull: specify external pull resistor type. If None, assume pull-down or chip-specific implementation
+//|         :param ~microcontroller.Pin pin: the pin to read from
+//|         :param Optional[digitalio.Pull] pull: specify external pull resistor type. If None, assume pull-down or chip-specific implementation that does not require a pull.
+//|         """
 //|         ...
 //|
 static mp_obj_t touchio_touchin_make_new(const mp_obj_type_t *type,
