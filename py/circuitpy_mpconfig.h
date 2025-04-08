@@ -452,7 +452,7 @@ void background_callback_run_all(void);
 #endif
 
 #ifndef CIRCUITPY_PYSTACK_SIZE
-#define CIRCUITPY_PYSTACK_SIZE 1536
+#define CIRCUITPY_PYSTACK_SIZE 2048
 #endif
 
 // The VM heap starts at this size and doubles in size as needed until it runs

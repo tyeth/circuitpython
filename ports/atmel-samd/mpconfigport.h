@@ -100,6 +100,11 @@
 #define CIRCUITPY_DEFAULT_STACK_SIZE                3584
 #endif
 
+#ifndef CIRCUITPY_PYSTACK_SIZE
+// Default for most boards is 2048 starting with CircuitPython 10, but on SAMD21, keep it at previous lower value.
+#define CIRCUITPY_PYSTACK_SIZE 1536
+#endif
+
 #ifndef SAMD21_BOD33_LEVEL
 // Set brownout detection to ~2.7V. Default from factory is 1.7V,
 // which is too low for proper operation of external SPI flash chips
