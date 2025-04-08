@@ -28,8 +28,9 @@
 //| For more information about working with the `touchio` module in CircuitPython,
 //| see `this Learn guide page <https://learn.adafruit.com/circuitpython-essentials/circuitpython-cap-touch>`_.
 //|
-//| **Limitations**: `touchio` is available on Raspberry Pi RP2040 builds,
-//| but not on RP2350, due to GPIO hardware limitations.
+//| **Limitations**: `touchio` on RP2350 must have a pull-up resistor to 3.3V
+//| instead of ground and set the `pull=Pull.UP` parameter when constructing
+//| a `TouchIn` object, due to GPIO hardware limitations.
 //|
 //| Example::
 //|

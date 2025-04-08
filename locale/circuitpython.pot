@@ -1555,7 +1555,7 @@ msgstr ""
 msgid "No pulldown on pin; 1Mohm recommended"
 msgstr ""
 
-#: ports/raspberrypi/common-hal/touchio/TouchIn.c
+#: shared-module/touchio/TouchIn.c
 msgid "No pullup on pin; 1Mohm recommended"
 msgstr ""
 

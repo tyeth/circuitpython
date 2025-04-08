@@ -64,12 +64,6 @@ CIRCUITPY_ALARM = 0
 # Default PICODVI on because it doesn't require much code in RAM to talk to HSTX.
 CIRCUITPY_PICODVI ?= 1
 
-# Our generic touchio uses a pull down and RP2350 A2 hardware doesn't work correctly.
-# So, turn generic touchio off because it doesn't work.
-# And use a "native" touchio that expects 1M pull-up resistor instead of pull-down
-CIRCUITPY_TOUCHIO = 1
-CIRCUITPY_TOUCHIO_USE_NATIVE ?= 1
-
 # delay in ms before calling cyw43_arch_init_with_country
 CIRCUITPY_CYW43_INIT_DELAY ?= 0
 
