@@ -34,7 +34,7 @@
 #define CIRCUITPY_PROCESSOR_COUNT           (2)
 
 // For many RP2 boards BOOTSEL is not connected to a GPIO pin.
-#define CIRCUITPY_BOOT_BUTTON               (1)
+#define CIRCUITPY_BOOT_BUTTON_NO_GPIO       (1)
 
 #if CIRCUITPY_USB_HOST
 #define CIRCUITPY_USB_HOST_INSTANCE 1
