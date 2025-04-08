@@ -227,7 +227,7 @@ void port_free(void *ptr) {
     tlsf_free(_heap, ptr);
 }
 
-void *port_realloc(void *ptr, size_t size) {
+void *port_realloc(void *ptr, size_t size, bool dma_capable) {
     return tlsf_realloc(_heap, ptr, size);
 }
 #endif

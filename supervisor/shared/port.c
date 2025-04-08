@@ -42,7 +42,7 @@ MP_WEAK void port_free(void *ptr) {
     tlsf_free(heap, ptr);
 }
 
-MP_WEAK void *port_realloc(void *ptr, size_t size) {
+MP_WEAK void *port_realloc(void *ptr, size_t size, bool dma_capable) {
     return tlsf_realloc(heap, ptr, size);
 }
 
