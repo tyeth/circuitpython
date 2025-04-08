@@ -493,6 +493,18 @@ void port_idle_until_interrupt(void) {
     }
 }
 
+#if CIRCUITPY_WIFI
+void port_boot_info(void) {
+    uint8_t mac[6];
+    esp_wifi_get_mac(ESP_IF_WIFI_STA, mac);
+    mp_printf(&mp_plat_print, "MAC");
+    for (int i = 0; i < 6; i++) {
+        mp_printf(&mp_plat_print, ":%02X", mac[i]);
+    }
+    mp_printf(&mp_plat_print, "\n");
+}
+#endif
+
 void port_post_boot_py(bool heap_valid) {
     if (!heap_valid && filesystem_present()) {
     }
