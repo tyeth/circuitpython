@@ -1414,6 +1414,11 @@ msgstr "MAC Address invalide"
 msgid "MITM security not supported"
 msgstr "Sécurité MITM n'est pas supportée"
 
+#: ports/stm/common-hal/sdioio/SDCard.c
+#, c-format
+msgid "MMC/SDIO Clock Error %x"
+msgstr ""
+
 #: shared-bindings/is31fl3741/IS31FL3741.c
 msgid "Mapping must be a tuple"
 msgstr "Le mapping doit être un tuple"

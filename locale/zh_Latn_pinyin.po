@@ -1402,6 +1402,11 @@ msgstr "MAC dì zhǐ wú xiào"
 msgid "MITM security not supported"
 msgstr "bù zhīchí MITM ānquánxìng"
 
+#: ports/stm/common-hal/sdioio/SDCard.c
+#, c-format
+msgid "MMC/SDIO Clock Error %x"
+msgstr ""
+
 #: shared-bindings/is31fl3741/IS31FL3741.c
 msgid "Mapping must be a tuple"
 msgstr "yìng shè bì xū shì yuán zǔ"
