@@ -1621,6 +1621,10 @@ msgstr "SDA 또는 SCL에서 풀업을 찾을 수 없습니다; 케이블 연결
 msgid "No pulldown on pin; 1Mohm recommended"
 msgstr "핀에 풀다운이 없습니다; 1Mohm를 권장합니다"
 
+#: shared-module/touchio/TouchIn.c
+msgid "No pullup on pin; 1Mohm recommended"
+msgstr ""
+
 #: py/moderrno.c
 msgid "No space left on device"
 msgstr "장치에 남은 공간이 없습니다"
@@ -2660,7 +2664,8 @@ msgstr ""
 msgid "bits must be 32 or less"
 msgstr ""
 
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiodelays/PitchShift.c
+#: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
+#: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
 #: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"

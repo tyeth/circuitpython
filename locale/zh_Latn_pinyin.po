@@ -1593,6 +1593,10 @@ msgstr "zài SDA huò SCL shàng wèi zhǎo dào shàng lā; jiǎn chá nín de 
 msgid "No pulldown on pin; 1Mohm recommended"
 msgstr "Yǐn jiǎo shàng méiyǒu xiàlā; 1Mohm tuījiàn"
 
+#: shared-module/touchio/TouchIn.c
+msgid "No pullup on pin; 1Mohm recommended"
+msgstr ""
+
 #: py/moderrno.c
 msgid "No space left on device"
 msgstr "Shèbèi shàng méiyǒu kònggé"
@@ -2633,7 +2637,8 @@ msgstr "wèi tú dà xiǎo bì xū pǐ pèi"
 msgid "bits must be 32 or less"
 msgstr "wèi bì xū shì 32 huò gèng shǎo"
 
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiodelays/PitchShift.c
+#: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
+#: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
 #: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
