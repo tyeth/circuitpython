@@ -67,7 +67,7 @@ MP_WEAK size_t port_heap_get_largest_free_size(void) {
 }
 
 MP_WEAK bool port_boot_button_pressed(void) {
-    #if defined(CIRCUITPY_BOOT_BUTTON) && CIRCUITPY_BOOT_BUTTON != 1
+    #if defined(CIRCUITPY_BOOT_BUTTON)
     // Init/deinit the boot button every time in case it is used for LEDs.
     digitalio_digitalinout_obj_t boot_button;
     common_hal_digitalio_digitalinout_construct(&boot_button, CIRCUITPY_BOOT_BUTTON);
