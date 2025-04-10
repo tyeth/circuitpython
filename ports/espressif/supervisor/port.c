@@ -324,8 +324,12 @@ void port_free(void *ptr) {
     heap_caps_free(ptr);
 }
 
-void *port_realloc(void *ptr, size_t size) {
-    return heap_caps_realloc(ptr, size, MALLOC_CAP_8BIT);
+void *port_realloc(void *ptr, size_t size, bool dma_capable) {
+    size_t caps = MALLOC_CAP_8BIT;
+    if (dma_capable) {
+        caps |= MALLOC_CAP_DMA;
+    }
+    return heap_caps_realloc(ptr, size, caps);
 }
 
 size_t port_heap_get_largest_free_size(void) {

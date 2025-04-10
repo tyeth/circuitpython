@@ -4,6 +4,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+#include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -89,8 +90,7 @@ extern uint32_t _ld_itcm_size;
 extern uint32_t _ld_itcm_flash_copy;
 
 static tlsf_t _heap = NULL;
-static pool_t _ram_pool = NULL;
-static pool_t _psram_pool = NULL;
+static tlsf_t _psram_heap = NULL;
 static size_t _psram_size = 0;
 
 #ifdef CIRCUITPY_PSRAM_CHIP_SELECT
@@ -245,10 +245,9 @@ static void _port_heap_init(void) {
     uint32_t *heap_bottom = port_heap_get_bottom();
     uint32_t *heap_top = port_heap_get_top();
     size_t size = (heap_top - heap_bottom) * sizeof(uint32_t);
-    _heap = tlsf_create_with_pool(heap_bottom, size, 64 * 1024 * 1024);
-    _ram_pool = tlsf_get_pool(_heap);
+    _heap = tlsf_create_with_pool(heap_bottom, size, size);
     if (_psram_size > 0) {
-        _psram_pool = tlsf_add_pool(_heap, (void *)0x11000000, _psram_size);
+        _psram_heap = tlsf_create_with_pool((void *)0x11000000, _psram_size, _psram_size);
     }
 }
 
@@ -257,15 +256,31 @@ void port_heap_init(void) {
 }
 
 void *port_malloc(size_t size, bool dma_capable) {
+    if (!dma_capable && _psram_size > 0) {
+        void *block = tlsf_malloc(_psram_heap, size);
+        if (block) {
+            return block;
+        }
+    }
     void *block = tlsf_malloc(_heap, size);
     return block;
 }
 
 void port_free(void *ptr) {
-    tlsf_free(_heap, ptr);
+    if (((size_t)ptr) < SRAM_BASE) {
+        tlsf_free(_psram_heap, ptr);
+    } else {
+        tlsf_free(_heap, ptr);
+    }
 }
 
-void *port_realloc(void *ptr, size_t size) {
+void *port_realloc(void *ptr, size_t size, bool dma_capable) {
+    if (_psram_size > 0 && ((ptr != NULL && ((size_t)ptr) < SRAM_BASE) || (ptr == NULL && !dma_capable))) {
+        void *block = tlsf_realloc(_psram_heap, ptr, size);
+        if (block) {
+            return block;
+        }
+    }
     return tlsf_realloc(_heap, ptr, size);
 }
 
@@ -279,12 +294,13 @@ static bool max_size_walker(void *ptr, size_t size, int used, void *user) {
 
 size_t port_heap_get_largest_free_size(void) {
     size_t max_size = 0;
-    tlsf_walk_pool(_ram_pool, max_size_walker, &max_size);
-    if (_psram_pool != NULL) {
-        tlsf_walk_pool(_psram_pool, max_size_walker, &max_size);
+    tlsf_walk_pool(tlsf_get_pool(_heap), max_size_walker, &max_size);
+    max_size = tlsf_fit_size(_heap, max_size);
+    if (_psram_heap != NULL) {
+        tlsf_walk_pool(tlsf_get_pool(_psram_heap), max_size_walker, &max_size);
+        max_size = tlsf_fit_size(_psram_heap, max_size);
     }
-    // IDF does this. Not sure why.
-    return tlsf_fit_size(_heap, max_size);
+    return max_size;
 }
 
 safe_mode_t port_init(void) {
