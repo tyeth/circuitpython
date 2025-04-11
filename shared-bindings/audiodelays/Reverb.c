@@ -148,7 +148,7 @@ MP_PROPERTY_GETSET(audiodelays_reverb_roomsize_obj,
     (mp_obj_t)&audiodelays_reverb_set_roomsize_obj);
 
 //|     damp: synthio.BlockInput
-//|     """How reverbrent the area is. 0.0-1.0"""
+//|     """How much the high frequencies are dampened in the area. 0.0-1.0"""
 static mp_obj_t audiodelays_reverb_obj_get_damp(mp_obj_t self_in) {
     return common_hal_audiodelays_reverb_get_damp(self_in);
 }
