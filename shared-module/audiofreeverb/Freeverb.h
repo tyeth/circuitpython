@@ -11,7 +11,7 @@
 #include "shared-module/synthio/__init__.h"
 #include "shared-module/synthio/block.h"
 
-extern const mp_obj_type_t audiodelays_reverb_type;
+extern const mp_obj_type_t audiofreeverb_freeverb_type;
 
 typedef struct {
     audiosample_base_t base;
@@ -39,18 +39,18 @@ typedef struct {
     int16_t allpassbufferindex[8];
 
     mp_obj_t sample;
-} audiodelays_reverb_obj_t;
+} audiofreeverb_freeverb_obj_t;
 
-void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
+void audiofreeverb_freeverb_reset_buffer(audiofreeverb_freeverb_obj_t *self,
     bool single_channel_output,
     uint8_t channel);
 
-audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj_t *self,
+audioio_get_buffer_result_t audiofreeverb_freeverb_get_buffer(audiofreeverb_freeverb_obj_t *self,
     bool single_channel_output,
     uint8_t channel,
     uint8_t **buffer,
     uint32_t *buffer_length);  // length in bytes
 
-int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n);
-void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2);
-void audiodelays_reverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect);
+int16_t audiofreeverb_freeverb_get_roomsize_fixedpoint(mp_float_t n);
+void audiofreeverb_freeverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2);
+void audiofreeverb_freeverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect);

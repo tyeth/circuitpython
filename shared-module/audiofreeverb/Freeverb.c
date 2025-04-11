@@ -7,13 +7,13 @@
 // Based on FreeVerb - https://github.com/sinshu/freeverb/tree/main
 // Fixed point ideas from - Paul Stoffregen in the Teensy audio library https://github.com/PaulStoffregen/Audio/blob/master/effect_freeverb.cpp
 //
-#include "shared-bindings/audiodelays/Reverb.h"
+#include "shared-bindings/audiofreeverb/Freeverb.h"
 
 #include <stdint.h>
 #include "py/runtime.h"
 #include <math.h>
 
-void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_obj_t roomsize, mp_obj_t damp, mp_obj_t mix,
+void common_hal_audiofreeverb_freeverb_construct(audiofreeverb_freeverb_obj_t *self, mp_obj_t roomsize, mp_obj_t damp, mp_obj_t mix,
     uint32_t buffer_size, uint8_t bits_per_sample,
     bool samples_signed, uint8_t channel_count, uint32_t sample_rate) {
 
@@ -35,14 +35,14 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
 
     self->buffer[0] = m_malloc(self->buffer_len);
     if (self->buffer[0] == NULL) {
-        common_hal_audiodelays_reverb_deinit(self);
+        common_hal_audiofreeverb_freeverb_deinit(self);
         m_malloc_fail(self->buffer_len);
     }
     memset(self->buffer[0], 0, self->buffer_len);
 
     self->buffer[1] = m_malloc(self->buffer_len);
     if (self->buffer[1] == NULL) {
-        common_hal_audiodelays_reverb_deinit(self);
+        common_hal_audiofreeverb_freeverb_deinit(self);
         m_malloc_fail(self->buffer_len);
     }
     memset(self->buffer[1], 0, self->buffer_len);
@@ -61,19 +61,19 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
         roomsize = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
     }
     synthio_block_assign_slot(roomsize, &self->roomsize, MP_QSTR_roomsize);
-    common_hal_audiodelays_reverb_set_roomsize(self, roomsize);
+    common_hal_audiofreeverb_freeverb_set_roomsize(self, roomsize);
 
     if (damp == MP_OBJ_NULL) {
         damp = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
     }
     synthio_block_assign_slot(damp, &self->damp, MP_QSTR_damp);
-    common_hal_audiodelays_reverb_set_damp(self, damp);
+    common_hal_audiofreeverb_freeverb_set_damp(self, damp);
 
     if (mix == MP_OBJ_NULL) {
         mix = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
     }
     synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
-    common_hal_audiodelays_reverb_set_mix(self, mix);
+    common_hal_audiofreeverb_freeverb_set_mix(self, mix);
 
     // Set up the comb filters
     // These values come from FreeVerb and are selected for the best reverb sound
@@ -88,7 +88,7 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     for (uint32_t i = 0; i < 8 * channel_count; i++) {
         self->combbuffers[i] = m_malloc(self->combbuffersizes[i] * sizeof(uint16_t));
         if (self->combbuffers[i] == NULL) {
-            common_hal_audiodelays_reverb_deinit(self);
+            common_hal_audiofreeverb_freeverb_deinit(self);
             m_malloc_fail(self->combbuffersizes[i]);
         }
         memset(self->combbuffers[i], 0, self->combbuffersizes[i]);
@@ -106,7 +106,7 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     for (uint32_t i = 0; i < 4 * channel_count; i++) {
         self->allpassbuffers[i] = m_malloc(self->allpassbuffersizes[i] * sizeof(uint16_t));
         if (self->allpassbuffers[i] == NULL) {
-            common_hal_audiodelays_reverb_deinit(self);
+            common_hal_audiofreeverb_freeverb_deinit(self);
             m_malloc_fail(self->allpassbuffersizes[i]);
         }
         memset(self->allpassbuffers[i], 0, self->allpassbuffersizes[i]);
@@ -115,30 +115,30 @@ void common_hal_audiodelays_reverb_construct(audiodelays_reverb_obj_t *self, mp_
     }
 }
 
-bool common_hal_audiodelays_reverb_deinited(audiodelays_reverb_obj_t *self) {
+bool common_hal_audiofreeverb_freeverb_deinited(audiofreeverb_freeverb_obj_t *self) {
     if (self->buffer[0] == NULL) {
         return true;
     }
     return false;
 }
 
-void common_hal_audiodelays_reverb_deinit(audiodelays_reverb_obj_t *self) {
-    if (common_hal_audiodelays_reverb_deinited(self)) {
+void common_hal_audiofreeverb_freeverb_deinit(audiofreeverb_freeverb_obj_t *self) {
+    if (common_hal_audiofreeverb_freeverb_deinited(self)) {
         return;
     }
     self->buffer[0] = NULL;
     self->buffer[1] = NULL;
 }
 
-mp_obj_t common_hal_audiodelays_reverb_get_roomsize(audiodelays_reverb_obj_t *self) {
+mp_obj_t common_hal_audiofreeverb_freeverb_get_roomsize(audiofreeverb_freeverb_obj_t *self) {
     return self->roomsize.obj;
 }
 
-void common_hal_audiodelays_reverb_set_roomsize(audiodelays_reverb_obj_t *self, mp_obj_t roomsize_obj) {
+void common_hal_audiofreeverb_freeverb_set_roomsize(audiofreeverb_freeverb_obj_t *self, mp_obj_t roomsize_obj) {
     synthio_block_assign_slot(roomsize_obj, &self->roomsize, MP_QSTR_roomsize);
 }
 
-int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n) {
+int16_t audiofreeverb_freeverb_get_roomsize_fixedpoint(mp_float_t n) {
     if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0)) {
         n = MICROPY_FLOAT_CONST(1.0);
     } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0)) {
@@ -148,15 +148,15 @@ int16_t audiodelays_reverb_get_roomsize_fixedpoint(mp_float_t n) {
     return (int16_t)(n * (mp_float_t)MICROPY_FLOAT_CONST(9175.04)) + 22937; // 9175.04 = 0.28f in fixed point 22937 = 0.7f
 }
 
-mp_obj_t common_hal_audiodelays_reverb_get_damp(audiodelays_reverb_obj_t *self) {
+mp_obj_t common_hal_audiofreeverb_freeverb_get_damp(audiofreeverb_freeverb_obj_t *self) {
     return self->damp.obj;
 }
 
-void common_hal_audiodelays_reverb_set_damp(audiodelays_reverb_obj_t *self, mp_obj_t damp) {
+void common_hal_audiofreeverb_freeverb_set_damp(audiofreeverb_freeverb_obj_t *self, mp_obj_t damp) {
     synthio_block_assign_slot(damp, &self->damp, MP_QSTR_damp);
 }
 
-void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2) {
+void audiofreeverb_freeverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_t *damp2) {
     if (n > (mp_float_t)MICROPY_FLOAT_CONST(1.0)) {
         n = MICROPY_FLOAT_CONST(1.0);
     } else if (n < (mp_float_t)MICROPY_FLOAT_CONST(0.0)) {
@@ -167,21 +167,21 @@ void audiodelays_reverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, int16_
     *damp2 = (int16_t)(32768 - *damp1); // inverse of x1 damp2 = 1.0 - damp1
 }
 
-mp_obj_t common_hal_audiodelays_reverb_get_mix(audiodelays_reverb_obj_t *self) {
+mp_obj_t common_hal_audiofreeverb_freeverb_get_mix(audiofreeverb_freeverb_obj_t *self) {
     return self->mix.obj;
 }
 
-void common_hal_audiodelays_reverb_set_mix(audiodelays_reverb_obj_t *self, mp_obj_t mix) {
+void common_hal_audiofreeverb_freeverb_set_mix(audiofreeverb_freeverb_obj_t *self, mp_obj_t mix) {
     synthio_block_assign_slot(mix, &self->mix, MP_QSTR_mix);
 }
 
-void audiodelays_reverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect) {
+void audiofreeverb_freeverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect) {
     mix = mix * (mp_float_t)MICROPY_FLOAT_CONST(2.0);
     *mix_sample = (int16_t)MIN((mp_float_t)MICROPY_FLOAT_CONST(2.0) - mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767;
     *mix_effect = (int16_t)MIN(mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767;
 }
 
-void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
+void audiofreeverb_freeverb_reset_buffer(audiofreeverb_freeverb_obj_t *self,
     bool single_channel_output,
     uint8_t channel) {
 
@@ -189,11 +189,11 @@ void audiodelays_reverb_reset_buffer(audiodelays_reverb_obj_t *self,
     memset(self->buffer[1], 0, self->buffer_len);
 }
 
-bool common_hal_audiodelays_reverb_get_playing(audiodelays_reverb_obj_t *self) {
+bool common_hal_audiofreeverb_freeverb_get_playing(audiofreeverb_freeverb_obj_t *self) {
     return self->sample != NULL;
 }
 
-void common_hal_audiodelays_reverb_play(audiodelays_reverb_obj_t *self, mp_obj_t sample, bool loop) {
+void common_hal_audiofreeverb_freeverb_play(audiofreeverb_freeverb_obj_t *self, mp_obj_t sample, bool loop) {
     audiosample_must_match(&self->base, sample);
 
     self->sample = sample;
@@ -210,7 +210,7 @@ void common_hal_audiodelays_reverb_play(audiodelays_reverb_obj_t *self, mp_obj_t
     return;
 }
 
-void common_hal_audiodelays_reverb_stop(audiodelays_reverb_obj_t *self) {
+void common_hal_audiofreeverb_freeverb_stop(audiofreeverb_freeverb_obj_t *self) {
     // When the sample is set to stop playing do any cleanup here
     // For reverb we clear the sample but the reverb continues until the object reading our effect stops
     self->sample = NULL;
@@ -238,7 +238,7 @@ static int16_t sat16(int32_t n, int rshift) {
     return n;
 }
 
-audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj_t *self, bool single_channel_output, uint8_t channel,
+audioio_get_buffer_result_t audiofreeverb_freeverb_get_buffer(audiofreeverb_freeverb_obj_t *self, bool single_channel_output, uint8_t channel,
     uint8_t **buffer, uint32_t *buffer_length) {
 
     // Switch our buffers to the other buffer
@@ -280,14 +280,14 @@ audioio_get_buffer_result_t audiodelays_reverb_get_buffer(audiodelays_reverb_obj
         shared_bindings_synthio_lfo_tick(self->base.sample_rate, n / self->base.channel_count);
         mp_float_t damp = synthio_block_slot_get_limited(&self->damp, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t damp1, damp2;
-        audiodelays_reverb_get_damp_fixedpoint(damp, &damp1, &damp2);
+        audiofreeverb_freeverb_get_damp_fixedpoint(damp, &damp1, &damp2);
 
         mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
         int16_t mix_sample, mix_effect;
-        audiodelays_reverb_get_mix_fixedpoint(mix, &mix_sample, &mix_effect);
+        audiofreeverb_freeverb_get_mix_fixedpoint(mix, &mix_sample, &mix_effect);
 
         mp_float_t roomsize = synthio_block_slot_get_limited(&self->roomsize, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
-        int16_t feedback = audiodelays_reverb_get_roomsize_fixedpoint(roomsize);
+        int16_t feedback = audiofreeverb_freeverb_get_roomsize_fixedpoint(roomsize);
 
         int16_t *sample_src = (int16_t *)self->sample_remaining_buffer;
 
