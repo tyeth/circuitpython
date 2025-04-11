@@ -177,8 +177,8 @@ void common_hal_audiofreeverb_freeverb_set_mix(audiofreeverb_freeverb_obj_t *sel
 
 void audiofreeverb_freeverb_get_mix_fixedpoint(mp_float_t mix, int16_t *mix_sample, int16_t *mix_effect) {
     mix = mix * (mp_float_t)MICROPY_FLOAT_CONST(2.0);
-    *mix_sample = (int16_t)MIN((mp_float_t)MICROPY_FLOAT_CONST(2.0) - mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767;
-    *mix_effect = (int16_t)MIN(mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767;
+    *mix_sample = (int16_t)(MIN((mp_float_t)MICROPY_FLOAT_CONST(2.0) - mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767);
+    *mix_effect = (int16_t)(MIN(mix, (mp_float_t)MICROPY_FLOAT_CONST(1.0)) * 32767);
 }
 
 void audiofreeverb_freeverb_reset_buffer(audiofreeverb_freeverb_obj_t *self,
