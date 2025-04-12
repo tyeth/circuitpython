@@ -635,6 +635,15 @@ void background_callback_run_all(void);
 #define CIRCUITPY_SAVES_PARTITION_SIZE 0
 #endif
 
+// Boards that have a boot button connected to a GPIO pin should set
+// CIRCUITPY_BOOT_BUTTON_NO_GPIO to 1.
+#ifndef CIRCUITPY_BOOT_BUTTON_NO_GPIO
+#define CIRCUITPY_BOOT_BUTTON_NO_GPIO (0)
+#endif
+#if defined(CIRCUITPY_BOOT_BUTTON) && CIRCUITPY_BOOT_BUTTON_NO_GPIO
+#error "CIRCUITPY_BOOT_BUTTON and CIRCUITPY_BOOT_BUTTON_NO_GPIO are mutually exclusive"
+#endif
+
 #if defined(__GNUC__) && !defined(__ZEPHYR__)
 #if __GNUC__ < CIRCUITPY_MIN_GCC_VERSION
 // (the 3 level scheme here is required to get expansion & stringization

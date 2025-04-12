@@ -56,7 +56,7 @@
 #include "RP2350.h" // CMSIS
 #endif
 
-#ifdef CIRCUITPY_BOOT_BUTTON_NO_GPIO
+#if CIRCUITPY_BOOT_BUTTON_NO_GPIO
 #include "hardware/gpio.h"
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
@@ -584,7 +584,7 @@ void port_boot_info(void) {
     #endif
 }
 
-#if defined(CIRCUITPY_BOOT_BUTTON_NO_GPIO)
+#if CIRCUITPY_BOOT_BUTTON_NO_GPIO
 bool __no_inline_not_in_flash_func(port_boot_button_pressed)(void) {
     // Sense the state of the boot button. Because this function
     // disables flash, it cannot be safely called once the second

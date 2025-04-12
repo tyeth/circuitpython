@@ -129,7 +129,7 @@ void print_safe_mode_message(safe_mode_t reason) {
         case SAFE_MODE_USER:
             #if defined(BOARD_USER_SAFE_MODE_ACTION)
             message = BOARD_USER_SAFE_MODE_ACTION;
-            #elif defined(CIRCUITPY_BOOT_BUTTON) || defined(CIRCUITPY_BOOT_BUTTON_NO_GPIO)
+            #elif defined(CIRCUITPY_BOOT_BUTTON) || CIRCUITPY_BOOT_BUTTON_NO_GPIO
             message = MP_ERROR_TEXT("You pressed the BOOT button at start up");
             #else
             message = MP_ERROR_TEXT("You pressed the reset button during boot.");
