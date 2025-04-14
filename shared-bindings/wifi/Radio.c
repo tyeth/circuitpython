@@ -9,6 +9,7 @@
 
 #include <string.h>
 
+#include "py/enum.h"
 #include "py/unicode.h"
 #include "py/runtime.h"
 #include "py/objproperty.h"
@@ -187,23 +188,24 @@ MP_PROPERTY_GETSET(wifi_radio_tx_power_obj,
     (mp_obj_t)&wifi_radio_get_tx_power_obj,
     (mp_obj_t)&wifi_radio_set_tx_power_obj);
 
-//|     listen_interval: int
-//|     """Wifi power save listen interval, in DTIM periods, or 100ms intervals if TWT is supported."""
-static mp_obj_t wifi_radio_get_listen_interval(mp_obj_t self_in) {
-    #if CIRCUITPY_WIFI_RADIO_SETTABLE_LISTEN_INTERVAL
+//|     power_management: PowerManagement
+//|     """Wifi power management setting. The default is `wifi.PowerManagement.MIN.
+//|     """
+static mp_obj_t wifi_radio_get_power_management(mp_obj_t self_in) {
+    #if CIRCUITPY_WIFI_RADIO_SETTABLE_POWER_MANAGEMENT
     wifi_radio_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_int(common_hal_wifi_radio_get_listen_interval(self));
+    return cp_enum_find(&wifi_power_management_type, common_hal_wifi_radio_get_power_management(self));
     #else
-    return mp_obj_new_int(0);
+    return MP_OBJ_FROM_PTR(&power_management_MIN);
     #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_1(wifi_radio_get_listen_interval_obj, wifi_radio_get_listen_interval);
 
-static mp_obj_t wifi_radio_set_listen_interval(mp_obj_t self_in, mp_obj_t listen_interval_in) {
-    #if CIRCUITPY_WIFI_RADIO_SETTABLE_LISTEN_INTERVAL
-    mp_int_t listen_interval = mp_obj_get_int(listen_interval_in);
+static mp_obj_t wifi_radio_set_power_management(mp_obj_t self_in, mp_obj_t power_management_in) {
+    #if CIRCUITPY_WIFI_RADIO_SETTABLE_POWER_MANAGEMENT
     wifi_radio_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    common_hal_wifi_radio_set_listen_interval(self, listen_interval);
+    wifi_power_management_t power_management = cp_enum_value(&wifi_power_management_type, power_management_in, MP_QSTR_power_management);
+    common_hal_wifi_radio_set_power_management(self, power_management);
     #else
     mp_raise_NotImplementedError(NULL);
     #endif
@@ -868,6 +870,7 @@ static const mp_rom_map_elem_t wifi_radio_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ipv4_subnet_ap),    MP_ROM_PTR(&wifi_radio_ipv4_subnet_ap_obj) },
     { MP_ROM_QSTR(MP_QSTR_ipv4_address),    MP_ROM_PTR(&wifi_radio_ipv4_address_obj) },
     { MP_ROM_QSTR(MP_QSTR_ipv4_address_ap),    MP_ROM_PTR(&wifi_radio_ipv4_address_ap_obj) },
+    { MP_ROM_QSTR(MP_QSTR_listen_interval),    MP_ROM_PTR(&wifi_radio_listen_interval_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_set_ipv4_address),    MP_ROM_PTR(&wifi_radio_set_ipv4_address_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_ipv4_address_ap),    MP_ROM_PTR(&wifi_radio_set_ipv4_address_ap_obj) },
