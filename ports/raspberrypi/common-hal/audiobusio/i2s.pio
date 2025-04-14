@@ -15,11 +15,11 @@
     mov x osr         side 0b11 ; Save the new value in case we need it again
     set y 14          side 0b11
 bitloop1:
-    out pins 1        side 0b10 [2]
+    out pins 1        side 0b10 [2] ; Right channel first
     jmp y-- bitloop1  side 0b11 [2]
     out pins 1        side 0b00 [2]
     set y 14          side 0b01 [2]
 bitloop0:
-    out pins 1        side 0b00 [2]
+    out pins 1        side 0b00 [2] ; Then left channel
     jmp y-- bitloop0  side 0b01 [2]
     out pins 1        side 0b10 [2]

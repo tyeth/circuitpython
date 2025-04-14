@@ -31,12 +31,12 @@ const uint16_t i2s_program[] = {
     mov x osr         side 0b11 ; Save the new value in case we need it again
     set y 14          side 0b11
 bitloop1:
-    out pins 1        side 0b10 [2]
+    out pins 1        side 0b10 [2] ; Right channel first
     jmp y-- bitloop1  side 0b11 [2]
     out pins 1        side 0b00 [2]
     set y 14          side 0b01 [2]
 bitloop0:
-    out pins 1        side 0b00 [2]
+    out pins 1        side 0b00 [2] ; Then left channel
     jmp y-- bitloop0  side 0b01 [2]
     out pins 1        side 0b10 [2]
 */
@@ -67,12 +67,12 @@ const uint16_t i2s_program_left_justified[] = {
     mov x osr         side 0b01 ; Save the new value in case we need it again
     set y 14          side 0b01
 bitloop1:
-    out pins 1        side 0b10 [2]
+    out pins 1        side 0b10 [2] ; Right channel first
     jmp y-- bitloop1  side 0b11 [2]
     out pins 1        side 0b10 [2]
     set y 14          side 0b11 [2]
 bitloop0:
-    out pins 1        side 0b00 [2]
+    out pins 1        side 0b00 [2] ; Then left channel
     jmp y-- bitloop0  side 0b01 [2]
     out pins 1        side 0b00 [2]
 */
@@ -103,12 +103,12 @@ const uint16_t i2s_program_swap[] = {
     mov x osr         side 0b11 ; Save the new value in case we need it again
     set y 14          side 0b11
 bitloop1:
-    out pins 1        side 0b01 [2]
+    out pins 1        side 0b01 [2] ; Right channel first
     jmp y-- bitloop1  side 0b11 [2]
     out pins 1        side 0b00 [2]
     set y 14          side 0b10 [2]
 bitloop0:
-    out pins 1        side 0b00 [2]
+    out pins 1        side 0b00 [2] ; Then left channel
     jmp y-- bitloop0  side 0b10 [2]
     out pins 1        side 0b01 [2]
 */
@@ -140,12 +140,12 @@ const uint16_t i2s_program_left_justified_swap[] = {
     mov x osr         side 0b10 ; Save the new value in case we need it again
     set y 14          side 0b10
 bitloop1:
-    out pins 1        side 0b01 [2]
+    out pins 1        side 0b01 [2] ; Right channel first
     jmp y-- bitloop1  side 0b11 [2]
     out pins 1        side 0b01 [2]
     set y 14          side 0b11 [2]
 bitloop0:
-    out pins 1        side 0b00 [2]
+    out pins 1        side 0b00 [2] ; Then left channel
     jmp y-- bitloop0  side 0b10 [2]
     out pins 1        side 0b00 [2]
 */
