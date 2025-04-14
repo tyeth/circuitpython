@@ -344,6 +344,7 @@ typedef long mp_off_t;
 #define CIRCUITPY_CONSOLE_UART (1)
 #ifndef CIRCUITPY_CONSOLE_UART_BAUDRATE
 #define CIRCUITPY_CONSOLE_UART_BAUDRATE (115200)
+#endif
 #if !defined(CIRCUITPY_CONSOLE_UART_PRINTF)
 #define CIRCUITPY_CONSOLE_UART_PRINTF(...) mp_printf(&console_uart_print, __VA_ARGS__)
 #endif
@@ -352,7 +353,6 @@ typedef long mp_off_t;
 #endif
 #if !defined(CIRCUITPY_CONSOLE_UART_TIMESTAMP)
 #define CIRCUITPY_CONSOLE_UART_TIMESTAMP (0)
-#endif
 #endif
 #else
 #define CIRCUITPY_CONSOLE_UART (0)
