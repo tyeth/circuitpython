@@ -1,0 +1,1 @@
+.pio files right now are compiled by hand with pico-sdk/tools/pioasm and inserted into I2SOut.c
