@@ -19,7 +19,9 @@
 #include "bindings/rp2pio/StateMachine.h"
 
 const uint16_t i2s_program[] = {
-/*
+
+/* From i2s.pio:
+
 .program i2s
 .side_set 2
 
@@ -55,7 +57,8 @@ bitloop0:
 
 
 const uint16_t i2s_program_left_justified[] = {
-/*
+/* From i2s_left.pio:
+
 .program i2s
 .side_set 2
 
@@ -91,7 +94,8 @@ bitloop0:
 
 // Another version of i2s_program with the LRCLC and BCLK pin swapped
 const uint16_t i2s_program_swap[] = {
-/*
+/* From i2s_swap.pio:
+
 .program i2s
 .side_set 2
 
@@ -128,7 +132,8 @@ bitloop0:
 // Another version of i2s_program_left_justified with the LRCLC and BCLK pin
 // swapped.
 const uint16_t i2s_program_left_justified_swap[] = {
-/*
+/* From i2s_swap_left.pio:
+
 .program i2s
 .side_set 2
 
