@@ -33,26 +33,27 @@
 //|         samples_signed: bool = True,
 //|         channel_count: int = 1,
 //|     ) -> None:
-//|         """Create a MultiTapDelay effect where you hear the original sample play back, at a lesser volume after
-//|            a set number of millisecond delay. The delay timing of the echo can be changed at runtime
-//|            with the delay_ms parameter but the delay can never exceed the max_delay_ms parameter. The
-//|            maximum delay you can set is limited by available memory.
+//|         """Create a delay effect where you hear the original sample play back at varying times, or "taps".
+//|            These tap positions and levels can be used to create rhythmic effects.
+//|            The timing of the delay can be changed at runtime with the delay_ms parameter but the delay can
+//|            never exceed the max_delay_ms parameter. The maximum delay you can set is limited by available
+//|            memory.
 //|
-//|            Each time the echo plays back the volume is reduced by the decay setting (echo * decay).
+//|            Each time the delay plays back the volume is reduced by the decay setting (delay * decay).
 //|
 //|            The mix parameter allows you to change how much of the unchanged sample passes through to
 //|            the output to how much of the effect audio you hear as the output.
 //|
-//|         :param int max_delay_ms: The maximum time the echo can be in milliseconds
-//|         :param float delay_ms: The current time of the echo delay in milliseconds. Must be less the max_delay_ms
-//|         :param synthio.BlockInput decay: The rate the echo fades. 0.0 = instant; 1.0 = never.
+//|         :param int max_delay_ms: The maximum time the delay can be in milliseconds.
+//|         :param float delay_ms: The current time of the delay in milliseconds. Must be less than max_delay_ms.
+//|         :param synthio.BlockInput decay: The rate the delay fades. 0.0 = instant; 1.0 = never.
 //|         :param synthio.BlockInput mix: The mix as a ratio of the sample (0.0) to the effect (1.0).
 //|         :param tuple taps: The positions and levels to tap into the delay buffer.
-//|         :param int buffer_size: The total size in bytes of each of the two playback buffers to use
-//|         :param int sample_rate: The sample rate to be used
+//|         :param int buffer_size: The total size in bytes of each of the two playback buffers to use.
+//|         :param int sample_rate: The sample rate to be used.
 //|         :param int channel_count: The number of channels the source samples contain. 1 = mono; 2 = stereo.
-//|         :param int bits_per_sample: The bits per sample of the effect
-//|         :param bool samples_signed: Effect is signed (True) or unsigned (False)
+//|         :param int bits_per_sample: The bits per sample of the effect.
+//|         :param bool samples_signed: Effect is signed (True) or unsigned (False).
 //|
 //|         Playing adding a multi-tap delay to a synth::
 //|
@@ -64,14 +65,14 @@
 //|
 //|           audio = audiobusio.I2SOut(bit_clock=board.GP20, word_select=board.GP21, data=board.GP22)
 //|           synth = synthio.Synthesizer(channel_count=1, sample_rate=44100)
-//|           effect = audiodelays.MultiTapDelay(max_delay_ms=1000, delay_ms=850, decay=0.65, buffer_size=1024, channel_count=1, sample_rate=44100, mix=0.7, freq_shift=False)
+//|           effect = audiodelays.MultiTapDelay(max_delay_ms=500, delay_ms=500, decay=0.65, mix=0.5, taps=((2/3, 0.7), 1), buffer_size=1024, channel_count=1, sample_rate=44100)
 //|           effect.play(synth)
 //|           audio.play(effect)
 //|
 //|           note = synthio.Note(261)
 //|           while True:
 //|               synth.press(note)
-//|               time.sleep(0.25)
+//|               time.sleep(0.05)
 //|               synth.release(note)
 //|               time.sleep(5)"""
 //|         ...
@@ -139,7 +140,7 @@ static void check_for_deinit(audiodelays_multi_tap_delay_obj_t *self) {
 
 
 //|     delay_ms: float
-//|     """Maximum time to delay the incoming signal in milliseconds."""
+//|     """Time to delay the incoming signal in milliseconds. Must be less than max_delay_ms."""
 //|
 static mp_obj_t audiodelays_multi_tap_delay_obj_get_delay_ms(mp_obj_t self_in) {
     audiodelays_multi_tap_delay_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -177,7 +178,7 @@ MP_PROPERTY_GETSET(audiodelays_multi_tap_delay_decay_obj,
     (mp_obj_t)&audiodelays_multi_tap_delay_set_decay_obj);
 
 //|     mix: synthio.BlockInput
-//|     """The rate the echo mix between 0 and 1 where 0 is only sample, 0.5 is an equal mix of the sample and the effect and 1 is all effect."""
+//|     """The mix of the effect between 0 and 1 where 0 is only sample, 0.5 is an equal mix of the sample and the effect and 1 is all effect."""
 static mp_obj_t audiodelays_multi_tap_delay_obj_get_mix(mp_obj_t self_in) {
     return common_hal_audiodelays_multi_tap_delay_get_mix(self_in);
 }
@@ -194,11 +195,11 @@ MP_PROPERTY_GETSET(audiodelays_multi_tap_delay_mix_obj,
     (mp_obj_t)&audiodelays_multi_tap_delay_get_mix_obj,
     (mp_obj_t)&audiodelays_multi_tap_delay_set_mix_obj);
 
-//|     taps: Tuple[float|Tuple[float, float], ...]
+//|     taps: Tuple[float|int|Tuple[float|int, float|int], ...]
 //|     """The position or position and level of delay taps.
-//|     The position is a number from 0.0 (start) to 1.0 (end) as a relative position in the delay buffer.
-//|     The level is a number from 0.0 (silence) to 1.0 (full volume).
-//|     If only a float is provided as an element of the tuple, the level is assumed to be 1.0.
+//|     The position is a number from 0 (start) to 1 (end) as a relative position in the delay buffer.
+//|     The level is a number from 0 (silence) to 1 (full volume).
+//|     If only a float or integer is provided as an element of the tuple, the level is assumed to be 1.
 //|     When retrieving the value of this property, the level will always be included."""
 //|
 static mp_obj_t audiodelays_multi_tap_delay_obj_get_taps(mp_obj_t self_in) {
