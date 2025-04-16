@@ -95,12 +95,6 @@ void port_wake_main_task_from_isr(void);
 // CircuitPython task when others are done.
 void port_yield(void);
 
-// Some ports need special handling just after completing boot.py execution.
-// This function is called once while boot.py's VM is still valid, and
-// then a second time after the VM is finalized.
-// A default weak implementation is provided that does nothing.
-void port_post_boot_py(bool heap_valid);
-
 // Some ports want to add information to boot_out.txt.
 // A default weak implementation is provided that does nothing.
 void port_boot_info(void);
