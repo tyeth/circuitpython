@@ -395,7 +395,7 @@ audioio_get_buffer_result_t audiodelays_multi_tap_delay_get_buffer(audiodelays_m
 
             if (MP_LIKELY(self->base.bits_per_sample == 16)) {
                 delay_word = synthio_mix_down_sample(delay_word, SYNTHIO_MIX_DOWN_SCALE(2));
-                delay_buffer[delay_buffer_pos + delay_buffer_offset] = (int16_t)word;
+                delay_buffer[delay_buffer_pos + delay_buffer_offset] = (int16_t)delay_word;
             } else {
                 // Do not have mix_down for 8 bit so just hard cap samples into 1 byte
                 delay_word = MIN(MAX(delay_word, -128), 127);
