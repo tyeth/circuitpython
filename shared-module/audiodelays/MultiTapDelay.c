@@ -410,6 +410,13 @@ audioio_get_buffer_result_t audiodelays_multi_tap_delay_get_buffer(audiodelays_m
 
             // Update delay buffer with sample and decay
             delay_word = delay_buffer[delay_buffer_pos + delay_buffer_offset];
+
+            // If no taps are provided, use as standard delay
+            if (!self->tap_len) {
+                word = delay_word;
+            }
+
+            // Apply decay and add sample
             delay_word = (int32_t)(delay_word * decay + sample_word);
 
             if (MP_LIKELY(self->base.bits_per_sample == 16)) {
