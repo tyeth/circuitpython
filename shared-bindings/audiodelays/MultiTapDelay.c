@@ -26,6 +26,7 @@
 //|         delay_ms: synthio.BlockInput = 250.0,
 //|         decay: synthio.BlockInput = 0.7,
 //|         mix: synthio.BlockInput = 0.25,
+//|         taps: Tuple[float|Tuple[float, float], ...] = None,
 //|         buffer_size: int = 512,
 //|         sample_rate: int = 8000,
 //|         bits_per_sample: int = 16,
@@ -46,6 +47,7 @@
 //|         :param float delay_ms: The current time of the echo delay in milliseconds. Must be less the max_delay_ms
 //|         :param synthio.BlockInput decay: The rate the echo fades. 0.0 = instant; 1.0 = never.
 //|         :param synthio.BlockInput mix: The mix as a ratio of the sample (0.0) to the effect (1.0).
+//|         :param tuple taps: The positions and levels to tap into the delay buffer.
 //|         :param int buffer_size: The total size in bytes of each of the two playback buffers to use
 //|         :param int sample_rate: The sample rate to be used
 //|         :param int channel_count: The number of channels the source samples contain. 1 = mono; 2 = stereo.
@@ -75,12 +77,13 @@
 //|         ...
 //|
 static mp_obj_t audiodelays_multi_tap_delay_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    enum { ARG_max_delay_ms, ARG_delay_ms, ARG_decay, ARG_mix, ARG_buffer_size, ARG_sample_rate, ARG_bits_per_sample, ARG_samples_signed, ARG_channel_count, ARG_freq_shift, };
+    enum { ARG_max_delay_ms, ARG_delay_ms, ARG_decay, ARG_mix, ARG_taps, ARG_buffer_size, ARG_sample_rate, ARG_bits_per_sample, ARG_samples_signed, ARG_channel_count, };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_max_delay_ms, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 500 } },
         { MP_QSTR_delay_ms, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_ROM_INT(250) } },
         { MP_QSTR_decay, MP_ARG_OBJ | MP_ARG_KW_ONLY,  {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_mix, MP_ARG_OBJ | MP_ARG_KW_ONLY,  {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_taps, MP_ARG_OBJ | MP_ARG_KW_ONLY,  {.u_obj = mp_const_none} },
         { MP_QSTR_buffer_size, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 512} },
         { MP_QSTR_sample_rate, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 8000} },
         { MP_QSTR_bits_per_sample, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 16} },
@@ -101,7 +104,7 @@ static mp_obj_t audiodelays_multi_tap_delay_make_new(const mp_obj_type_t *type, 
     }
 
     audiodelays_multi_tap_delay_obj_t *self = mp_obj_malloc(audiodelays_multi_tap_delay_obj_t, &audiodelays_multi_tap_delay_type);
-    common_hal_audiodelays_multi_tap_delay_construct(self, max_delay_ms, args[ARG_delay_ms].u_obj, args[ARG_decay].u_obj, args[ARG_mix].u_obj, args[ARG_buffer_size].u_int, bits_per_sample, args[ARG_samples_signed].u_bool, channel_count, sample_rate);
+    common_hal_audiodelays_multi_tap_delay_construct(self, max_delay_ms, args[ARG_delay_ms].u_obj, args[ARG_decay].u_obj, args[ARG_mix].u_obj, args[ARG_taps].u_obj, args[ARG_buffer_size].u_int, bits_per_sample, args[ARG_samples_signed].u_bool, channel_count, sample_rate);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -191,6 +194,29 @@ MP_PROPERTY_GETSET(audiodelays_multi_tap_delay_mix_obj,
     (mp_obj_t)&audiodelays_multi_tap_delay_get_mix_obj,
     (mp_obj_t)&audiodelays_multi_tap_delay_set_mix_obj);
 
+//|     taps: Tuple[float|Tuple[float, float], ...]
+//|     """The position or position and level of delay taps.
+//|     The position is a number from 0.0 (start) to 1.0 (end) as a relative position in the delay buffer.
+//|     The level is a number from 0.0 (silence) to 1.0 (full volume).
+//|     If only a float is provided as an element of the tuple, the level is assumed to be 1.0.
+//|     When retrieving the value of this property, the level will always be included."""
+//|
+static mp_obj_t audiodelays_multi_tap_delay_obj_get_taps(mp_obj_t self_in) {
+    return common_hal_audiodelays_multi_tap_delay_get_taps(self_in);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(audiodelays_multi_tap_delay_get_taps_obj, audiodelays_multi_tap_delay_obj_get_taps);
+
+static mp_obj_t audiodelays_multi_tap_delay_obj_set_taps(mp_obj_t self_in, mp_obj_t taps_in) {
+    audiodelays_multi_tap_delay_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    common_hal_audiodelays_multi_tap_delay_set_taps(self, taps_in);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(audiodelays_multi_tap_delay_set_taps_obj, audiodelays_multi_tap_delay_obj_set_taps);
+
+MP_PROPERTY_GETSET(audiodelays_multi_tap_delay_taps_obj,
+    (mp_obj_t)&audiodelays_multi_tap_delay_get_taps_obj,
+    (mp_obj_t)&audiodelays_multi_tap_delay_set_taps_obj);
+
 
 
 //|     playing: bool
@@ -258,6 +284,7 @@ static const mp_rom_map_elem_t audiodelays_multi_tap_delay_locals_dict_table[] =
     { MP_ROM_QSTR(MP_QSTR_delay_ms), MP_ROM_PTR(&audiodelays_multi_tap_delay_delay_ms_obj) },
     { MP_ROM_QSTR(MP_QSTR_decay), MP_ROM_PTR(&audiodelays_multi_tap_delay_decay_obj) },
     { MP_ROM_QSTR(MP_QSTR_mix), MP_ROM_PTR(&audiodelays_multi_tap_delay_mix_obj) },
+    { MP_ROM_QSTR(MP_QSTR_taps), MP_ROM_PTR(&audiodelays_multi_tap_delay_taps_obj) },
     AUDIOSAMPLE_FIELDS,
 };
 static MP_DEFINE_CONST_DICT(audiodelays_multi_tap_delay_locals_dict, audiodelays_multi_tap_delay_locals_dict_table);

@@ -21,6 +21,11 @@ typedef struct {
     synthio_block_slot_t decay;
     synthio_block_slot_t mix;
 
+    mp_float_t *tap_positions;
+    mp_float_t *tap_levels;
+    uint32_t *tap_offsets;
+    size_t tap_len;
+
     int8_t *buffer[2];
     uint8_t last_buf_idx;
     uint32_t buffer_len; // max buffer in bytes
@@ -35,9 +40,12 @@ typedef struct {
     uint32_t delay_buffer_len; // bytes
     uint32_t max_delay_buffer_len; // bytes
     uint32_t delay_buffer_pos;
+    uint32_t delay_buffer_right_pos;
 
     mp_obj_t sample;
 } audiodelays_multi_tap_delay_obj_t;
+
+void recalculate_tap_offsets(audiodelays_multi_tap_delay_obj_t *self);
 
 void audiodelays_multi_tap_delay_reset_buffer(audiodelays_multi_tap_delay_obj_t *self,
     bool single_channel_output,
