@@ -400,7 +400,7 @@ audioio_get_buffer_result_t audiodelays_multi_tap_delay_get_buffer(audiodelays_m
                 for (size_t j = 0; j < self->tap_len; j++) {
                     tap_pos = (delay_buffer_pos + delay_buffer_len - self->tap_offsets[j]) % delay_buffer_len;
                     delay_word = delay_buffer[tap_pos + delay_buffer_offset];
-                    word += delay_word * self->tap_levels[j];
+                    word += (int32_t)(delay_word * self->tap_levels[j]);
                 }
 
                 if (self->tap_len > 1) {
@@ -417,7 +417,7 @@ audioio_get_buffer_result_t audiodelays_multi_tap_delay_get_buffer(audiodelays_m
             }
 
             // Apply decay and add sample
-            delay_word = (int32_t)(delay_word * decay + sample_word);
+            delay_word = (int32_t)(delay_word * decay) + sample_word;
 
             if (MP_LIKELY(self->base.bits_per_sample == 16)) {
                 delay_word = synthio_mix_down_sample(delay_word, SYNTHIO_MIX_DOWN_SCALE(2));
