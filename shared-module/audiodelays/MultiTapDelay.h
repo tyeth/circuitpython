@@ -45,6 +45,8 @@ typedef struct {
     mp_obj_t sample;
 } audiodelays_multi_tap_delay_obj_t;
 
+void validate_tap_value(mp_obj_t item, qstr arg_name);
+mp_float_t get_tap_value(mp_obj_t item);
 void recalculate_tap_offsets(audiodelays_multi_tap_delay_obj_t *self);
 
 void audiodelays_multi_tap_delay_reset_buffer(audiodelays_multi_tap_delay_obj_t *self,

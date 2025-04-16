@@ -163,6 +163,24 @@ mp_obj_t common_hal_audiodelays_multi_tap_delay_get_taps(audiodelays_multi_tap_d
     }
 }
 
+void validate_tap_value(mp_obj_t item, qstr arg_name) {
+    if (mp_obj_is_small_int(item)) {
+        mp_arg_validate_int_range(mp_obj_get_int(item), 0, 1, arg_name);
+    } else {
+        mp_arg_validate_obj_float_range(item, 0, 1, arg_name);
+    }
+}
+
+mp_float_t get_tap_value(mp_obj_t item) {
+    mp_float_t value;
+    if (mp_obj_is_small_int(item)) {
+        value = (mp_float_t)mp_obj_get_int(item);
+    } else {
+        value = mp_obj_float_get(item);
+    }
+    return value;
+}
+
 void common_hal_audiodelays_multi_tap_delay_set_taps(audiodelays_multi_tap_delay_obj_t *self, mp_obj_t taps_in) {
     if (taps_in != mp_const_none && !MP_OBJ_TYPE_HAS_SLOT(mp_obj_get_type(taps_in), iter)) {
         mp_raise_TypeError_varg(
@@ -193,10 +211,10 @@ void common_hal_audiodelays_multi_tap_delay_set_taps(audiodelays_multi_tap_delay
                 mp_arg_validate_length(len1, 2, MP_QSTR_items);
 
                 for (size_t j = 0; j < len1; j++) {
-                    mp_arg_validate_obj_float_range(items1[j], 0, 1, j ? MP_QSTR_level : MP_QSTR_position);
+                    validate_tap_value(items1[j], j ? MP_QSTR_level : MP_QSTR_position);
                 }
-            } else if (mp_obj_is_float(item)) {
-                mp_arg_validate_obj_float_range(item, 0, 1, MP_QSTR_position);
+            } else if (mp_obj_is_float(item) || mp_obj_is_small_int(item)) {
+                validate_tap_value(item, MP_QSTR_position);
             } else {
                 mp_raise_TypeError_varg(
                     MP_ERROR_TEXT("%q in %q must be of type %q or %q, not %q"),
@@ -226,15 +244,16 @@ void common_hal_audiodelays_multi_tap_delay_set_taps(audiodelays_multi_tap_delay
 
     for (i = 0; i < len; i++) {
         mp_obj_t item = items[i];
-        if (mp_obj_is_float(item)) {
-            self->tap_positions[i] = mp_obj_float_get(item);
-            self->tap_levels[i] = MICROPY_FLOAT_CONST(1.0);
-        } else if (mp_obj_is_tuple_compatible(item)) {
+        if (mp_obj_is_tuple_compatible(item)) {
             size_t len1;
             mp_obj_t *items1;
             mp_obj_tuple_get(item, &len1, &items1);
-            self->tap_positions[i] = mp_obj_float_get(items1[0]);
-            self->tap_levels[i] = mp_obj_float_get(items1[1]);
+
+            self->tap_positions[i] = get_tap_value(items1[0]);
+            self->tap_levels[i] = get_tap_value(items1[1]);
+        } else {
+            self->tap_positions[i] = get_tap_value(item);
+            self->tap_levels[i] = MICROPY_FLOAT_CONST(1.0);
         }
     }
 
