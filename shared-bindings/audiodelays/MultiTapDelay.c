@@ -26,7 +26,7 @@
 //|         delay_ms: synthio.BlockInput = 250.0,
 //|         decay: synthio.BlockInput = 0.7,
 //|         mix: synthio.BlockInput = 0.25,
-//|         taps: Tuple[float|Tuple[float, float], ...] = None,
+//|         taps: Optional[Tuple[float|Tuple[float, float], ...]] = None,
 //|         buffer_size: int = 512,
 //|         sample_rate: int = 8000,
 //|         bits_per_sample: int = 16,
