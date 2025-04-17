@@ -85,6 +85,7 @@ INC += \
 	-isystem esp-idf/components/esp_rom/include \
 	-isystem esp-idf/components/esp_rom/$(IDF_TARGET)/include \
 	-isystem esp-idf/components/esp_rom/$(IDF_TARGET)/include/$(IDF_TARGET) \
+	-isystem esp-idf/components/esp_security/include \
 	-isystem esp-idf/components/esp_system/include \
 	-isystem esp-idf/components/esp_timer/include \
 	-isystem esp-idf/components/esp_wifi/include \
@@ -597,7 +598,7 @@ endif
 
 ESP_IDF_COMPONENTS_LINK = $(IDF_TARGET_ARCH) $(CHIP_COMPONENTS) app_update bootloader_support driver esp_driver_gpio esp_driver_gptimer esp_driver_i2c esp_driver_ledc esp_driver_spi esp_driver_uart efuse esp_adc esp_app_format esp_common esp_event esp_hw_support esp_mm esp_partition esp_pm esp_ringbuf esp_rom esp_system esp_timer freertos hal heap log newlib nvs_flash pthread soc spi_flash vfs esp_vfs_console
 ifneq ($(CIRCUITPY_WIFI),0)
-	ESP_IDF_COMPONENTS_LINK += esp_coex esp_netif esp-tls esp_wifi lwip mbedtls mdns wpa_supplicant esp_phy
+	ESP_IDF_COMPONENTS_LINK += esp_coex esp_netif esp_security esp-tls esp_wifi lwip mbedtls mdns wpa_supplicant esp_phy
 endif
 ifneq ($(CIRCUITPY_BLEIO_NATIVE),0)
 	BLE_IMPL_esp32 := esp32
