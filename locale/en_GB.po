@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-03-06 13:42+0000\n"
+"PO-Revision-Date: 2025-04-19 15:42+0000\n"
 "Last-Translator: Andi Chandler <andi@gowling.com>\n"
 "Language-Team: none\n"
 "Language: en_GB\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.10.3-dev\n"
+"X-Generator: Weblate 5.11.1-dev\n"
 
 #: main.c
 msgid ""
@@ -805,7 +805,7 @@ msgstr "Cannot record to a file"
 
 #: shared-module/storage/__init__.c
 msgid "Cannot remount path when visible via USB."
-msgstr ""
+msgstr "Cannot remount path when visible via USB."
 
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Cannot set value when direction is input."
@@ -1391,7 +1391,7 @@ msgstr "MITM security is not supported"
 #: ports/stm/common-hal/sdioio/SDCard.c
 #, c-format
 msgid "MMC/SDIO Clock Error %x"
-msgstr ""
+msgstr "MMC/SDIO Clock Error %x"
 
 #: shared-bindings/is31fl3741/IS31FL3741.c
 msgid "Mapping must be a tuple"
@@ -1581,7 +1581,7 @@ msgstr "No pulldown on pin; 1Mohm recommended"
 
 #: shared-module/touchio/TouchIn.c
 msgid "No pullup on pin; 1Mohm recommended"
-msgstr ""
+msgstr "No pullup on pin; 1Mohm recommended"
 
 #: py/moderrno.c
 msgid "No space left on device"
