@@ -631,6 +631,9 @@ ifneq ($(CIRCUITPY_BLEIO_NATIVE),0)
 	endif
 	endif
 endif
+ifeq ($(IDF_TARGET),esp32p4)
+    ESP_IDF_COMPONENTS_LINK += esp_security
+endif
 ifneq ($(CIRCUITPY_ESPULP),0)
 	ESP_IDF_COMPONENTS_LINK += ulp
 endif
