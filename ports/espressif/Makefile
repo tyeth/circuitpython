@@ -609,7 +609,7 @@ ifneq ($(CIRCUITPY_BLEIO_NATIVE),0)
 	BLE_IMPL_esp32h2 := libble
 	BLE_IMPL = $(BLE_IMPL_$(IDF_TARGET))
 
-	ESP_IDF_COMPONENTS_LINK += bt esp_phy
+	ESP_IDF_COMPONENTS_LINK += bt esp_phy esp_security
 	ifeq ($(BLE_IMPL),esp32)
 		# BLE will hang the ESP32 and trigger an interrupt watchdog without this undefined symbol at
 		# link because a weak version of the interrupt that BLE uses will be linked incorrectly.
