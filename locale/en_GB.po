@@ -115,6 +115,10 @@ msgstr "%q contains duplicate pins"
 msgid "%q failure: %d"
 msgstr "%q failure: %d"
 
+#: shared-module/audiodelays/MultiTapDelay.c
+msgid "%q in %q must be of type %q or %q, not %q"
+msgstr ""
+
 #: py/argcheck.c shared-module/audiofilters/Filter.c
 msgid "%q in %q must be of type %q, not %q"
 msgstr "%q in %q must be of type %q, not %q"
@@ -237,7 +241,8 @@ msgid "%q must be of type %q, %q, or %q, not %q"
 msgstr "%q must be of type %q, %q, or %q, not %q"
 
 #: py/argcheck.c py/runtime.c shared-bindings/bitmapfilter/__init__.c
-#: shared-module/synthio/Note.c shared-module/synthio/__init__.c
+#: shared-module/audiodelays/MultiTapDelay.c shared-module/synthio/Note.c
+#: shared-module/synthio/__init__.c
 msgid "%q must be of type %q, not %q"
 msgstr "%q must be of type %q, not %q"
 
@@ -2620,6 +2625,7 @@ msgid "bits must be 32 or less"
 msgstr "bits must be 32 or less"
 
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
+#: shared-bindings/audiodelays/MultiTapDelay.c
 #: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
 #: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
