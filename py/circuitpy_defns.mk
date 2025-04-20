@@ -617,6 +617,7 @@ $(filter $(SRC_PATTERNS), \
 	supervisor/StatusBar.c \
 	wifi/AuthMode.c \
 	wifi/Packet.c \
+	wifi/PowerManagement.c \
 )
 
 ifeq ($(CIRCUITPY_BLEIO_HCI),1)

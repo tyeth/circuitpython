@@ -6,6 +6,7 @@
 
 #include "shared-bindings/wifi/__init__.h"
 #include "shared-bindings/wifi/AuthMode.h"
+#include "shared-bindings/wifi/PowerManagement.h"
 
 #include <string.h>
 
@@ -189,33 +190,29 @@ MP_PROPERTY_GETSET(wifi_radio_tx_power_obj,
     (mp_obj_t)&wifi_radio_set_tx_power_obj);
 
 //|     power_management: PowerManagement
-//|     """Wifi power management setting. The default is `wifi.PowerManagement.MIN.
+//|     """Wifi power management setting. See `wifi.PowerManagement`. The default is `wifi.PowerManagement.MIN`.
 //|     """
 static mp_obj_t wifi_radio_get_power_management(mp_obj_t self_in) {
-    #if CIRCUITPY_WIFI_RADIO_SETTABLE_POWER_MANAGEMENT
     wifi_radio_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return cp_enum_find(&wifi_power_management_type, common_hal_wifi_radio_get_power_management(self));
-    #else
-    return MP_OBJ_FROM_PTR(&power_management_MIN);
-    #endif
 }
-MP_DEFINE_CONST_FUN_OBJ_1(wifi_radio_get_listen_interval_obj, wifi_radio_get_listen_interval);
+MP_DEFINE_CONST_FUN_OBJ_1(wifi_radio_get_power_management_obj, wifi_radio_get_power_management);
 
 static mp_obj_t wifi_radio_set_power_management(mp_obj_t self_in, mp_obj_t power_management_in) {
-    #if CIRCUITPY_WIFI_RADIO_SETTABLE_POWER_MANAGEMENT
     wifi_radio_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    wifi_power_management_t power_management = cp_enum_value(&wifi_power_management_type, power_management_in, MP_QSTR_power_management);
+    wifi_power_management_t power_management =
+        cp_enum_value(&wifi_power_management_type, power_management_in, MP_QSTR_power_management);
+    if (power_management == POWER_MANAGEMENT_UNKNOWN) {
+        mp_arg_error_invalid(MP_QSTR_power_management);
+    }
     common_hal_wifi_radio_set_power_management(self, power_management);
-    #else
-    mp_raise_NotImplementedError(NULL);
-    #endif
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_2(wifi_radio_set_listen_interval_obj, wifi_radio_set_listen_interval);
+MP_DEFINE_CONST_FUN_OBJ_2(wifi_radio_set_power_management_obj, wifi_radio_set_power_management);
 
-MP_PROPERTY_GETSET(wifi_radio_listen_interval_obj,
-    (mp_obj_t)&wifi_radio_get_listen_interval_obj,
-    (mp_obj_t)&wifi_radio_set_listen_interval_obj);
+MP_PROPERTY_GETSET(wifi_radio_power_management_obj,
+    (mp_obj_t)&wifi_radio_get_power_management_obj,
+    (mp_obj_t)&wifi_radio_set_power_management_obj);
 
 //|     mac_address_ap: ReadableBuffer
 //|     """MAC address for the AP. When the address is altered after interface is started
@@ -870,7 +867,7 @@ static const mp_rom_map_elem_t wifi_radio_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ipv4_subnet_ap),    MP_ROM_PTR(&wifi_radio_ipv4_subnet_ap_obj) },
     { MP_ROM_QSTR(MP_QSTR_ipv4_address),    MP_ROM_PTR(&wifi_radio_ipv4_address_obj) },
     { MP_ROM_QSTR(MP_QSTR_ipv4_address_ap),    MP_ROM_PTR(&wifi_radio_ipv4_address_ap_obj) },
-    { MP_ROM_QSTR(MP_QSTR_listen_interval),    MP_ROM_PTR(&wifi_radio_listen_interval_obj) },
+    { MP_ROM_QSTR(MP_QSTR_power_management),    MP_ROM_PTR(&wifi_radio_power_management_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_set_ipv4_address),    MP_ROM_PTR(&wifi_radio_set_ipv4_address_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_ipv4_address_ap),    MP_ROM_PTR(&wifi_radio_set_ipv4_address_ap_obj) },
