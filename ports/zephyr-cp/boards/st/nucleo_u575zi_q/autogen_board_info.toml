@@ -58,6 +58,7 @@ jpegio = false
 keypad = false
 keypad_demux = false
 locale = false
+lvfontio = false
 math = false
 max3421e = false
 mdns = false
