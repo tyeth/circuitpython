@@ -344,6 +344,7 @@ typedef long mp_off_t;
 #define CIRCUITPY_CONSOLE_UART (1)
 #ifndef CIRCUITPY_CONSOLE_UART_BAUDRATE
 #define CIRCUITPY_CONSOLE_UART_BAUDRATE (115200)
+#endif
 #if !defined(CIRCUITPY_CONSOLE_UART_PRINTF)
 #define CIRCUITPY_CONSOLE_UART_PRINTF(...) mp_printf(&console_uart_print, __VA_ARGS__)
 #endif
@@ -352,7 +353,6 @@ typedef long mp_off_t;
 #endif
 #if !defined(CIRCUITPY_CONSOLE_UART_TIMESTAMP)
 #define CIRCUITPY_CONSOLE_UART_TIMESTAMP (0)
-#endif
 #endif
 #else
 #define CIRCUITPY_CONSOLE_UART (0)
@@ -452,7 +452,7 @@ void background_callback_run_all(void);
 #endif
 
 #ifndef CIRCUITPY_PYSTACK_SIZE
-#define CIRCUITPY_PYSTACK_SIZE 1536
+#define CIRCUITPY_PYSTACK_SIZE 2048
 #endif
 
 // The VM heap starts at this size and doubles in size as needed until it runs
@@ -633,6 +633,15 @@ void background_callback_run_all(void);
 
 #ifndef CIRCUITPY_SAVES_PARTITION_SIZE
 #define CIRCUITPY_SAVES_PARTITION_SIZE 0
+#endif
+
+// Boards that have a boot button connected to a GPIO pin should set
+// CIRCUITPY_BOOT_BUTTON_NO_GPIO to 1.
+#ifndef CIRCUITPY_BOOT_BUTTON_NO_GPIO
+#define CIRCUITPY_BOOT_BUTTON_NO_GPIO (0)
+#endif
+#if defined(CIRCUITPY_BOOT_BUTTON) && CIRCUITPY_BOOT_BUTTON_NO_GPIO
+#error "CIRCUITPY_BOOT_BUTTON and CIRCUITPY_BOOT_BUTTON_NO_GPIO are mutually exclusive"
 #endif
 
 #if defined(__GNUC__) && !defined(__ZEPHYR__)

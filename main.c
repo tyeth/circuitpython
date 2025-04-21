@@ -903,12 +903,8 @@ static void __attribute__ ((noinline)) run_boot_py(safe_mode_t safe_mode) {
         #endif
     }
 
-    port_post_boot_py(true);
-
     cleanup_after_vm(_exec_result.exception);
     _exec_result.exception = NULL;
-
-    port_post_boot_py(false);
 }
 
 static int run_repl(safe_mode_t safe_mode) {
