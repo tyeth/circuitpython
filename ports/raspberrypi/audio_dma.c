@@ -248,9 +248,9 @@ audio_dma_result audio_dma_setup_playback(
 
     if (!single_buffer) {
         #ifdef PICO_RP2350
-        dma->buffer[1] = (uint8_t *)port_realloc(dma->buffer[0], max_buffer_length, true);
+        dma->buffer[1] = (uint8_t *)port_realloc(dma->buffer[1], max_buffer_length, true);
         #else
-        dma->buffer[1] = (uint8_t *)m_realloc(dma->buffer[0],
+        dma->buffer[1] = (uint8_t *)m_realloc(dma->buffer[1],
             #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
             dma->buffer_length[1], // Old size
             #endif
