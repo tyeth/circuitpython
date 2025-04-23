@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-04-21 18:19+0000\n"
+"PO-Revision-Date: 2025-04-23 08:01+0000\n"
 "Last-Translator: Jonny Bergdahl <jonny@bergdahl.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -2642,7 +2642,7 @@ msgstr "bits måste vara 32 eller färre"
 #: shared-bindings/audiofilters/Distortion.c
 #: shared-bindings/audiodelays/Reverb.c
 msgid "bits_per_sample must be 16"
-msgstr ""
+msgstr "bits_per_sample måste vara 16"
 
 #: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
 #: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
@@ -4071,7 +4071,7 @@ msgstr "rsplit(None,n)"
 
 #: shared-bindings/audiodelays/Reverb.c
 msgid "samples_signed must be true"
-msgstr ""
+msgstr "samples_signed måste vara sann"
 
 #: ports/atmel-samd/common-hal/audiobusio/PDMIn.c
 #: ports/raspberrypi/common-hal/audiobusio/PDMIn.c
@@ -4080,7 +4080,7 @@ msgstr "samplingsfrekvens utanför räckvidden"
 
 #: py/modmicropython.c
 msgid "schedule queue full"
-msgstr "schemakön full"
+msgstr "schemakö full"
 
 #: py/builtinimport.c
 msgid "script compilation not supported"
