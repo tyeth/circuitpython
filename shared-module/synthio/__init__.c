@@ -270,7 +270,7 @@ static bool synth_note_into_buffer(synthio_synth_t *synth, int chan, int32_t *ou
                 accum = accum - lim + offset;
             }
             int16_t idx = accum >> SYNTHIO_FREQUENCY_SHIFT;
-            wi = (ring_waveform[idx] * out_buffer32[i]) / 32768; // consider for synthio_sat16 but had a weird artificat
+            int16_t wi = (ring_waveform[idx] * out_buffer32[i]) / 32768; // consider for synthio_sat16 but had a weird artificat
             out_buffer32[i] = wi;
         }
         synth->ring_accum[chan] = accum;
