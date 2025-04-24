@@ -331,7 +331,9 @@ static size_t compute_heap_size(size_t total_blocks) {
 static bool gc_try_add_heap(size_t failed_alloc) {
     // 'needed' is the size of a heap large enough to hold failed_alloc, with
     // the additional metadata overheads as calculated in gc_setup_area().
+    // CIRCUITPY-CHANGE: calculation of how much to grow the heap
     size_t total_new_blocks = (failed_alloc + BYTES_PER_BLOCK - 1) / BYTES_PER_BLOCK;
+    // CIRCUITPY-CHANGE
     size_t needed = compute_heap_size(total_new_blocks);
 
     size_t avail = gc_get_max_new_split();
@@ -376,6 +378,7 @@ static bool gc_try_add_heap(size_t failed_alloc) {
         total_blocks += area->gc_alloc_table_byte_len * BLOCKS_PER_ATB;
     }
 
+    // CIRCUITPY-CHANGE
     size_t total_heap = compute_heap_size(total_blocks);
 
     DEBUG_printf("total_heap " UINT_FMT " bytes\n", total_heap);
@@ -498,6 +501,7 @@ static void MP_NO_INSTRUMENT PLACE_IN_ITCM(gc_mark_subtree)(size_t block)
         // check that the consecutive blocks didn't overflow past the end of the area
         assert(area->gc_pool_start + (block + n_blocks) * BYTES_PER_BLOCK <= area->gc_pool_end);
 
+        // CIRCUITPY-CHANGE
         // check if this block should be collected
         #if MICROPY_ENABLE_SELECTIVE_COLLECT
         bool should_scan = CTB_GET(area, block);
@@ -1005,6 +1009,7 @@ found:
     (void)has_finaliser;
     #endif
 
+    // CIRCUITPY-CHANGE
     #if MICROPY_ENABLE_SELECTIVE_COLLECT
     bool do_not_collect = (alloc_flags & GC_ALLOC_FLAG_DO_NOT_COLLECT) != 0;
     GC_ENTER();
@@ -1184,6 +1189,7 @@ void *gc_realloc(void *ptr, mp_uint_t n_bytes) {
 void *gc_realloc(void *ptr_in, size_t n_bytes, bool allow_move) {
     // check for pure allocation
     if (ptr_in == NULL) {
+        // CIRCUITPY-CHANGE
         return gc_alloc(n_bytes, 0);
     }
 
@@ -1329,6 +1335,7 @@ void *gc_realloc(void *ptr_in, size_t n_bytes, bool allow_move) {
     }
     #endif
 
+    // CIRCUITPY-CHANGE
     #if MICROPY_ENABLE_SELECTIVE_COLLECT
     if (!CTB_GET(area, block)) {
         alloc_flags |= GC_ALLOC_FLAG_DO_NOT_COLLECT;
@@ -1343,6 +1350,7 @@ void *gc_realloc(void *ptr_in, size_t n_bytes, bool allow_move) {
     }
 
     // can't resize inplace; try to find a new contiguous chain
+    // CIRCUITPY-CHANGE
     void *ptr_out = gc_alloc(n_bytes, alloc_flags);
 
     // check that the alloc succeeded

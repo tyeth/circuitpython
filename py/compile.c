@@ -3689,6 +3689,7 @@ void mp_compile_to_raw_code(mp_parse_tree_t *parse_tree, qstr source_file, bool 
 
 mp_obj_t mp_compile(mp_parse_tree_t *parse_tree, qstr source_file, bool is_repl) {
     mp_compiled_module_t cm;
+    // CIRCUITPY-CHANGE
     cm.context = m_malloc_with_collect(sizeof(mp_module_context_t));
     cm.context->module.globals = mp_globals_get();
     mp_compile_to_raw_code(parse_tree, source_file, is_repl, &cm);

@@ -119,6 +119,7 @@ void *m_malloc_helper(size_t num_bytes, uint8_t flags) {
     MP_STATE_MEM(current_bytes_allocated) += num_bytes;
     UPDATE_PEAK();
     #endif
+    // CIRCUITPY-CHANGE
     // If this config is set then the GC clears all memory, so we don't need to.
     #if !MICROPY_GC_CONSERVATIVE_CLEAR
     if (flags & M_MALLOC_ENSURE_ZEROED) {
@@ -130,10 +131,12 @@ void *m_malloc_helper(size_t num_bytes, uint8_t flags) {
 }
 
 void *m_malloc(size_t num_bytes) {
+    // CIRCUITPY-CHANGE
     return m_malloc_helper(num_bytes, M_MALLOC_RAISE_ERROR);
 }
 
 void *m_malloc_maybe(size_t num_bytes) {
+    // CIRCUITPY-CHANGE
     return m_malloc_helper(num_bytes, 0);
 }
 
@@ -142,10 +145,12 @@ void *m_malloc0(size_t num_bytes) {
 }
 
 void *m_malloc_with_collect(size_t num_bytes) {
+    // CIRCUITPY-CHANGE
     return m_malloc_helper(num_bytes, M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT);
 }
 
 void *m_malloc_maybe_with_collect(size_t num_bytes) {
+    // CIRCUITPY-CHANGE
     return m_malloc_helper(num_bytes, M_MALLOC_COLLECT);
 }
 

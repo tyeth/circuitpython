@@ -74,6 +74,7 @@ typedef unsigned int uint;
 
 // TODO make a lazy m_renew that can increase by a smaller amount than requested (but by at least 1 more element)
 
+// CIRCUITPY-CHANGE: new wrappers for selective collect, and use of m_malloc_helper()
 // The following are convenience wrappers for m_malloc_helper and can save space at the call sites.
 // m_malloc and m_new allocate space that is not collected and does not have a finaliser.
 // Use m_malloc_items() to allocate space for mp_obj_t that will be collected.
