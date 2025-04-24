@@ -242,7 +242,6 @@ ifeq ($(IDF_TARGET),esp32)
 LDFLAGS += \
 	-Tesp32.rom.newlib-data.ld \
 	-Tesp32.rom.newlib-funcs.ld \
-	-Tesp32.rom.newlib-time.ld \
 	-Tesp32.rom.spiflash_legacy.ld
 
 CHIP_COMPONENTS = \
@@ -265,7 +264,6 @@ CHIP_COMPONENTS = \
 else ifeq ($(IDF_TARGET),esp32c3)
 LDFLAGS += \
 	-Tesp32c3.rom.newlib.ld \
-	-Tesp32c3.rom.newlib-time.ld \
 	-Tesp32c3.rom.version.ld \
 	-Tesp32c3.rom.eco3.ld \
 	-Tesp32c3.rom.bt_funcs.ld
@@ -312,7 +310,6 @@ else ifeq ($(IDF_TARGET),esp32s2)
 LDFLAGS += \
 	-Tesp32s2.rom.newlib-data.ld \
 	-Tesp32s2.rom.newlib-funcs.ld \
-	-Tesp32s2.rom.newlib-time.ld \
 	-Tesp32s2.rom.spiflash_legacy.ld
 
 CHIP_COMPONENTS = \
