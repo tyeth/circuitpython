@@ -59,7 +59,6 @@ static mp_obj_t deque_make_new(const mp_obj_type_t *type, size_t n_args, size_t 
     o->alloc = maxlen + 1;
     o->i_get = o->i_put = 0;
     // CIRCUITPY-CHANGE
-    // CIRCUITPY-CHANGE
     o->items = m_malloc_items(o->alloc);
 
     if (n_args > 2) {

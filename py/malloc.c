@@ -132,26 +132,26 @@ void *m_malloc_helper(size_t num_bytes, uint8_t flags) {
 
 void *m_malloc(size_t num_bytes) {
     // CIRCUITPY-CHANGE
-    return m_malloc_helper(num_bytes, M_MALLOC_RAISE_ERROR);
+    return m_malloc_helper(num_bytes, M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT);
 }
 
 void *m_malloc_maybe(size_t num_bytes) {
     // CIRCUITPY-CHANGE
-    return m_malloc_helper(num_bytes, 0);
+    return m_malloc_helper(num_bytes, M_MALLOC_COLLECT);
 }
 
 void *m_malloc0(size_t num_bytes) {
-    return m_malloc_helper(num_bytes, M_MALLOC_ENSURE_ZEROED | M_MALLOC_RAISE_ERROR);
+    return m_malloc_helper(num_bytes, M_MALLOC_ENSURE_ZEROED | M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT);
 }
 
-void *m_malloc_with_collect(size_t num_bytes) {
+void *m_malloc_without_collect(size_t num_bytes) {
     // CIRCUITPY-CHANGE
-    return m_malloc_helper(num_bytes, M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT);
+    return m_malloc_helper(num_bytes, M_MALLOC_RAISE_ERROR);
 }
 
-void *m_malloc_maybe_with_collect(size_t num_bytes) {
+void *m_malloc_maybe_without_collect(size_t num_bytes) {
     // CIRCUITPY-CHANGE
-    return m_malloc_helper(num_bytes, M_MALLOC_COLLECT);
+    return m_malloc_helper(num_bytes, 0);
 }
 
 #if MICROPY_MALLOC_USES_ALLOCATED_SIZE

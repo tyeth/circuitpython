@@ -76,15 +76,16 @@ typedef unsigned int uint;
 
 // CIRCUITPY-CHANGE: new wrappers for selective collect, and use of m_malloc_helper()
 // The following are convenience wrappers for m_malloc_helper and can save space at the call sites.
-// m_malloc and m_new allocate space that is not collected and does not have a finaliser.
-// Use m_malloc_items() to allocate space for mp_obj_t that will be collected.
+// m_malloc and m_new allocate space that is collected and does not have a finaliser. Use
+// m_malloc_without_collect() if the space will not contain pointers to other heap allocations. It
+// will still be marked and swept but not scanned for other pointers.
+// Use m_malloc_items() to allocate space for mp_obj_ts that will be collected.
 // Use mp_obj_malloc*() to allocate space for objects (aka structs with a type pointer) that will be
 // collected.
 
-#define m_new(type, num) ((type *)(m_malloc_helper(sizeof(type) * (num), M_MALLOC_RAISE_ERROR)))
-#define m_new_struct_with_collect(type, num) ((type *)(m_malloc_helper(sizeof(type) * (num), M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT)))
-#define m_new_maybe(type, num) ((type *)(m_malloc_helper(sizeof(type) * (num), 0)))
-#define m_new0(type, num) ((type *)(m_malloc_helper(sizeof(type) * (num), M_MALLOC_ENSURE_ZEROED | M_MALLOC_RAISE_ERROR)))
+#define m_new(type, num) ((type *)(m_malloc(sizeof(type) * (num))))
+#define m_new_maybe(type, num) ((type *)(m_malloc_maybe(sizeof(type) * (num))))
+#define m_new0(type, num) ((type *)(m_malloc0(sizeof(type) * (num))))
 #define m_new_obj(type) (m_new(type, 1))
 #define m_new_obj_maybe(type) (m_new_maybe(type, 1))
 #define m_new_obj_var(obj_type, var_field, var_type, var_num) ((obj_type *)m_malloc_helper(offsetof(obj_type, var_field) + sizeof(var_type) * (var_num), M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT))
@@ -103,8 +104,8 @@ typedef unsigned int uint;
 #endif
 #define m_del_obj(type, ptr) (m_del(type, ptr, 1))
 
-#define m_malloc_items(num) m_malloc_helper(sizeof(mp_obj_t) * (num), M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT)
-#define m_malloc_items0(num) m_malloc_helper(sizeof(mp_obj_t) * (num), M_MALLOC_ENSURE_ZEROED | M_MALLOC_RAISE_ERROR | M_MALLOC_COLLECT)
+#define m_malloc_items(num) m_malloc(sizeof(mp_obj_t) * (num))
+#define m_malloc_items0(num) m_malloc0(sizeof(mp_obj_t) * (num))
 
 // Flags for m_malloc_helper
 #define M_MALLOC_ENSURE_ZEROED (1 << 0)
@@ -116,8 +117,8 @@ void *m_malloc_helper(size_t num_bytes, uint8_t flags);
 void *m_malloc(size_t num_bytes);
 void *m_malloc_maybe(size_t num_bytes);
 void *m_malloc0(size_t num_bytes);
-void *m_malloc_with_collect(size_t num_bytes);
-void *m_malloc_maybe_with_collect(size_t num_bytes);
+void *m_malloc_without_collect(size_t num_bytes);
+void *m_malloc_maybe_without_collect(size_t num_bytes);
 #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
 void *m_realloc(void *ptr, size_t old_num_bytes, size_t new_num_bytes);
 void *m_realloc_maybe(void *ptr, size_t old_num_bytes, size_t new_num_bytes, bool allow_move);

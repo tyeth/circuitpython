@@ -120,8 +120,7 @@ static mp_obj_array_t *array_new(char typecode, size_t n) {
     o->free = 0;
     o->len = n;
     // CIRCUITPY-CHANGE
-    // CIRCUITPY-CHANGE
-    o->items = m_malloc(typecode_size * o->len);
+    o->items = m_malloc_without_collect(typecode_size * o->len);
     return o;
 }
 #endif
@@ -230,7 +229,6 @@ static mp_obj_t bytearray_make_new(const mp_obj_type_t *type_in, size_t n_args, 
 #if MICROPY_PY_BUILTINS_MEMORYVIEW
 
 mp_obj_t mp_obj_new_memoryview(byte typecode, size_t nitems, void *items) {
-    // CIRCUITPY-CHANGE
     // CIRCUITPY-CHANGE
     mp_obj_array_t *self = mp_obj_malloc(mp_obj_array_t, &mp_type_memoryview);
     mp_obj_memoryview_init(self, typecode, 0, nitems, items);
@@ -691,7 +689,6 @@ static mp_obj_t array_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_obj_t value
                 if (slice.start > memview_offset_max) {
                     mp_raise_msg(&mp_type_OverflowError, MP_ERROR_TEXT("memoryview offset too large"));
                 }
-                // CIRCUITPY-CHANGE
                 // CIRCUITPY-CHANGE
                 res = mp_obj_malloc(mp_obj_array_t, &mp_type_memoryview);
                 *res = *o;
