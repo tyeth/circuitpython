@@ -175,12 +175,12 @@ ifeq ($(DEBUG), 1)
 		OPTIMIZATION_FLAGS ?= -Og
 		CFLAGS += -DDEBUG
 	endif
-	# You may want to enable these flags to make setting breakpoints easier.
-	# CFLAGS += -fno-inline -fno-ipa-sra
+#	You may want to enable these flags to make setting breakpoints easier.
+#	CFLAGS += -fno-inline -fno-ipa-sra
 else
 	CFLAGS += -DNDEBUG
-	# RISC-V is larger than xtensa
-	# Use -Os for RISC-V when it overflows
+#	RISC-V is larger than xtensa
+#	Use -Os for RISC-V when it overflows
 	ifeq ($(IDF_TARGET_ARCH),riscv)
 		OPTIMIZATION_FLAGS ?= -Os
 	else
@@ -384,7 +384,7 @@ SRC_C += \
 	peripherals/$(IDF_TARGET)/pins.c
 
 ifeq ($(CIRCUITPY_SSL),1)
-SRC_C += lib/mbedtls_config/crt_bundle.c
+SRC_C += common-hal/ssl/crt_bundle.c
 endif
 
 SRC_C += $(wildcard common-hal/espidf/*.c)
@@ -608,8 +608,8 @@ ifneq ($(CIRCUITPY_BLEIO_NATIVE),0)
 
 	ESP_IDF_COMPONENTS_LINK += bt esp_phy esp_security
 	ifeq ($(BLE_IMPL),esp32)
-		# BLE will hang the ESP32 and trigger an interrupt watchdog without this undefined symbol at
-		# link because a weak version of the interrupt that BLE uses will be linked incorrectly.
+#		BLE will hang the ESP32 and trigger an interrupt watchdog without this undefined symbol at
+#		link because a weak version of the interrupt that BLE uses will be linked incorrectly.
 		REGISTRATION_FUNCTIONS += -u ld_include_hli_vectors_bt
 		BINARY_BLOBS += esp-idf/components/bt/controller/lib_esp32/$(IDF_TARGET)/libbtdm_app.a
 	endif
