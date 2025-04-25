@@ -123,7 +123,7 @@ mp_obj_t common_hal_canio_listener_receive(canio_listener_obj_t *self) {
     // allows the CPU to serve the next FIFO entry
     FLEXCAN_ClearMbStatusFlags(self->can->data->base, (uint32_t)kFLEXCAN_RxFifoFrameAvlFlag);
 
-    mp_obj_type_t *type;
+    const mp_obj_type_t *type;
     if (rx_frame.type == kFLEXCAN_FrameTypeRemote) {
         type = &canio_remote_transmission_request_type;
     } else {
