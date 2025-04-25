@@ -18,7 +18,7 @@ static int convert_esp_err(esp_err_t ret) {
         case ESP_OK:
             return 0;
         default:
-            // Right now esp_crt_bundle.c doesn't return very specific errors.
+        // Right now esp_crt_bundle.c doesn't return very specific errors.
         case ESP_ERR_INVALID_ARG:
             return -MP_EINVAL;
     }
