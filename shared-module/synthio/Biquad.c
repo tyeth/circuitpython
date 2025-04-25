@@ -213,7 +213,7 @@ void synthio_biquad_filter_samples(mp_obj_t self_in, biquad_filter_state *st, in
 
     for (size_t n = n_samples; n; --n, ++buffer) {
         int32_t input = *buffer;
-        int32_t output = synthio_sat16((b0 * input + b1 * x0 + b2 * x1 - a1 * y0 - a2 * y1 + (1 << (BIQUAD_SHIFT - 1))), 15);
+        int32_t output = synthio_sat16((b0 * input + b1 * x0 + b2 * x1 - a1 * y0 - a2 * y1 + (1 << (BIQUAD_SHIFT - 1))), BIQUAD_SHIFT);
 
         x1 = x0;
         x0 = input;
