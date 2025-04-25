@@ -142,7 +142,9 @@ extern void common_hal_mcu_enable_interrupts(void);
 #define MICROPY_PY___FILE__              (1)
 
 #if CIRCUITPY_FULL_BUILD
+#ifndef MICROPY_QSTR_BYTES_IN_HASH
 #define MICROPY_QSTR_BYTES_IN_HASH       (1)
+#endif
 #else
 #define MICROPY_QSTR_BYTES_IN_HASH       (0)
 #endif
