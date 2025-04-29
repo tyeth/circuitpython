@@ -509,12 +509,6 @@ void port_boot_info(void) {
 }
 #endif
 
-void port_post_boot_py(bool heap_valid) {
-    if (!heap_valid && filesystem_present()) {
-    }
-}
-
-
 // Wrap main in app_main that the IDF expects.
 extern void main(void);
 extern void app_main(void);

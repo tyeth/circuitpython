@@ -62,6 +62,7 @@ extern void common_hal_mcu_enable_interrupts(void);
 #define MICROPY_EMIT_X64                 (0)
 #define MICROPY_ENABLE_DOC_STRING        (0)
 #define MICROPY_ENABLE_FINALISER         (1)
+#define MICROPY_ENABLE_SELECTIVE_COLLECT (1)
 #define MICROPY_ENABLE_GC                (1)
 #define MICROPY_ENABLE_PYSTACK           (1)
 #define MICROPY_TRACKED_ALLOC            (CIRCUITPY_SSL_MBEDTLS)
@@ -141,7 +142,13 @@ extern void common_hal_mcu_enable_interrupts(void);
 #define MICROPY_PY_UCTYPES               (0)
 #define MICROPY_PY___FILE__              (1)
 
+#if CIRCUITPY_FULL_BUILD
+#ifndef MICROPY_QSTR_BYTES_IN_HASH
 #define MICROPY_QSTR_BYTES_IN_HASH       (1)
+#endif
+#else
+#define MICROPY_QSTR_BYTES_IN_HASH       (0)
+#endif
 #define MICROPY_REPL_AUTO_INDENT         (1)
 #define MICROPY_REPL_EVENT_DRIVEN        (0)
 #define MICROPY_STACK_CHECK              (1)
@@ -255,6 +262,10 @@ typedef long mp_off_t;
 #define MICROPY_PY_COLLECTIONS_DEQUE          (CIRCUITPY_FULL_BUILD)
 #define MICROPY_PY_COLLECTIONS_DEQUE_ITER     (CIRCUITPY_FULL_BUILD)
 #define MICROPY_PY_COLLECTIONS_DEQUE_SUBSCR   (CIRCUITPY_FULL_BUILD)
+#endif
+
+#ifndef MICROPY_PY_DOUBLE_TYPECODE
+#define MICROPY_PY_DOUBLE_TYPECODE       (CIRCUITPY_FULL_BUILD ? 1 : 0)
 #endif
 
 #ifndef MICROPY_PY_FUNCTION_ATTRS
