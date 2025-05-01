@@ -145,7 +145,7 @@ MP_PROPERTY_GETSET(audiofilters_phaser_frequency_obj,
 
 
 //|     feedback: synthio.BlockInput
-//|     """The amount of which the incoming signal is fed back into the phasing filters from 0 to 1 where 0 is no feedback and 1 is full feedback."""
+//|     """The amount of which the incoming signal is fed back into the phasing filters from 0.1 to 0.9."""
 static mp_obj_t audiofilters_phaser_obj_get_feedback(mp_obj_t self_in) {
     return common_hal_audiofilters_phaser_get_feedback(self_in);
 }

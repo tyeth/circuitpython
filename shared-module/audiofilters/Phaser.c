@@ -221,7 +221,7 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
             // get the effect values we need from the BlockInput. These may change at run time so you need to do bounds checking if required
             shared_bindings_synthio_lfo_tick(self->base.sample_rate, n / self->base.channel_count);
             mp_float_t frequency = synthio_block_slot_get_limited(&self->frequency, MICROPY_FLOAT_CONST(0.0), self->nyquist);
-            mp_float_t feedback = synthio_block_slot_get_limited(&self->feedback, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
+            mp_float_t feedback = synthio_block_slot_get_limited(&self->feedback, MICROPY_FLOAT_CONST(0.1), MICROPY_FLOAT_CONST(0.9));
             mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
 
             if (mix <= MICROPY_FLOAT_CONST(0.01)) { // if mix is zero pure sample only
