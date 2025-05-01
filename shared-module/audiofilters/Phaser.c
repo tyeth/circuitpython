@@ -221,10 +221,10 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
             // get the effect values we need from the BlockInput. These may change at run time so you need to do bounds checking if required
             shared_bindings_synthio_lfo_tick(self->base.sample_rate, n / self->base.channel_count);
             mp_float_t frequency = synthio_block_slot_get_limited(&self->frequency, MICROPY_FLOAT_CONST(0.0), self->nyquist);
-            mp_float_t feedback = synthio_block_slot_get_limited(&self->feedback, MICROPY_FLOAT_CONST(0.1), MICROPY_FLOAT_CONST(0.9));
-            mp_float_t mix = synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
+            int16_t feedback = (int16_t)(synthio_block_slot_get_limited(&self->feedback, MICROPY_FLOAT_CONST(0.1), MICROPY_FLOAT_CONST(0.9)) * 32767);
+            int16_t mix = (int16_t)(synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0)) * 32767);
 
-            if (mix <= MICROPY_FLOAT_CONST(0.01)) { // if mix is zero pure sample only
+            if (mix <= 328) { // if mix is zero (0.01 in fixed point), pure sample only
                 for (uint32_t i = 0; i < n; i++) {
                     if (MP_LIKELY(self->base.bits_per_sample == 16)) {
                         word_buffer[i] = sample_src[i];
@@ -233,10 +233,9 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
                     }
                 }
             } else {
-
                 // Update all-pass filter coefficient
-                mp_float_t allpasscoef = frequency / self->nyquist;
-                allpasscoef = (MICROPY_FLOAT_CONST(1.0) - allpasscoef) / (MICROPY_FLOAT_CONST(1.0) + allpasscoef);
+                frequency /= self->nyquist; // scale relative to frequency range
+                int16_t allpasscoef = (int16_t)((MICROPY_FLOAT_CONST(1.0) - frequency) / (MICROPY_FLOAT_CONST(1.0) + frequency) * 32767);
 
                 for (uint32_t i = 0; i < n; i++) {
                     bool right_channel = (single_channel_output && channel == 1) || (!single_channel_output && (i % self->base.channel_count) == 1);
@@ -254,19 +253,19 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
                         }
                     }
 
-                    int32_t word = sample_word + self->word_buffer[right_channel] * feedback;
+                    int32_t word = synthio_sat16(sample_word + synthio_sat16(self->word_buffer[right_channel] * feedback, 15), 0);
                     int32_t allpass_word = 0;
 
                     // Update all-pass filters
                     for (uint32_t j = 0; j < self->stages; j++) {
-                        allpass_word = word * -allpasscoef + self->allpass_buffer[j + allpass_buffer_offset];
-                        self->allpass_buffer[j + allpass_buffer_offset] = allpass_word * allpasscoef + word;
+                        allpass_word = synthio_sat16(synthio_sat16(word * -allpasscoef, 15) + self->allpass_buffer[j + allpass_buffer_offset], 0);
+                        self->allpass_buffer[j + allpass_buffer_offset] = synthio_sat16(synthio_sat16(allpass_word * allpasscoef, 15) + word, 0);
                         word = allpass_word;
                     }
                     self->word_buffer[(bool)allpass_buffer_offset] = word;
 
                     // Add original sample + effect
-                    word = sample_word + (int32_t)(word * mix);
+                    word = sample_word + (int32_t)(synthio_sat16(word * mix, 15));
                     word = synthio_mix_down_sample(word, 2);
 
                     if (MP_LIKELY(self->base.bits_per_sample == 16)) {
