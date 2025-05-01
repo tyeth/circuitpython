@@ -38,10 +38,6 @@ void common_hal_audiofilters_phaser_construct(audiofilters_phaser_obj_t *self,
 
     self->last_buf_idx = 1; // Which buffer to use first, toggle between 0 and 1
 
-    // This buffer will be used to process samples through the biquad filter
-    self->filter_buffer = m_malloc_without_collect(SYNTHIO_MAX_DUR * sizeof(int32_t));
-    memset(self->filter_buffer, 0, SYNTHIO_MAX_DUR * sizeof(int32_t));
-
     // Initialize other values most effects will need.
     self->sample = NULL; // The current playing sample
     self->sample_remaining_buffer = NULL; // Pointer to the start of the sample buffer we have not played
@@ -51,7 +47,11 @@ void common_hal_audiofilters_phaser_construct(audiofilters_phaser_obj_t *self,
 
     // The below section sets up the effect's starting values.
 
-    self->nyquist = (mp_float_t) self->base.sample_rate / 2;
+    // Create buffer to hold the last processed word
+    self->word_buffer = m_malloc_without_collect(self->base.channel_count * sizeof(int32_t));
+    memset(self->word_buffer, 0, self->base.channel_count * sizeof(int32_t));
+
+    self->nyquist = (mp_float_t)self->base.sample_rate / 2;
 
     if (feedback == mp_const_none) {
         feedback = mp_obj_new_float(MICROPY_FLOAT_CONST(0.7));
@@ -68,6 +68,8 @@ void common_hal_audiofilters_phaser_deinit(audiofilters_phaser_obj_t *self) {
     audiosample_mark_deinit(&self->base);
     self->buffer[0] = NULL;
     self->buffer[1] = NULL;
+    self->word_buffer = NULL;
+    self->allpass_buffer = NULL;
 }
 
 mp_obj_t common_hal_audiofilters_phaser_get_frequency(audiofilters_phaser_obj_t *self) {
@@ -102,8 +104,15 @@ void common_hal_audiofilters_phaser_set_stages(audiofilters_phaser_obj_t *self, 
     if (!arg) {
         arg = 1;
     }
-    // TODO: reallocate filters
+
+    self->allpass_buffer = (int32_t *)m_realloc(self->allpass_buffer,
+        #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
+        self->base.channel_count * self->stages * sizeof(int32_t), // Old size
+        #endif
+        self->base.channel_count * arg * sizeof(int32_t));
     self->stages = arg;
+
+    memset(self->allpass_buffer, 0, self->base.channel_count * self->stages * sizeof(int32_t));
 }
 
 void audiofilters_phaser_reset_buffer(audiofilters_phaser_obj_t *self,
@@ -112,6 +121,8 @@ void audiofilters_phaser_reset_buffer(audiofilters_phaser_obj_t *self,
 
     memset(self->buffer[0], 0, self->buffer_len);
     memset(self->buffer[1], 0, self->buffer_len);
+    memset(self->word_buffer, 0, self->base.channel_count * sizeof(int32_t));
+    memset(self->allpass_buffer, 0, self->base.channel_count * self->stages * sizeof(int32_t));
 }
 
 bool common_hal_audiofilters_phaser_get_playing(audiofilters_phaser_obj_t *self) {
@@ -222,7 +233,15 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
                     }
                 }
             } else {
+
+                // Update all-pass filter coefficient
+                mp_float_t allpasscoef = frequency / self->nyquist;
+                allpasscoef = (MICROPY_FLOAT_CONST(1.0) - allpasscoef) / (MICROPY_FLOAT_CONST(1.0) + allpasscoef);
+
                 for (uint32_t i = 0; i < n; i++) {
+                    bool right_channel = (single_channel_output && channel == 1) || (!single_channel_output && (i % self->base.channel_count) == 1);
+                    uint32_t allpass_buffer_offset = self->stages * right_channel;
+
                     int32_t sample_word = 0;
                     if (MP_LIKELY(self->base.bits_per_sample == 16)) {
                         sample_word = sample_src[i];
@@ -235,13 +254,21 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
                         }
                     }
 
-                    // TODO: Process sample
-                    int32_t word = 0;
+                    int32_t word = sample_word + self->word_buffer[right_channel] * feedback;
+                    int32_t allpass_word = 0;
+
+                    // Update all-pass filters
+                    for (uint32_t j = 0; j < self->stages; j++) {
+                        allpass_word = word * -allpasscoef + self->allpass_buffer[j + allpass_buffer_offset];
+                        self->allpass_buffer[j + allpass_buffer_offset] = allpass_word * allpasscoef + word;
+                        word = allpass_word;
+                    }
+                    self->word_buffer[(bool)allpass_buffer_offset] = word;
 
                     // Add original sample + effect
                     word = sample_word + (int32_t)(word * mix);
                     word = synthio_mix_down_sample(word, 2);
-    
+
                     if (MP_LIKELY(self->base.bits_per_sample == 16)) {
                         word_buffer[i] = word;
                         if (!self->base.samples_signed) {

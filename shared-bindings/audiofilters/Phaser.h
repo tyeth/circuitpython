@@ -27,7 +27,7 @@ mp_obj_t common_hal_audiofilters_phaser_get_mix(audiofilters_phaser_obj_t *self)
 void common_hal_audiofilters_phaser_set_mix(audiofilters_phaser_obj_t *self, mp_obj_t arg);
 
 uint8_t common_hal_audiofilters_phaser_get_stages(audiofilters_phaser_obj_t *self);
-void common_hal_audiofilters_phaser_set_stages(audiofilters_phaser_obj_t *self, mp_obj_t arg);
+void common_hal_audiofilters_phaser_set_stages(audiofilters_phaser_obj_t *self, uint8_t arg);
 
 bool common_hal_audiofilters_phaser_get_playing(audiofilters_phaser_obj_t *self);
 void common_hal_audiofilters_phaser_play(audiofilters_phaser_obj_t *self, mp_obj_t sample, bool loop);

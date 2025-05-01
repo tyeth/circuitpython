@@ -53,12 +53,12 @@
 //|           import time
 //|           import board
 //|           import audiobusio
-//|           import synthio
 //|           import audiofilters
+//|           import synthio
 //|
 //|           audio = audiobusio.I2SOut(bit_clock=board.GP20, word_select=board.GP21, data=board.GP22)
 //|           synth = synthio.Synthesizer(channel_count=1, sample_rate=44100)
-//|           effect = audiofilters.Phaser(buffer_size=1024, channel_count=1, sample_rate=44100, mix=1.0)
+//|           effect = audiofilters.Phaser(channel_count=1, sample_rate=44100)
 //|           effect.frequency = synthio.LFO(offset=1000.0, scale=600.0, rate=0.5)
 //|           effect.play(synth)
 //|           audio.play(effect)
@@ -67,7 +67,7 @@
 //|         ...
 //|
 static mp_obj_t audiofilters_phaser_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    enum { ARG_frequency, ARG_stages, ARG_feedback, ARG_mix, ARG_buffer_size, ARG_sample_rate, ARG_bits_per_sample, ARG_samples_signed, ARG_channel_count, };
+    enum { ARG_frequency, ARG_feedback, ARG_mix, ARG_stages, ARG_buffer_size, ARG_sample_rate, ARG_bits_per_sample, ARG_samples_signed, ARG_channel_count, };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_frequency, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_ROM_INT(1000) } },
         { MP_QSTR_feedback, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_ROM_NONE } },
