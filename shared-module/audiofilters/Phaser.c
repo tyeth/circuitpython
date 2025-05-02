@@ -48,8 +48,8 @@ void common_hal_audiofilters_phaser_construct(audiofilters_phaser_obj_t *self,
     // The below section sets up the effect's starting values.
 
     // Create buffer to hold the last processed word
-    self->word_buffer = m_malloc_without_collect(self->base.channel_count * sizeof(int32_t));
-    memset(self->word_buffer, 0, self->base.channel_count * sizeof(int32_t));
+    self->word_buffer = m_malloc_without_collect(self->base.channel_count * sizeof(int16_t));
+    memset(self->word_buffer, 0, self->base.channel_count * sizeof(int16_t));
 
     self->nyquist = (mp_float_t)self->base.sample_rate / 2;
 
@@ -105,14 +105,14 @@ void common_hal_audiofilters_phaser_set_stages(audiofilters_phaser_obj_t *self, 
         arg = 1;
     }
 
-    self->allpass_buffer = (int32_t *)m_realloc(self->allpass_buffer,
+    self->allpass_buffer = (int16_t *)m_realloc(self->allpass_buffer,
         #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
-        self->base.channel_count * self->stages * sizeof(int32_t), // Old size
+        self->base.channel_count * self->stages * sizeof(int16_t), // Old size
         #endif
-        self->base.channel_count * arg * sizeof(int32_t));
+        self->base.channel_count * arg * sizeof(int16_t));
     self->stages = arg;
 
-    memset(self->allpass_buffer, 0, self->base.channel_count * self->stages * sizeof(int32_t));
+    memset(self->allpass_buffer, 0, self->base.channel_count * self->stages * sizeof(int16_t));
 }
 
 void audiofilters_phaser_reset_buffer(audiofilters_phaser_obj_t *self,
@@ -121,8 +121,8 @@ void audiofilters_phaser_reset_buffer(audiofilters_phaser_obj_t *self,
 
     memset(self->buffer[0], 0, self->buffer_len);
     memset(self->buffer[1], 0, self->buffer_len);
-    memset(self->word_buffer, 0, self->base.channel_count * sizeof(int32_t));
-    memset(self->allpass_buffer, 0, self->base.channel_count * self->stages * sizeof(int32_t));
+    memset(self->word_buffer, 0, self->base.channel_count * sizeof(int16_t));
+    memset(self->allpass_buffer, 0, self->base.channel_count * self->stages * sizeof(int16_t));
 }
 
 bool common_hal_audiofilters_phaser_get_playing(audiofilters_phaser_obj_t *self) {
@@ -253,7 +253,7 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
                         }
                     }
 
-                    int32_t word = synthio_sat16(sample_word + synthio_sat16(self->word_buffer[right_channel] * feedback, 15), 0);
+                    int32_t word = synthio_sat16(sample_word + synthio_sat16((int32_t)self->word_buffer[right_channel] * feedback, 15), 0);
                     int32_t allpass_word = 0;
 
                     // Update all-pass filters
@@ -262,7 +262,7 @@ audioio_get_buffer_result_t audiofilters_phaser_get_buffer(audiofilters_phaser_o
                         self->allpass_buffer[j + allpass_buffer_offset] = synthio_sat16(synthio_sat16(allpass_word * allpasscoef, 15) + word, 0);
                         word = allpass_word;
                     }
-                    self->word_buffer[(bool)allpass_buffer_offset] = word;
+                    self->word_buffer[(bool)allpass_buffer_offset] = (int16_t)word;
 
                     // Add original sample + effect
                     word = sample_word + (int32_t)(synthio_sat16(word * mix, 15));

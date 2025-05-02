@@ -32,8 +32,8 @@ typedef struct {
     bool loop;
     bool more_data;
 
-    int32_t *allpass_buffer;
-    int32_t *word_buffer;
+    int16_t *allpass_buffer;
+    int16_t *word_buffer;
 
     mp_obj_t sample;
 } audiofilters_phaser_obj_t;
