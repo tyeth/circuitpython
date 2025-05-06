@@ -83,7 +83,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(audiomixer_mixervoice_stop_obj, 1, audiomixer_mixervo
 
 //|     def end(self) -> None:
 //|     """ Sets looping to False if sample is playing, allowing current looped
-//|     sample to finish before looping again  ""
+//|     sample to finish before looping again  """
 //|     ...
 //|
 static mp_obj_t audiomixer_mixervoice_obj_end(mp_obj_t self_in) {
