@@ -155,18 +155,17 @@ static const mp_rom_map_elem_t audiomixer_mixervoice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&audiomixer_mixervoice_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_end), MP_ROM_PTR(&audiomixer_mixervoice_end_obj) },
 
-      // Properties
-      {
-          MP_ROM_QSTR(MP_QSTR_playing), MP_ROM_PTR(&audiomixer_mixervoice_playing_obj)
-      },
-      { MP_ROM_QSTR(MP_QSTR_level), MP_ROM_PTR(&audiomixer_mixervoice_level_obj) },
-      { MP_ROM_QSTR(MP_QSTR_loop), MP_ROM_PTR(&audiomixer_mixervoice_loop_obj) }, };
-    static MP_DEFINE_CONST_DICT(audiomixer_mixervoice_locals_dict, audiomixer_mixervoice_locals_dict_table);
+    // Properties
+    { MP_ROM_QSTR(MP_QSTR_playing), MP_ROM_PTR(&audiomixer_mixervoice_playing_obj) },
+    { MP_ROM_QSTR(MP_QSTR_level), MP_ROM_PTR(&audiomixer_mixervoice_level_obj) },
+    { MP_ROM_QSTR(MP_QSTR_loop), MP_ROM_PTR(&audiomixer_mixervoice_loop_obj) },
+};
+static MP_DEFINE_CONST_DICT(audiomixer_mixervoice_locals_dict, audiomixer_mixervoice_locals_dict_table);
 
-    MP_DEFINE_CONST_OBJ_TYPE(
-        audiomixer_mixervoice_type,
-        MP_QSTR_MixerVoice,
-        MP_TYPE_FLAG_HAS_SPECIAL_ACCESSORS,
-        make_new, audiomixer_mixervoice_make_new,
-        locals_dict, &audiomixer_mixervoice_locals_dict
-        );
+MP_DEFINE_CONST_OBJ_TYPE(
+    audiomixer_mixervoice_type,
+    MP_QSTR_MixerVoice,
+    MP_TYPE_FLAG_HAS_SPECIAL_ACCESSORS,
+    make_new, audiomixer_mixervoice_make_new,
+    locals_dict, &audiomixer_mixervoice_locals_dict
+    );
