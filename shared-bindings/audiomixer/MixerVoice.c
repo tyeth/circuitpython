@@ -153,7 +153,7 @@ static const mp_rom_map_elem_t audiomixer_mixervoice_locals_dict_table[] = {
     // Methods
     { MP_ROM_QSTR(MP_QSTR_play), MP_ROM_PTR(&audiomixer_mixervoice_play_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&audiomixer_mixervoice_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_end), MP_ROM_PTR(&audiomixer_mixervoice_end_obj)
+    { MP_ROM_QSTR(MP_QSTR_end), MP_ROM_PTR(&audiomixer_mixervoice_end_obj) },
 
       // Properties
       {
