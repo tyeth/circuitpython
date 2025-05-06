@@ -86,7 +86,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(audiomixer_mixervoice_stop_obj, 1, audiomixer_mixervo
 //|     sample to finish before looping again  ""
 //|     ...
 //|
-STATIC mp_obj_t audiomixer_mixervoice_obj_end(mp_obj_t self_in) {
+static mp_obj_t audiomixer_mixervoice_obj_end(mp_obj_t self_in) {
     audiomixer_mixervoice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     common_hal_audiomixer_mixervoice_end(self);
     return mp_const_none;
