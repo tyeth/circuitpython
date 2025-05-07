@@ -299,7 +299,7 @@ void displayio_tilegrid_mark_tile_dirty(displayio_tilegrid_t *self, uint16_t x, 
     if (self->partial_change) {
         displayio_area_union(&self->dirty_area, &temp_area, &self->dirty_area);
     }
-
+    self->partial_change = true;
 }
 
 void common_hal_displayio_tilegrid_set_tile(displayio_tilegrid_t *self, uint16_t x, uint16_t y, uint16_t tile_index) {
@@ -322,7 +322,6 @@ void common_hal_displayio_tilegrid_set_tile(displayio_tilegrid_t *self, uint16_t
         ((uint8_t *)tiles)[index] = (uint8_t)tile_index;
     }
     displayio_tilegrid_mark_tile_dirty(self, x, y);
-    self->partial_change = true;
 }
 
 void common_hal_displayio_tilegrid_set_all_tiles(displayio_tilegrid_t *self, uint16_t tile_index) {
