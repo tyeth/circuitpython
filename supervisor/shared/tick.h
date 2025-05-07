@@ -33,13 +33,6 @@ extern uint32_t supervisor_ticks_ms32(void);
  */
 extern uint64_t supervisor_ticks_ms64(void);
 
-/** @brief Get 64-bit current time in subticks
- *
- * Time is returned as a 64-bit count of subticks where each subtick is 1/32768
- * of a second.
- */
-extern uint64_t supervisor_get_raw_subticks(void);
-
 extern void supervisor_enable_tick(void);
 extern void supervisor_disable_tick(void);
 
