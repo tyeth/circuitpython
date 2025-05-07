@@ -29,7 +29,7 @@
 //|         :param Union[displayio.Palette, displayio.ColorConverter] pixel_shader:
 //|           The palette or ColorConverter to get mapped colors from.
 //|         :param int input_color_count: The number of colors in in the input bitmap.
-//|         :param TileGrid tilegrid: The tilegrid to use with the TilePaletteMapper
+//|         :param TileGrid tilegrid: The tilegrid to use with the TilePaletteMapper"""
 //|
 
 static mp_obj_t tilepalettemapper_tilepalettemapper_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
