@@ -12,6 +12,7 @@
 #include "shared-bindings/util.h"
 #include "shared-bindings/displayio/Palette.h"
 #include "shared-bindings/displayio/ColorConverter.h"
+#include "shared-bindings/displayio/TileGrid.h"
 #include "shared-bindings/tilepalettemapper/TilePaletteMapper.h"
 
 //| class TilePaletteMapper:
@@ -21,24 +22,23 @@
 //|     bitmap with a wider array of colors."""
 //|
 //|     def __init__(
-//|         self, palette: displayio.Palette, input_color_count: int, width: int, height: int
+//|         self, palette: displayio.Palette, input_color_count: int, tilegrid: TileGrid
 //|     ) -> None:
 //|         """Create a TilePaletteMApper object to store a set of color mappings for tiles.
 //|
 //|         :param Union[displayio.Palette, displayio.ColorConverter] pixel_shader:
 //|           The palette or ColorConverter to get mapped colors from.
 //|         :param int input_color_count: The number of colors in in the input bitmap.
-//|         :param int width: The width of the grid in tiles.
-//|         :param int height: The height of the grid in tiles."""
+//|         :param TileGrid tilegrid: The tilegrid to use with the TilePaletteMapper
 //|
 
 static mp_obj_t tilepalettemapper_tilepalettemapper_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    enum { ARG_pixel_shader, ARG_input_color_count, ARG_width, ARG_height };
+    enum { ARG_pixel_shader, ARG_input_color_count, ARG_tilegrid };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_pixel_shader, MP_ARG_OBJ | MP_ARG_REQUIRED },
         { MP_QSTR_input_color_count, MP_ARG_INT | MP_ARG_REQUIRED },
-        { MP_QSTR_width, MP_ARG_INT | MP_ARG_REQUIRED },
-        { MP_QSTR_height, MP_ARG_INT | MP_ARG_REQUIRED },
+        { MP_QSTR_tilegrid, MP_ARG_OBJ | MP_ARG_REQUIRED },
+
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -46,8 +46,14 @@ static mp_obj_t tilepalettemapper_tilepalettemapper_make_new(const mp_obj_type_t
     if (!mp_obj_is_type(pixel_shader, &displayio_palette_type) && !mp_obj_is_type(pixel_shader, &displayio_colorconverter_type)) {
         mp_raise_TypeError_varg(MP_ERROR_TEXT("unsupported %q type"), MP_QSTR_pixel_shader);
     }
+
+    mp_obj_t tilegrid = args[ARG_tilegrid].u_obj;
+    if (!mp_obj_is_type(tilegrid, &displayio_tilegrid_type)) {
+        mp_raise_TypeError_varg(MP_ERROR_TEXT("unsupported %q type"), MP_QSTR_tilegrid);
+    }
+
     tilepalettemapper_tilepalettemapper_t *self = mp_obj_malloc(tilepalettemapper_tilepalettemapper_t, &tilepalettemapper_tilepalettemapper_type);
-    common_hal_tilepalettemapper_tilepalettemapper_construct(self, pixel_shader, args[ARG_input_color_count].u_int, args[ARG_width].u_int, args[ARG_height].u_int);
+    common_hal_tilepalettemapper_tilepalettemapper_construct(self, pixel_shader, args[ARG_input_color_count].u_int, tilegrid);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -87,6 +93,17 @@ MP_DEFINE_CONST_FUN_OBJ_1(tilepalettemapper_tilepalettemapper_get_pixel_shader_o
 MP_PROPERTY_GETTER(tilepalettemapper_tilepalettemapper_palette_obj,
     (mp_obj_t)&tilepalettemapper_tilepalettemapper_get_pixel_shader_obj);
 
+//|     tilegrid: displayio.TileGrid
+//|     """The tilegrid that the TilePaletteMapper is used on."""
+//|
+static mp_obj_t tilepalettemapper_tilepalettemapper_obj_get_tilegrid(mp_obj_t self_in) {
+    tilepalettemapper_tilepalettemapper_t *self = MP_OBJ_TO_PTR(self_in);
+    return common_hal_tilepalettemapper_tilepalettemapper_get_tilegrid(self);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(tilepalettemapper_tilepalettemapper_get_tilegrid_obj, tilepalettemapper_tilepalettemapper_obj_get_tilegrid);
+
+MP_PROPERTY_GETTER(tilepalettemapper_tilepalettemapper_tilegrid_obj,
+    (mp_obj_t)&tilepalettemapper_tilepalettemapper_get_tilegrid_obj);
 
 //|     def __getitem__(self, index: Union[Tuple[int, int], int]) -> Tuple[int]:
 //|         """Returns the mapping for the given index. The index can either be an x,y tuple or an int equal

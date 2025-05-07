@@ -68,7 +68,7 @@ void displayio_tilegrid_validate_pixel_shader(mp_obj_t pixel_shader) {
 //|         tile_width and tile_height match the height of the bitmap by default.
 //|
 //|         :param Bitmap,OnDiskBitmap bitmap: The bitmap storing one or more tiles.
-//|         :param ColorConverter,Palette pixel_shader: The pixel shader that produces colors from values
+//|         :param Optional[ColorConverter,Palette] pixel_shader: The pixel shader that produces colors from values
 //|         :param int width: Width of the grid in tiles.
 //|         :param int height: Height of the grid in tiles.
 //|         :param int tile_width: Width of a single tile in pixels. Defaults to the full Bitmap and must evenly divide into the Bitmap's dimensions.
@@ -81,7 +81,7 @@ static mp_obj_t displayio_tilegrid_make_new(const mp_obj_type_t *type, size_t n_
     enum { ARG_bitmap, ARG_pixel_shader, ARG_width, ARG_height, ARG_tile_width, ARG_tile_height, ARG_default_tile, ARG_x, ARG_y };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_bitmap, MP_ARG_REQUIRED | MP_ARG_OBJ },
-        { MP_QSTR_pixel_shader, MP_ARG_OBJ | MP_ARG_KW_ONLY | MP_ARG_REQUIRED },
+        { MP_QSTR_pixel_shader, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = mp_const_none} },
         { MP_QSTR_width, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 1} },
         { MP_QSTR_height, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 1} },
         { MP_QSTR_tile_width, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 0} },
@@ -109,7 +109,9 @@ static mp_obj_t displayio_tilegrid_make_new(const mp_obj_type_t *type, size_t n_
         mp_raise_TypeError_varg(MP_ERROR_TEXT("unsupported %q type"), MP_QSTR_bitmap);
     }
     mp_obj_t pixel_shader = args[ARG_pixel_shader].u_obj;
-    displayio_tilegrid_validate_pixel_shader(pixel_shader);
+    if (pixel_shader != mp_const_none) {
+        displayio_tilegrid_validate_pixel_shader(pixel_shader);
+    }
     uint16_t tile_width = args[ARG_tile_width].u_int;
     if (tile_width == 0) {
         tile_width = bitmap_width;

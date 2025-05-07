@@ -8,16 +8,16 @@
 #include "shared-bindings/tilepalettemapper/TilePaletteMapper.h"
 #include "shared-bindings/displayio/Palette.h"
 #include "shared-bindings/displayio/ColorConverter.h"
+#include "shared-bindings/displayio/TileGrid.h"
 
 void common_hal_tilepalettemapper_tilepalettemapper_construct(tilepalettemapper_tilepalettemapper_t *self,
-    mp_obj_t pixel_shader, uint16_t input_color_count, uint16_t width, uint16_t height) {
-
+    mp_obj_t pixel_shader, uint16_t input_color_count, mp_obj_t tilegrid) {
+    self->tilegrid = tilegrid;
     self->pixel_shader = pixel_shader;
-    self->width_in_tiles = width;
-    self->height_in_tiles = height;
+    self->width_in_tiles = common_hal_displayio_tilegrid_get_width(tilegrid);
+    self->height_in_tiles = common_hal_displayio_tilegrid_get_height(tilegrid);
     self->input_color_count = input_color_count;
-    self->needs_refresh = false;
-    int mappings_len = width * height;
+    int mappings_len = self->width_in_tiles * self->height_in_tiles;
     self->tile_mappings = (uint32_t **)m_malloc(mappings_len * sizeof(uint32_t *));
     for (int i = 0; i < mappings_len; i++) {
         self->tile_mappings[i] = (uint32_t *)m_malloc_without_collect(input_color_count * sizeof(uint32_t));
@@ -31,6 +31,7 @@ void common_hal_tilepalettemapper_tilepalettemapper_construct(tilepalettemapper_
             }
         }
     }
+    common_hal_displayio_tilegrid_set_pixel_shader(self->tilegrid, self);
 }
 
 uint16_t common_hal_tilepalettemapper_tilepalettemapper_get_width(tilepalettemapper_tilepalettemapper_t *self) {
@@ -43,6 +44,10 @@ uint16_t common_hal_tilepalettemapper_tilepalettemapper_get_height(tilepalettema
 
 mp_obj_t common_hal_tilepalettemapper_tilepalettemapper_get_pixel_shader(tilepalettemapper_tilepalettemapper_t *self) {
     return self->pixel_shader;
+}
+
+mp_obj_t common_hal_tilepalettemapper_tilepalettemapper_get_tilegrid(tilepalettemapper_tilepalettemapper_t *self) {
+    return self->tilegrid;
 }
 
 mp_obj_t common_hal_tilepalettemapper_tilepalettemapper_get_mapping(tilepalettemapper_tilepalettemapper_t *self, uint16_t x, uint16_t y) {
@@ -67,7 +72,7 @@ void common_hal_tilepalettemapper_tilepalettemapper_set_mapping(tilepalettemappe
         mp_arg_validate_int_range(mapping_val, 0, palette_max, MP_QSTR_mapping_value);
         self->tile_mappings[y * self->width_in_tiles + x][i] = mapping_val;
     }
-    self->needs_refresh = true;
+    displayio_tilegrid_mark_tile_dirty(self->tilegrid, x, y);
 }
 
 void tilepalettemapper_tilepalettemapper_get_color(tilepalettemapper_tilepalettemapper_t *self, const _displayio_colorspace_t *colorspace, displayio_input_pixel_t *input_pixel, displayio_output_pixel_t *output_color, uint16_t x_tile_index, uint16_t y_tile_index) {
@@ -89,12 +94,4 @@ void tilepalettemapper_tilepalettemapper_get_color(tilepalettemapper_tilepalette
         displayio_colorconverter_convert(self->pixel_shader, colorspace, &tmp_pixel, output_color);
     }
 
-}
-
-bool tilepalettemapper_tilepalettemapper_needs_refresh(tilepalettemapper_tilepalettemapper_t *self) {
-    return self->needs_refresh;
-}
-
-void tilepalettemapper_tilepalettemapper_finish_refresh(tilepalettemapper_tilepalettemapper_t *self) {
-    self->needs_refresh = false;
 }

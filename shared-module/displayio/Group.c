@@ -258,6 +258,9 @@ static void _add_layer(displayio_group_t *self, mp_obj_t layer) {
     mp_obj_t native_layer = mp_obj_cast_to_native_base(layer, &displayio_tilegrid_type);
     if (native_layer != MP_OBJ_NULL) {
         displayio_tilegrid_t *tilegrid = native_layer;
+        if (tilegrid->pixel_shader == mp_const_none) {
+            mp_raise_ValueError(MP_ERROR_TEXT("TileGrid must have a pixel_shader"));
+        }
         if (tilegrid->in_group) {
             mp_raise_ValueError(MP_ERROR_TEXT("Layer already in a group"));
         } else {

@@ -275,25 +275,7 @@ uint16_t common_hal_displayio_tilegrid_get_tile(displayio_tilegrid_t *self, uint
     }
 }
 
-void common_hal_displayio_tilegrid_set_tile(displayio_tilegrid_t *self, uint16_t x, uint16_t y, uint16_t tile_index) {
-    if (tile_index >= self->tiles_in_bitmap) {
-        mp_raise_ValueError(MP_ERROR_TEXT("Tile index out of bounds"));
-    }
-
-    void *tiles = self->tiles;
-    if (self->inline_tiles) {
-        tiles = &self->tiles;
-    }
-    if (tiles == NULL) {
-        return;
-    }
-
-    uint32_t index = y * self->width_in_tiles + x;
-    if (self->tiles_in_bitmap > 255) {
-        ((uint16_t *)tiles)[index] = tile_index;
-    } else {
-        ((uint8_t *)tiles)[index] = (uint8_t)tile_index;
-    }
+void displayio_tilegrid_mark_tile_dirty(displayio_tilegrid_t *self, uint16_t x, uint16_t y) {
     displayio_area_t temp_area;
     displayio_area_t *tile_area;
     if (!self->partial_change) {
@@ -318,6 +300,28 @@ void common_hal_displayio_tilegrid_set_tile(displayio_tilegrid_t *self, uint16_t
         displayio_area_union(&self->dirty_area, &temp_area, &self->dirty_area);
     }
 
+}
+
+void common_hal_displayio_tilegrid_set_tile(displayio_tilegrid_t *self, uint16_t x, uint16_t y, uint16_t tile_index) {
+    if (tile_index >= self->tiles_in_bitmap) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Tile index out of bounds"));
+    }
+
+    void *tiles = self->tiles;
+    if (self->inline_tiles) {
+        tiles = &self->tiles;
+    }
+    if (tiles == NULL) {
+        return;
+    }
+
+    uint32_t index = y * self->width_in_tiles + x;
+    if (self->tiles_in_bitmap > 255) {
+        ((uint16_t *)tiles)[index] = tile_index;
+    } else {
+        ((uint8_t *)tiles)[index] = (uint8_t)tile_index;
+    }
+    displayio_tilegrid_mark_tile_dirty(self, x, y);
     self->partial_change = true;
 }
 
@@ -613,11 +617,6 @@ void displayio_tilegrid_finish_refresh(displayio_tilegrid_t *self) {
     } else if (mp_obj_is_type(self->pixel_shader, &displayio_colorconverter_type)) {
         displayio_colorconverter_finish_refresh(self->pixel_shader);
     }
-    #if CIRCUITPY_TILEPALETTEMAPPER
-    if (mp_obj_is_type(self->pixel_shader, &tilepalettemapper_tilepalettemapper_type)) {
-        tilepalettemapper_tilepalettemapper_finish_refresh(self->pixel_shader);
-    }
-    #endif
     if (mp_obj_is_type(self->bitmap, &displayio_bitmap_type)) {
         displayio_bitmap_finish_refresh(self->bitmap);
     } else if (mp_obj_is_type(self->bitmap, &displayio_ondiskbitmap_type)) {
@@ -671,11 +670,6 @@ displayio_area_t *displayio_tilegrid_get_refresh_areas(displayio_tilegrid_t *sel
             displayio_palette_needs_refresh(self->pixel_shader)) ||
         (mp_obj_is_type(self->pixel_shader, &displayio_colorconverter_type) &&
             displayio_colorconverter_needs_refresh(self->pixel_shader));
-    #if CIRCUITPY_TILEPALETTEMAPPER
-    self->full_change = self->full_change ||
-        (mp_obj_is_type(self->pixel_shader, &tilepalettemapper_tilepalettemapper_type) &&
-            tilepalettemapper_tilepalettemapper_needs_refresh(self->pixel_shader));
-    #endif
 
     if (self->full_change || first_draw) {
         self->current_area.next = tail;
