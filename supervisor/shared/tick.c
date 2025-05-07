@@ -114,13 +114,14 @@ void mp_hal_delay_ms(mp_uint_t delay_ms) {
     // or the user.
     while (remaining > 0 && !mp_hal_is_interrupted()) {
         RUN_BACKGROUND_TASKS;
-        remaining = end_subtick - supervisor_get_raw_subticks();
-        // We break a bit early so we don't risk setting the alarm before the time when we call
-        // sleep.
-        if (remaining < 1) {
+        // Exit if interrupted while running background tasks
+        if (mp_hal_is_interrupted()) {
             break;
         }
-        uint32_t remaining_ticks = remaining / 32;
+        // Recalculate remaining delay after running background tasks
+        remaining = end_subtick - supervisor_get_raw_subticks();
+        // If remaining delay is less than 1 tick, idle loop until end of delay
+        int64_t remaining_ticks = remaining / 32;
         if (remaining_ticks > 0) {
             port_interrupt_after_ticks(remaining_ticks);
             // Idle until an interrupt happens.
