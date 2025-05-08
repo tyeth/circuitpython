@@ -22,7 +22,7 @@
 //|     bitmap with a wider array of colors."""
 //|
 //|     def __init__(
-//|         self, palette: displayio.Palette, input_color_count: int, tilegrid: TileGrid
+//|         self, palette: displayio.Palette, input_color_count: int, tilegrid: displayio.TileGrid
 //|     ) -> None:
 //|         """Create a TilePaletteMApper object to store a set of color mappings for tiles.
 //|
@@ -94,7 +94,7 @@ MP_PROPERTY_GETTER(tilepalettemapper_tilepalettemapper_palette_obj,
     (mp_obj_t)&tilepalettemapper_tilepalettemapper_get_pixel_shader_obj);
 
 //|     tilegrid: displayio.TileGrid
-//|     """The tilegrid that the TilePaletteMapper is used on."""
+//|     """The TileGrid that the TilePaletteMapper is used with."""
 //|
 static mp_obj_t tilepalettemapper_tilepalettemapper_obj_get_tilegrid(mp_obj_t self_in) {
     tilepalettemapper_tilepalettemapper_t *self = MP_OBJ_TO_PTR(self_in);
