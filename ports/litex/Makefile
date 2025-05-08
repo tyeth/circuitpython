@@ -77,8 +77,9 @@ ifneq ($(CIRCUITPY_USB),0)
 SRC_C += lib/tinyusb/src/portable/valentyusb/eptri/dcd_eptri.c
 endif
 
-SRC_S = \
-	crt0-vexriscv.S
+SRC_S_UPPER = \
+	crt0-vexriscv.S \
+	supervisor/shared/cpu_regs.S
 
 $(BUILD)/lib/tlsf/tlsf.o: CFLAGS += -Wno-cast-align
 
@@ -93,7 +94,7 @@ ifeq ($(INTERNAL_LIBM),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(SRC_CIRCUITPY_COMMON:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S_UPPER:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 
 $(BUILD)/$(FATFS_DIR)/ff.o: COPT += -Os

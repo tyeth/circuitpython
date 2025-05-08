@@ -660,13 +660,13 @@ else
 OBJ_MBEDTLS :=
 endif
 
-SRC_S = supervisor/$(CHIP_FAMILY)_cpu.s
 BOOT2_S_CFLAGS ?= -DPICO_FLASH_SPI_CLKDIV=4
 SRC_S_UPPER = sdk/src/rp2_common/hardware_irq/irq_handler_chain.S \
               sdk/src/rp2_common/pico_bit_ops/bit_ops_aeabi.S \
               sdk/src/rp2_common/pico_double/double_aeabi_$(DOUBLE_EABI).S \
               sdk/src/rp2_common/pico_int64_ops/pico_int64_ops_aeabi.S \
               sdk/src/rp2_common/pico_crt0/crt0.S \
+              supervisor/shared/cpu_regs.S \
               $(SRC_S_UPPER_CHIP_VARIANT)
 
 ifeq ($(CIRCUITPY_PICODVI),1)

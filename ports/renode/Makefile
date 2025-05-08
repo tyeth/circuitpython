@@ -45,7 +45,7 @@ SRC_C += \
 	background.c \
 	mphalport.c \
 
-SRC_S = supervisor/$(CPU)_cpu.s
+SRC_S_UPPER = supervisor/shared/cpu_regs.S
 
 OBJ = $(PY_O) $(SUPERVISOR_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_COMMON_HAL_SHARED_MODULE_EXPANDED:.c=.o))
