@@ -81,6 +81,11 @@ void common_hal_displayio_tilegrid_construct(displayio_tilegrid_t *self, mp_obj_
     self->flip_y = false;
     self->transpose_xy = false;
     self->absolute_transform = NULL;
+    #if CIRCUITPY_TILEPALETTEMAPPER
+    if (mp_obj_is_type(self->pixel_shader, &tilepalettemapper_tilepalettemapper_type)) {
+        tilepalettemapper_tilepalettemapper_bind(self->pixel_shader, self);
+    }
+    #endif
 }
 
 
@@ -231,6 +236,11 @@ mp_obj_t common_hal_displayio_tilegrid_get_pixel_shader(displayio_tilegrid_t *se
 void common_hal_displayio_tilegrid_set_pixel_shader(displayio_tilegrid_t *self, mp_obj_t pixel_shader) {
     self->pixel_shader = pixel_shader;
     self->full_change = true;
+    #if CIRCUITPY_TILEPALETTEMAPPER
+    if (mp_obj_is_type(self->pixel_shader, &tilepalettemapper_tilepalettemapper_type)) {
+        tilepalettemapper_tilepalettemapper_bind(self->pixel_shader, self);
+    }
+    #endif
 }
 
 mp_obj_t common_hal_displayio_tilegrid_get_bitmap(displayio_tilegrid_t *self) {

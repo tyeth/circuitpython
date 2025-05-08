@@ -12,6 +12,7 @@
 
 #include "py/obj.h"
 #include "shared-module/displayio/Palette.h"
+#include "shared-module/displayio/TileGrid.h"
 
 typedef struct {
     mp_obj_base_t base;
@@ -24,3 +25,4 @@ typedef struct {
 } tilepalettemapper_tilepalettemapper_t;
 
 void tilepalettemapper_tilepalettemapper_get_color(tilepalettemapper_tilepalettemapper_t *self, const _displayio_colorspace_t *colorspace, displayio_input_pixel_t *input_pixel, displayio_output_pixel_t *output_color, uint16_t x_tile_index, uint16_t y_tile_index);
+void tilepalettemapper_tilepalettemapper_bind(tilepalettemapper_tilepalettemapper_t *self, displayio_tilegrid_t *tilegrid);

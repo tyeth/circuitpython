@@ -8,7 +8,7 @@
 extern const mp_obj_type_t tilepalettemapper_tilepalettemapper_type;
 
 void common_hal_tilepalettemapper_tilepalettemapper_construct(tilepalettemapper_tilepalettemapper_t *self,
-    mp_obj_t paltte, uint16_t input_color_count, mp_obj_t tilegrid);
+    mp_obj_t paltte, uint16_t input_color_count);
 
 
 uint16_t common_hal_tilepalettemapper_tilepalettemapper_get_width(tilepalettemapper_tilepalettemapper_t *self);

@@ -11,27 +11,9 @@
 #include "shared-bindings/displayio/TileGrid.h"
 
 void common_hal_tilepalettemapper_tilepalettemapper_construct(tilepalettemapper_tilepalettemapper_t *self,
-    mp_obj_t pixel_shader, uint16_t input_color_count, mp_obj_t tilegrid) {
-    self->tilegrid = tilegrid;
+    mp_obj_t pixel_shader, uint16_t input_color_count) {
     self->pixel_shader = pixel_shader;
-    self->width_in_tiles = common_hal_displayio_tilegrid_get_width(tilegrid);
-    self->height_in_tiles = common_hal_displayio_tilegrid_get_height(tilegrid);
     self->input_color_count = input_color_count;
-    int mappings_len = self->width_in_tiles * self->height_in_tiles;
-    self->tile_mappings = (uint32_t **)m_malloc(mappings_len * sizeof(uint32_t *));
-    for (int i = 0; i < mappings_len; i++) {
-        self->tile_mappings[i] = (uint32_t *)m_malloc_without_collect(input_color_count * sizeof(uint32_t));
-        if (mp_obj_is_type(self->pixel_shader, &displayio_palette_type)) {
-            for (uint16_t j = 0; j < input_color_count; j++) {
-                self->tile_mappings[i][j] = j;
-            }
-        } else if (mp_obj_is_type(self->pixel_shader, &displayio_colorconverter_type)) {
-            for (uint16_t j = 0; j < input_color_count; j++) {
-                self->tile_mappings[i][j] = 0;
-            }
-        }
-    }
-    common_hal_displayio_tilegrid_set_pixel_shader(self->tilegrid, self);
 }
 
 uint16_t common_hal_tilepalettemapper_tilepalettemapper_get_width(tilepalettemapper_tilepalettemapper_t *self) {
@@ -94,4 +76,25 @@ void tilepalettemapper_tilepalettemapper_get_color(tilepalettemapper_tilepalette
         displayio_colorconverter_convert(self->pixel_shader, colorspace, &tmp_pixel, output_color);
     }
 
+}
+
+void tilepalettemapper_tilepalettemapper_bind(tilepalettemapper_tilepalettemapper_t *self,  displayio_tilegrid_t *tilegrid) {
+    self->tilegrid = tilegrid;
+    self->width_in_tiles = common_hal_displayio_tilegrid_get_width(tilegrid);
+    self->height_in_tiles = common_hal_displayio_tilegrid_get_height(tilegrid);
+
+    int mappings_len = self->width_in_tiles * self->height_in_tiles;
+    self->tile_mappings = (uint32_t **)m_malloc(mappings_len * sizeof(uint32_t *));
+    for (int i = 0; i < mappings_len; i++) {
+        self->tile_mappings[i] = (uint32_t *)m_malloc_without_collect(self->input_color_count * sizeof(uint32_t));
+        if (mp_obj_is_type(self->pixel_shader, &displayio_palette_type)) {
+            for (uint16_t j = 0; j < self->input_color_count; j++) {
+                self->tile_mappings[i][j] = j;
+            }
+        } else if (mp_obj_is_type(self->pixel_shader, &displayio_colorconverter_type)) {
+            for (uint16_t j = 0; j < self->input_color_count; j++) {
+                self->tile_mappings[i][j] = 0;
+            }
+        }
+    }
 }

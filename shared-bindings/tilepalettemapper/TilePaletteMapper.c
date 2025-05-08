@@ -22,22 +22,20 @@
 //|     bitmap with a wider array of colors."""
 //|
 //|     def __init__(
-//|         self, palette: displayio.Palette, input_color_count: int, tilegrid: displayio.TileGrid
+//|         self, palette: displayio.Palette, input_color_count: int
 //|     ) -> None:
 //|         """Create a TilePaletteMApper object to store a set of color mappings for tiles.
 //|
 //|         :param Union[displayio.Palette, displayio.ColorConverter] pixel_shader:
 //|           The palette or ColorConverter to get mapped colors from.
-//|         :param int input_color_count: The number of colors in in the input bitmap.
-//|         :param TileGrid tilegrid: The tilegrid to use with the TilePaletteMapper"""
+//|         :param int input_color_count: The number of colors in in the input bitmap."""
 //|
 
 static mp_obj_t tilepalettemapper_tilepalettemapper_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    enum { ARG_pixel_shader, ARG_input_color_count, ARG_tilegrid };
+    enum { ARG_pixel_shader, ARG_input_color_count };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_pixel_shader, MP_ARG_OBJ | MP_ARG_REQUIRED },
         { MP_QSTR_input_color_count, MP_ARG_INT | MP_ARG_REQUIRED },
-        { MP_QSTR_tilegrid, MP_ARG_OBJ | MP_ARG_REQUIRED },
 
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -47,13 +45,9 @@ static mp_obj_t tilepalettemapper_tilepalettemapper_make_new(const mp_obj_type_t
         mp_raise_TypeError_varg(MP_ERROR_TEXT("unsupported %q type"), MP_QSTR_pixel_shader);
     }
 
-    mp_obj_t tilegrid = args[ARG_tilegrid].u_obj;
-    if (!mp_obj_is_type(tilegrid, &displayio_tilegrid_type)) {
-        mp_raise_TypeError_varg(MP_ERROR_TEXT("unsupported %q type"), MP_QSTR_tilegrid);
-    }
 
     tilepalettemapper_tilepalettemapper_t *self = mp_obj_malloc(tilepalettemapper_tilepalettemapper_t, &tilepalettemapper_tilepalettemapper_type);
-    common_hal_tilepalettemapper_tilepalettemapper_construct(self, pixel_shader, args[ARG_input_color_count].u_int, tilegrid);
+    common_hal_tilepalettemapper_tilepalettemapper_construct(self, pixel_shader, args[ARG_input_color_count].u_int);
 
     return MP_OBJ_FROM_PTR(self);
 }
