@@ -202,21 +202,24 @@ else
 endif
 
 ifeq ($(IDF_TARGET_ARCH),xtensa)
-# Remove the last two flags once TinyUSB is updated with the `#include <xtensa_api.h>` instead of
-# `#include "xtensa/xtensa_api.h"`.
+	# Remove the last two flags once TinyUSB is updated with the `#include <xtensa_api.h>` instead of
+	# `#include "xtensa/xtensa_api.h"`.
 
-CFLAGS += -mlongcalls -isystem esp-idf/components/xtensa/deprecated_include/ -Wno-error=cpp
+	CFLAGS += -mlongcalls -isystem esp-idf/components/xtensa/deprecated_include/ -Wno-error=cpp
+
+	# Wrap longjmp with a patched version that protects register window update with a critical section
+	LDFLAGS += -Wl,--wrap=longjmp
 else ifeq ($(IDF_TARGET_ARCH),riscv)
 
-ifeq ($(IDF_TARGET),esp32p4)
-CFLAGS += -march=rv32imafc_zicsr_zifencei_xesppie -mabi=ilp32f
-else
-CFLAGS += -march=rv32imac_zicsr_zifencei
-endif
+	ifeq ($(IDF_TARGET),esp32p4)
+		CFLAGS += -march=rv32imafc_zicsr_zifencei_xesppie -mabi=ilp32f
+	else
+		CFLAGS += -march=rv32imac_zicsr_zifencei
+	endif
 
-LDFLAGS += \
-	-Lesp-idf/components/riscv/ld \
-	-Trom.api.ld
+	LDFLAGS += \
+		-Lesp-idf/components/riscv/ld \
+		-Trom.api.ld
 endif
 
 $(BUILD)/lib/tlsf/tlsf.o: CFLAGS += -Wno-cast-align
@@ -544,6 +547,10 @@ ifeq ($(DEBUG), 1)
 	DEBUG_SDKCONFIG = esp-idf-config/sdkconfig-debug.defaults
 else
 	DEBUG_SDKCONFIG = esp-idf-config/sdkconfig-opt.defaults
+endif
+
+ifeq ($(ENABLE_JTAG), 1)
+	CFLAGS += -DENABLE_JTAG=1
 endif
 
 SDKCONFIGS := esp-idf-config/sdkconfig.defaults;$(DEBUG_SDKCONFIG);$(FLASH_SIZE_SDKCONFIG);$(FLASH_MODE_SDKCONFIG);$(FLASH_SPEED_SDKCONFIG);$(PSRAM_SDKCONFIG);$(PSRAM_SIZE_SDKCONFIG);$(PSRAM_MODE_SDKCONFIG);$(PSRAM_SPEED_SDKCONFIG);$(TARGET_SDKCONFIG);boards/$(BOARD)/sdkconfig
