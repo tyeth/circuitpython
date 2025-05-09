@@ -161,9 +161,9 @@ SRC_C += \
 
 endif
 
-SRC_S = \
+SRC_S_UPPER = \
     sdk/devices/$(CHIP_FAMILY)/gcc/startup_$(CHIP_CORE).S \
-    supervisor/cpu.S
+    supervisor/shared/cpu_regs.S
 
 OBJ = $(PY_O) $(SUPERVISOR_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_SDK:.c=.o))
@@ -173,6 +173,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(SRC_CIRCUITPY_COMMON:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.S=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S_UPPER:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 
 SRC_QSTR += $(SRC_C) $(SRC_SUPERVISOR) $(SRC_COMMON_HAL_SHARED_MODULE_EXPANDED) $(SRC_CIRCUITPY_COMMON)

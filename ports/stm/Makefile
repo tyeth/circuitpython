@@ -212,8 +212,8 @@ ifneq ($(CIRCUITPY_USB),0)
 	endif
 endif
 
+SRC_S_UPPER = supervisor/shared/cpu_regs.S
 SRC_S = \
-	supervisor/cpu.s \
 	st_driver/cmsis_device_$(MCU_SERIES_LOWER)/Source/Templates/gcc/startup_$(MCU_VARIANT_LOWER).s
 
 ifneq ($(FROZEN_MPY_DIR),)
@@ -229,6 +229,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(SRC_CIRCUITPY_COMMON:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S_UPPER:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 
 $(BUILD)/$(FATFS_DIR)/ff.o: COPT += -Os
