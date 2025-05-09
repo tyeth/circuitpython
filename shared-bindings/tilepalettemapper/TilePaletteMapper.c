@@ -84,7 +84,7 @@ static mp_obj_t tilepalettemapper_tilepalettemapper_obj_get_pixel_shader(mp_obj_
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tilepalettemapper_tilepalettemapper_get_pixel_shader_obj, tilepalettemapper_tilepalettemapper_obj_get_pixel_shader);
 
-MP_PROPERTY_GETTER(tilepalettemapper_tilepalettemapper_palette_obj,
+MP_PROPERTY_GETTER(tilepalettemapper_tilepalettemapper_pixel_shader_obj,
     (mp_obj_t)&tilepalettemapper_tilepalettemapper_get_pixel_shader_obj);
 
 //|     tilegrid: displayio.TileGrid
@@ -165,7 +165,8 @@ static mp_obj_t tilepalettemapper_subscr(mp_obj_t self_in, mp_obj_t index_obj, m
 static const mp_rom_map_elem_t tilepalettemapper_tilepalettemapper_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_width), MP_ROM_PTR(&tilepalettemapper_tilepalettemapper_width_obj) },
     { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_PTR(&tilepalettemapper_tilepalettemapper_height_obj) },
-    { MP_ROM_QSTR(MP_QSTR_palette), MP_ROM_PTR(&tilepalettemapper_tilepalettemapper_palette_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pixel_shader), MP_ROM_PTR(&tilepalettemapper_tilepalettemapper_pixel_shader_obj) },
+    { MP_ROM_QSTR(MP_QSTR_tilegrid), MP_ROM_PTR(&tilepalettemapper_tilepalettemapper_tilegrid_obj) },
 };
 static MP_DEFINE_CONST_DICT(tilepalettemapper_tilepalettemapper_locals_dict, tilepalettemapper_tilepalettemapper_locals_dict_table);
 

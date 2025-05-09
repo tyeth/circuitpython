@@ -14,6 +14,7 @@ void common_hal_tilepalettemapper_tilepalettemapper_construct(tilepalettemapper_
     mp_obj_t pixel_shader, uint16_t input_color_count) {
     self->pixel_shader = pixel_shader;
     self->input_color_count = input_color_count;
+    self->tilegrid = mp_const_none;
 }
 
 uint16_t common_hal_tilepalettemapper_tilepalettemapper_get_width(tilepalettemapper_tilepalettemapper_t *self) {
@@ -79,6 +80,9 @@ void tilepalettemapper_tilepalettemapper_get_color(tilepalettemapper_tilepalette
 }
 
 void tilepalettemapper_tilepalettemapper_bind(tilepalettemapper_tilepalettemapper_t *self,  displayio_tilegrid_t *tilegrid) {
+    if (self->tilegrid != mp_const_none) {
+        mp_raise_RuntimeError(MP_ERROR_TEXT("TilePaletteMapper may only be bound to a TileGrid once"));
+    }
     self->tilegrid = tilegrid;
     self->width_in_tiles = common_hal_displayio_tilegrid_get_width(tilegrid);
     self->height_in_tiles = common_hal_displayio_tilegrid_get_height(tilegrid);

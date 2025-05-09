@@ -2070,8 +2070,8 @@ msgstr ""
 msgid "Tile width must exactly divide bitmap width"
 msgstr ""
 
-#: shared-module/displayio/Group.c
-msgid "TileGrid must have a pixel_shader"
+#: shared-module/tilepalettemapper/TilePaletteMapper.c
+msgid "TilePaletteMapper may only be bound to a TileGrid once"
 msgstr ""
 
 #: shared-bindings/alarm/time/TimeAlarm.c
