@@ -1079,7 +1079,8 @@ msgstr "Det gick inte att skriva till intern flash."
 msgid "File exists"
 msgstr "Filen finns redan"
 
-#: shared-module/lvfontio/OnDiskFont.c shared-module/os/getenv.c
+#: shared-bindings/supervisor/__init__.c shared-module/lvfontio/OnDiskFont.c
+#: shared-module/os/getenv.c
 msgid "File not found"
 msgstr "Filen hittades inte"
 
@@ -1278,6 +1279,7 @@ msgstr "Avbruten av utgångsfunktion"
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2040.c py/argcheck.c
 #: shared-bindings/digitalio/DigitalInOut.c
 #: shared-bindings/epaperdisplay/EPaperDisplay.c shared-bindings/pwmio/PWMOut.c
+#: shared-bindings/supervisor/__init__.c
 #: shared-module/aurora_epaper/aurora_framebuffer.c
 #: shared-module/lvfontio/OnDiskFont.c
 msgid "Invalid %q"
@@ -2105,6 +2107,10 @@ msgstr "Tile-index utanför gräns"
 msgid "Tile width must exactly divide bitmap width"
 msgstr "Tile-bredd måste vara jämnt delbar med bredd på bitmap"
 
+#: shared-module/tilepalettemapper/TilePaletteMapper.c
+msgid "TilePaletteMapper may only be bound to a TileGrid once"
+msgstr ""
+
 #: shared-bindings/alarm/time/TimeAlarm.c
 msgid "Time is in the past."
 msgstr "Tid har passerats."
@@ -2636,16 +2642,16 @@ msgstr "bitmappsstorlekar måste matcha"
 msgid "bits must be 32 or less"
 msgstr "bits måste vara 32 eller färre"
 
+#: shared-bindings/audiofreeverb/Freeverb.c
+msgid "bits_per_sample must be 16"
+msgstr "bits_per_sample måste vara 16"
+
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
 #: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
-#: shared-bindings/audiodelays/Reverb.c
-msgid "bits_per_sample must be 16"
-msgstr "bits_per_sample måste vara 16"
-
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
-#: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
+#: shared-bindings/audiofilters/Filter.c shared-bindings/audiofilters/Phaser.c
+#: shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
 msgstr "bits_per_sample måste vara 8 eller 16"
 
@@ -4069,7 +4075,7 @@ msgstr "argumentet roll måste vara en ndarray"
 msgid "rsplit(None,n)"
 msgstr "rsplit(None,n)"
 
-#: shared-bindings/audiodelays/Reverb.c
+#: shared-bindings/audiofreeverb/Freeverb.c
 msgid "samples_signed must be true"
 msgstr "samples_signed måste vara sann"
 
