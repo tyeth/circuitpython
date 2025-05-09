@@ -1080,7 +1080,8 @@ msgstr "Wúfǎ xiě rù nèibù shǎncún."
 msgid "File exists"
 msgstr "Wénjiàn cúnzài"
 
-#: shared-module/lvfontio/OnDiskFont.c shared-module/os/getenv.c
+#: shared-bindings/supervisor/__init__.c shared-module/lvfontio/OnDiskFont.c
+#: shared-module/os/getenv.c
 msgid "File not found"
 msgstr "zhǎo bú dào wén jiàn"
 
@@ -1284,6 +1285,7 @@ msgstr "bèi shūchū gōngnéng zhōngduàn"
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2040.c py/argcheck.c
 #: shared-bindings/digitalio/DigitalInOut.c
 #: shared-bindings/epaperdisplay/EPaperDisplay.c shared-bindings/pwmio/PWMOut.c
+#: shared-bindings/supervisor/__init__.c
 #: shared-module/aurora_epaper/aurora_framebuffer.c
 #: shared-module/lvfontio/OnDiskFont.c
 msgid "Invalid %q"
@@ -2112,6 +2114,10 @@ msgstr "Píng pū zhǐshù chāochū fànwéi"
 msgid "Tile width must exactly divide bitmap width"
 msgstr "Píng pū kuāndù bìxū huàfēn wèi tú kuāndù"
 
+#: shared-module/tilepalettemapper/TilePaletteMapper.c
+msgid "TilePaletteMapper may only be bound to a TileGrid once"
+msgstr ""
+
 #: shared-bindings/alarm/time/TimeAlarm.c
 msgid "Time is in the past."
 msgstr "shí jiān yǐ jīng guò qù."
@@ -2642,16 +2648,16 @@ msgstr "wèi tú dà xiǎo bì xū pǐ pèi"
 msgid "bits must be 32 or less"
 msgstr "wèi bì xū shì 32 huò gèng shǎo"
 
+#: shared-bindings/audiofreeverb/Freeverb.c
+msgid "bits_per_sample must be 16"
+msgstr "bits_per_sample bìxū wèi 16"
+
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
 #: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
-#: shared-bindings/audiodelays/Reverb.c
-msgid "bits_per_sample must be 16"
-msgstr "bits_per_sample bìxū wèi 16"
-
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
-#: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
+#: shared-bindings/audiofilters/Filter.c shared-bindings/audiofilters/Phaser.c
+#: shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
 msgstr "měi jiàn yàngběn bìxū wèi 8 huò 16"
 
@@ -4075,7 +4081,7 @@ msgstr "gǔn dòng cān shù bì xū shì ndarray"
 msgid "rsplit(None,n)"
 msgstr "Rchāifēn(wú,N)"
 
-#: shared-bindings/audiodelays/Reverb.c
+#: shared-bindings/audiofreeverb/Freeverb.c
 msgid "samples_signed must be true"
 msgstr "samples_signed bìxū wéi zhēn"
 
