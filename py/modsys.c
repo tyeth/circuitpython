@@ -26,6 +26,7 @@
  */
 
 #include "py/builtin.h"
+#include "py/objexcept.h"
 #include "py/objlist.h"
 #include "py/objmodule.h"
 #include "py/objtuple.h"
@@ -187,7 +188,8 @@ static mp_obj_t mp_sys_exc_info(void) {
     t->items[0] = MP_OBJ_FROM_PTR(mp_obj_get_type(cur_exc));
     t->items[1] = cur_exc;
     // CIRCUITPY-CHANGE: has traceback obj
-    t->items[2] = mp_obj_exception_get_traceback_obj(cur_exc);
+    mp_obj_exception_t *native_exc = mp_obj_exception_get_native(cur_exc);
+    t->items[2] = native_exc->traceback;
     return MP_OBJ_FROM_PTR(t);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(mp_sys_exc_info_obj, mp_sys_exc_info);
