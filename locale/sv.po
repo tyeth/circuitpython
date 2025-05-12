@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-04-23 08:01+0000\n"
+"PO-Revision-Date: 2025-05-11 14:02+0000\n"
 "Last-Translator: Jonny Bergdahl <jonny@bergdahl.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.11.1-dev\n"
+"X-Generator: Weblate 5.12-dev\n"
 
 #: main.c
 msgid ""
@@ -2109,7 +2109,7 @@ msgstr "Tile-bredd måste vara jämnt delbar med bredd på bitmap"
 
 #: shared-module/tilepalettemapper/TilePaletteMapper.c
 msgid "TilePaletteMapper may only be bound to a TileGrid once"
-msgstr ""
+msgstr "TilePaletteMapper får bara bindas till ett TileGrid en gång"
 
 #: shared-bindings/alarm/time/TimeAlarm.c
 msgid "Time is in the past."
