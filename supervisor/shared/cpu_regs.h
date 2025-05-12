@@ -20,6 +20,13 @@
 #endif
 #endif
 
+#ifdef __riscv
+#define INTEGER_REGS 12
+#ifdef __riscv_vector
+#define FLOATING_POINT_REGS 12
+#endif
+#endif
+
 #ifndef INTEGER_REGS
 #define INTEGER_REGS 0
 #endif
