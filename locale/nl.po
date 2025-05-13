@@ -1093,7 +1093,7 @@ msgstr ""
 msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr ""
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Formaat wordt niet ondersteund"
 
@@ -2316,10 +2316,6 @@ msgstr ""
 msgid "Unsupported display bus type"
 msgstr "Niet-ondersteund beeldscherm bus type"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Niet-ondersteunde format"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr ""
@@ -2378,8 +2374,10 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr ""
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
 msgstr ""
 
 #: main.c
@@ -4416,12 +4414,6 @@ msgstr ""
 msgid "width must be greater than zero"
 msgstr "breedte moet groter dan nul zijn"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr ""
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr ""
@@ -4483,6 +4475,9 @@ msgstr "zi moet van type float zijn"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi moet vorm (n_section, 2) hebben"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Niet-ondersteunde format"
 
 #~ msgid "Data chunk must follow fmt chunk"
 #~ msgstr "Data chunk moet gevolgd worden door fmt chunk"

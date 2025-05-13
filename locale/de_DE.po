@@ -1113,7 +1113,7 @@ msgstr "Für den L8-Farbraum muss die Eingabe-Bitmap 8 Bit pro Pixel aufweisen"
 msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr "Für RGB-Farbräume muss die Eingabe-Bitmap 16 Bit pro Pixel haben"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Format nicht unterstützt"
 
@@ -2353,10 +2353,6 @@ msgstr "Nicht unterstützter Farbraum"
 msgid "Unsupported display bus type"
 msgstr "Nicht unterstützter display bus type"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Nicht unterstütztes Format"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Hash Algorithmus wird nicht unterstützt"
@@ -2421,9 +2417,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "WLAN ist nicht aktiviert"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4483,12 +4481,6 @@ msgstr "Gewichte müssen ein Objekt des Typs %q, %q, %q, or %q, not %q sein "
 msgid "width must be greater than zero"
 msgstr "Breite muss größer als 0 sein"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "wifi ist nicht aktiviert"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wifi.Monitor nicht verfügbar"
@@ -4550,6 +4542,15 @@ msgstr "zi muss eine Gleitkommazahl sein"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi muss die Form (n_section, 2) haben"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Nicht unterstütztes Format"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "WLAN ist nicht aktiviert"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "wifi ist nicht aktiviert"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "'/' kann nicht wiedereingehängt werden, wenn per USB sichtbar."

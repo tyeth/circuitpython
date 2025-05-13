@@ -1106,7 +1106,7 @@ msgstr "Pro barevný prostor L8 musí mít vstupní bitmapa 8 bitů na pixel"
 msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr "Pro barevný prostor RGB musí mít vstupní bitmapa 16 bitů na pixel"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Formát není podporován"
 
@@ -2324,10 +2324,6 @@ msgstr "Nepodporovaný barevný prostor"
 msgid "Unsupported display bus type"
 msgstr "Nepodporovaná sběrnice dispalye"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Nepodporovaný formát"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Nepodporovaný hash algoritmus"
@@ -2389,9 +2385,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "Wifi není povoleno"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4421,12 +4419,6 @@ msgstr ""
 msgid "width must be greater than zero"
 msgstr ""
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr ""
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wifi.Monitor není dostupný"
@@ -4488,6 +4480,12 @@ msgstr ""
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr ""
+
+#~ msgid "Unsupported format"
+#~ msgstr "Nepodporovaný formát"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "Wifi není povoleno"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "Není možné znovu připojit '/', pokud je viditelné pomocí USB."

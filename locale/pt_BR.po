@@ -1118,7 +1118,7 @@ msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr ""
 "Para espaços de cor RGB, o bitmap da entrada deve ter 16 bits por pixel"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "O formato não é suportado"
 
@@ -2368,10 +2368,6 @@ msgstr "Espaço de cor não compatível"
 msgid "Unsupported display bus type"
 msgstr "Não há suporte para o tipo do display bus"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Formato não suportado"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Sem compatibilidade com o algoritmo de hash"
@@ -2435,9 +2431,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "O Wi-Fi não está ativado"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4491,12 +4489,6 @@ msgstr "os pesos devem ser um objeto do tipo %q, %q, %q ou %q, e não %q "
 msgid "width must be greater than zero"
 msgstr "a largura deve ser maior que zero"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "o wifi não está ativo"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "O wifi.Monitor não está disponível"
@@ -4558,6 +4550,15 @@ msgstr "zi deve ser de um tipo float"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi deve estar na forma (n_section, 2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Formato não suportado"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "O Wi-Fi não está ativado"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "o wifi não está ativo"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "Não é possível montar '/' quando estiver visível pelo USB."

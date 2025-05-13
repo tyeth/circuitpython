@@ -1111,7 +1111,7 @@ msgstr "För L8-färgrymden måste indatabitmappen ha 8 bitar per pixel"
 msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr "För RGB-färgrymder måste indatabitmappen ha 16 bitar per pixel"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Format stöds inte"
 
@@ -2340,10 +2340,6 @@ msgstr "Färgrymd stöds inte"
 msgid "Unsupported display bus type"
 msgstr "Busstyp för display stöds inte"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Format stöds inte"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Hash-algoritmen stöds inte"
@@ -2405,9 +2401,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "WiFi är inte aktiverat"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4446,12 +4444,6 @@ msgstr "Vikter måste vara ett objekt av typen %q, %q, %q eller %q, inte %q "
 msgid "width must be greater than zero"
 msgstr "width måste vara större än noll"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "WiFi är inte aktiverat"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wifi.Monitor är inte tillgänglig"
@@ -4513,6 +4505,15 @@ msgstr "zi måste vara av typ float"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi måste vara i formen (n_section, 2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Format stöds inte"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "WiFi är inte aktiverat"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "WiFi är inte aktiverat"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "Det går inte att montera om '/' när den är synlig via USB."

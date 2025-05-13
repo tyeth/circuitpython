@@ -1106,7 +1106,7 @@ msgstr "For L8 colourspace, input bitmap must have 8 bits per pixel"
 msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr "For RGB colourspaces, input bitmap must have 16 bits per pixel"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Format not supported"
 
@@ -2328,10 +2328,6 @@ msgstr "Unsupported colourspace"
 msgid "Unsupported display bus type"
 msgstr "Unsupported display bus type"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Unsupported format"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Unsupported hash algorithm"
@@ -2393,9 +2389,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "Wifi is not enabled"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4430,12 +4428,6 @@ msgstr "weights must be an object of type %q, %q, %q, or %q, not %q "
 msgid "width must be greater than zero"
 msgstr "width must be greater than zero"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "WiFi is not enabled"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wifi.Monitor not available"
@@ -4497,6 +4489,15 @@ msgstr "zi must be of float type"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi must be of shape (n_section, 2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Unsupported format"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "Wifi is not enabled"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "WiFi is not enabled"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "Cannot remount '/' when visible via USB."
