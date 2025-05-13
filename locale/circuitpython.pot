@@ -2362,10 +2362,6 @@ msgstr ""
 msgid "WiFi is not enabled"
 msgstr ""
 
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr ""
-
 #: main.c
 msgid "Woken up by alarm.\n"
 msgstr ""
