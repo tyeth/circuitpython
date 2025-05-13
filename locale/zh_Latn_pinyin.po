@@ -1115,7 +1115,7 @@ msgstr ""
 "zài GRB sè yù zhōng, měi gè shū rù de xiàng sù bì xū shì 16 wèi (16 bit) shù "
 "jù"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Bù zhīyuán géshì"
 
@@ -2346,10 +2346,6 @@ msgstr "bú zhī chí de sè cǎi kōng jiān"
 msgid "Unsupported display bus type"
 msgstr "Bù zhīchí de gōnggòng qìchē lèixíng"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Bù zhīchí de géshì"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "bù zhīchí de hā xī suànfǎ"
@@ -2411,9 +2407,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "wú xiàn wǎng luò wèi qǐ yòng"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4456,12 +4454,6 @@ msgstr ""
 msgid "width must be greater than zero"
 msgstr "kuāndù bìxū dàyú líng"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "wèi qǐ yòng WIFI"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wú xiàn wǎng luò xiǎn shì qì bù kě yòng"
@@ -4523,6 +4515,15 @@ msgstr "zi bìxū wèi fú diǎn xíng"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi bìxū jùyǒu xíngzhuàng (n_section,2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Bù zhīchí de géshì"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "wú xiàn wǎng luò wèi qǐ yòng"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "wèi qǐ yòng WIFI"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "tōngguò USB kějiàn shí wúfǎ chóngxīn ānzhuāng '/'."

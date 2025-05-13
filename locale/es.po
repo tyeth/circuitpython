@@ -1120,7 +1120,7 @@ msgstr ""
 "Para espacios de colores RGB, el bitmap de entrada debe tener 16 bits por "
 "pixel"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Sin capacidades para el formato"
 
@@ -2364,10 +2364,6 @@ msgstr "Espacio de color no sportado"
 msgid "Unsupported display bus type"
 msgstr "Sin capacidad de bus tipo display"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Formato no soportado"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Algoritmo hash no soportado"
@@ -2430,9 +2426,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "Wifi no esta activado"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4477,12 +4475,6 @@ msgstr "los pesos deben ser un tipo de objetos %q, %q, %q, or %q, y no %q. "
 msgid "width must be greater than zero"
 msgstr "el ancho debe ser mayor que cero"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "wifi no esta habilitado"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wifi.Monitor no esta disponible"
@@ -4544,6 +4536,15 @@ msgstr "zi debe ser de tipo flotante"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi debe ser una forma (n_section,2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Formato no soportado"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "Wifi no esta activado"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "wifi no esta habilitado"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "No se puede remountar '/' cuanto se es visible vía USB."

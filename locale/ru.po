@@ -1123,7 +1123,7 @@ msgstr ""
 "Для цветовых пространств RGB входное растровое изображение должно иметь 16 "
 "бит на пиксель"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Формат не поддерживается"
 
@@ -2361,10 +2361,6 @@ msgstr "Неподдерживаемое цветовое пространств
 msgid "Unsupported display bus type"
 msgstr "Неподдерживаемый тип шины дисплея"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Неподдерживаемый формат"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Неподдерживаемый алгоритм хеширования"
@@ -2428,9 +2424,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi: "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "Wifi не включен"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4488,12 +4486,6 @@ msgstr "Веса должны быть объектом типа %q, %q, %q ил
 msgid "width must be greater than zero"
 msgstr "ширина должна быть больше нуля"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "Wi-Fi не включен"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "Wi-Fi. Монитор недоступен"
@@ -4555,6 +4547,15 @@ msgstr "zi должно быть типа float"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi должен иметь форму (n_section, 2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Неподдерживаемый формат"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "Wifi не включен"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "Wi-Fi не включен"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "Невозможно перемонтировать '/' пока он виден через USB."

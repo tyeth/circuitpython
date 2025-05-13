@@ -1127,7 +1127,7 @@ msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr ""
 "Pour l'espace de couleur RVB, l'image d'entrée doit avoir 16 bits par pixel"
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr "Format non supporté"
 
@@ -2374,10 +2374,6 @@ msgstr "Espace de couleur non supporté"
 msgid "Unsupported display bus type"
 msgstr "Type de bus d'affichage non supporté"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Format non pris en charge"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr "Algorithme de hachage non supporté"
@@ -2439,9 +2435,11 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr "Wi-Fi : "
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
-msgstr "Le WiFi n'est pas activé"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
+msgstr ""
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -4497,12 +4495,6 @@ msgstr "le poids requier un objet de type %q, %q, %q ou %q, pas %q. "
 msgid "width must be greater than zero"
 msgstr "width doit être plus grand que zero"
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr "le WiFi est inactif"
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr "wifi.Monitor indisponible"
@@ -4564,6 +4556,15 @@ msgstr "zi doit être de type float"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi doit être de forme (n_section, 2)"
+
+#~ msgid "Unsupported format"
+#~ msgstr "Format non pris en charge"
+
+#~ msgid "Wifi is not enabled"
+#~ msgstr "Le WiFi n'est pas activé"
+
+#~ msgid "wifi is not enabled"
+#~ msgstr "le WiFi est inactif"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr ""

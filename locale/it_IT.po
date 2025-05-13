@@ -1098,7 +1098,7 @@ msgstr ""
 msgid "For RGB colorspaces, input bitmap must have 16 bits per pixel"
 msgstr ""
 
-#: ports/cxd56/common-hal/camera/Camera.c
+#: ports/cxd56/common-hal/camera/Camera.c shared-module/audiocore/WaveFile.c
 msgid "Format not supported"
 msgstr ""
 
@@ -2317,10 +2317,6 @@ msgstr ""
 msgid "Unsupported display bus type"
 msgstr "tipo di bitmap non supportato"
 
-#: shared-module/audiocore/WaveFile.c
-msgid "Unsupported format"
-msgstr "Formato non supportato"
-
 #: shared-bindings/hashlib/__init__.c
 msgid "Unsupported hash algorithm"
 msgstr ""
@@ -2377,8 +2373,10 @@ msgstr ""
 msgid "Wi-Fi: "
 msgstr ""
 
+#: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
-msgid "Wifi is not enabled"
+#: ports/zephyr-cp/common-hal/wifi/Radio.c
+msgid "WiFi is not enabled"
 msgstr ""
 
 #: main.c
@@ -4426,12 +4424,6 @@ msgstr ""
 msgid "width must be greater than zero"
 msgstr ""
 
-#: ports/espressif/common-hal/wifi/Radio.c
-#: ports/raspberrypi/common-hal/wifi/Radio.c
-#: ports/zephyr-cp/common-hal/wifi/Radio.c
-msgid "wifi is not enabled"
-msgstr ""
-
 #: ports/raspberrypi/common-hal/wifi/Monitor.c
 msgid "wifi.Monitor not available"
 msgstr ""
@@ -4493,6 +4485,9 @@ msgstr ""
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr ""
+
+#~ msgid "Unsupported format"
+#~ msgstr "Formato non supportato"
 
 #~ msgid "Buffer length must be a multiple of 512"
 #~ msgstr "La lunghezza del buffer deve essere un multiplo di 512"
