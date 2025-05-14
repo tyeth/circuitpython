@@ -8,6 +8,10 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#if CIRCUITPY_ALARM
+#include "common-hal/alarm/__init__.h"
+#endif
+
 #include "common-hal/microcontroller/Pin.h"
 #include "common-hal/microcontroller/Processor.h"
 
@@ -78,6 +82,14 @@ void common_hal_mcu_on_next_reset(mcu_runmode_t runmode) {
 
 void common_hal_mcu_reset(void) {
     filesystem_flush();
+
+    // Clear any saved info about last deep sleep wakeup,
+    // to avoid confusing this software reset with a real deep sleep reset.
+    // See logic in common_hal_mcu_processor_get_reset_reason().
+    #if CIRCUITPY_ALARM
+    sleepmem_wakeup_event = SLEEPMEM_WAKEUP_BY_NONE;
+    #endif
+
     reset_cpu();
 }
 
