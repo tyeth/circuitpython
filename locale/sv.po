@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-05-11 14:02+0000\n"
+"PO-Revision-Date: 2025-05-15 08:01+0000\n"
 "Last-Translator: Jonny Bergdahl <jonny@bergdahl.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -337,7 +337,7 @@ msgstr "Objektet '%q' är inte itererbart"
 #: py/emitinlinethumb.c py/emitinlinextensa.c
 #, c-format
 msgid "'%s' expects a label"
-msgstr "'%s' förväntar sig en label"
+msgstr "'%s' förväntar sig en etikett"
 
 #: py/emitinlinethumb.c py/emitinlinextensa.c
 #, c-format
@@ -461,7 +461,7 @@ msgstr "*x måste vara mål för tilldelning"
 
 #: py/obj.c
 msgid ", in %q\n"
-msgstr ", i %q\n"
+msgstr ", i%q\n"
 
 #: shared-bindings/busdisplay/BusDisplay.c
 #: shared-bindings/epaperdisplay/EPaperDisplay.c
@@ -2405,7 +2405,7 @@ msgstr "Wi-Fi: "
 #: ports/raspberrypi/common-hal/wifi/Radio.c
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "WiFi is not enabled"
-msgstr ""
+msgstr "WiFi är inte aktiverat"
 
 #: main.c
 msgid "Woken up by alarm.\n"
