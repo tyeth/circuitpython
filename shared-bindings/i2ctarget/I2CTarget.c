@@ -222,6 +222,13 @@ static mp_obj_t i2ctarget_i2c_target_request_make_new(const mp_obj_type_t *type,
     return mp_obj_new_i2ctarget_i2c_target_request(args[0], mp_obj_get_int(args[1]), mp_obj_is_true(args[2]), mp_obj_is_true(args[3]));
 }
 
+static void target_request_check_for_deinit(i2ctarget_i2c_target_request_obj_t *self) {
+    if (self->target == NULL) {
+        raise_deinited_error();
+    }
+    check_for_deinit(self->target);
+}
+
 //|     def deinit(self) -> None:
 //|         """Disconnects from parent `I2CTarget`.
 //|         Called by `__exit__()` to indicate the `I2CTargetRequest` is no longer useful."""
@@ -229,18 +236,18 @@ static mp_obj_t i2ctarget_i2c_target_request_make_new(const mp_obj_type_t *type,
 //|
 static mp_obj_t i2ctarget_i2c_target_request_deinit(mp_obj_t self_in) {
     i2ctarget_i2c_target_request_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    target_request_check_for_deinit(self);
+
+    i2ctarget_i2c_target_obj_t *target = self->target;
+
+    // Deinit I2CTargetRequest first in case _close() fails.
     self->target = NULL;
+
+    common_hal_i2ctarget_i2c_target_close(target);
 
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(i2ctarget_i2c_target_request_deinit_obj, i2ctarget_i2c_target_request_deinit);
-
-static void target_request_check_for_deinit(i2ctarget_i2c_target_request_obj_t *self) {
-    if (self->target == NULL) {
-        raise_deinited_error();
-    }
-    check_for_deinit(self->target);
-}
 
 //|     address: int
 //|     """The I2C address of the request."""
@@ -401,22 +408,11 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(i2ctarget_i2c_target_request_ack_obj, 1, 2, 
 //|         """Close and deinit the request."""
 //|         ...
 //|
-static mp_obj_t i2ctarget_i2c_target_request__exit__(size_t n_args, const mp_obj_t *args) {
-    i2ctarget_i2c_target_request_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    target_request_check_for_deinit(self);
-
-    i2ctarget_i2c_target_obj_t *target = self->target;
-    // Deinit target request first in case _close() fails.
-    i2ctarget_i2c_target_request_deinit(args[0]);
-
-    common_hal_i2ctarget_i2c_target_close(target);
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(i2ctarget_i2c_target_request___exit___obj, 4, 4, i2ctarget_i2c_target_request__exit__);
+//  Provided by context manager helper.
 
 static const mp_rom_map_elem_t i2ctarget_i2c_target_request_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR___enter__), MP_ROM_PTR(&default___enter___obj) },
-    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&i2ctarget_i2c_target_request___exit___obj) },
+    { MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&default___exit___obj) },
     { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&i2ctarget_i2c_target_request_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR__del__), MP_ROM_PTR(&i2ctarget_i2c_target_request_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR_address), MP_ROM_PTR(&i2ctarget_i2c_target_request_address_obj) },
