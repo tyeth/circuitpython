@@ -6,6 +6,12 @@
 
 #include "shared-bindings/rclcpy/__init__.h"
 
+#include "esp_log.h"
+
+#define RCLCPY_DOMAIN_ID 3
+#define RCLCPY_AGENT_IP "192.168.10.111"
+#define RCLCPY_AGENT_PORT "8888"
+
 rclcpy_context_t rclcpy_default_context = {
     .initialized = false,
 };
@@ -44,16 +50,43 @@ void common_hal_rclcpy_init(void) {
     custom_allocator.deallocate = microros_deallocate;
     custom_allocator.reallocate = microros_reallocate;
     custom_allocator.zero_allocate =  microros_zero_allocate;
-
     // Set custom allocator as default
     if (!rcutils_set_default_allocator(&custom_allocator)) {
+        ESP_LOGW("RCLCPY", "allocator failure");
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS memory allocator failure"));
     }
-
     rclcpy_default_context.rcl_allocator = custom_allocator;
+
     rcl_ret_t ret;
-    ret = rclc_support_init(&rclcpy_default_context.rcl_support, 0, NULL, &rclcpy_default_context.rcl_allocator);
+
+    // Options Init
+    rclcpy_default_context.init_options = rcl_get_zero_initialized_init_options();
+	ret = rcl_init_options_init(&rclcpy_default_context.init_options, rclcpy_default_context.rcl_allocator);
     if (ret != RCL_RET_OK) {
+        ESP_LOGW("RCLCPY", "Options init failure: %d", ret);
+    }
+	ret = rcl_init_options_set_domain_id(&rclcpy_default_context.init_options, RCLCPY_DOMAIN_ID);
+    if (ret != RCL_RET_OK) {
+        ESP_LOGW("RCLCPY", "Options domain failure: %d", ret);
+    }
+
+    // Set up Agent
+    rclcpy_default_context.rmw_options = rcl_init_options_get_rmw_init_options(&rclcpy_default_context.init_options);
+	ret = rmw_uros_options_set_udp_address(RCLCPY_AGENT_IP, RCLCPY_AGENT_PORT, rclcpy_default_context.rmw_options);
+    if (ret != RCL_RET_OK) {
+        ESP_LOGW("RCLCPY", "Agent options failure: %d", ret);
+    }
+	//RCCHECK(rmw_uros_discover_agent(rmw_options));
+
+    // Support Init
+    // ret = rclc_support_init(&rclcpy_default_context.rcl_support, 0, NULL, &rclcpy_default_context.rcl_allocator);
+    ret = rclc_support_init_with_options(&rclcpy_default_context.rcl_support,
+            0,
+            NULL,
+            &rclcpy_default_context.init_options,
+            &rclcpy_default_context.rcl_allocator);
+    if (ret != RCL_RET_OK) {
+        ESP_LOGW("RCLCPY", "Initialization failure: %d", ret);
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS failed to initialize"));
     } else {
         rclcpy_default_context.initialized = true;

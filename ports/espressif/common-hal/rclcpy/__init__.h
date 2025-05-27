@@ -14,11 +14,14 @@
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
+#include <rmw_microros/rmw_microros.h>
 
 typedef struct {
     bool initialized;
     rcl_allocator_t rcl_allocator;
     rclc_support_t rcl_support;
+    rcl_init_options_t init_options;
+    rmw_init_options_t* rmw_options;
 } rclcpy_context_t;
 
 extern rclcpy_context_t rclcpy_default_context;
