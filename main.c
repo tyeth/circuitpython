@@ -582,8 +582,8 @@ static bool __attribute__((noinline)) run_code_py(safe_mode_t safe_mode, bool *s
     size_t total_time = blink_time + LED_SLEEP_TIME_MS;
     #endif
 
-    // This loop is waits after code completes. It waits for fake sleeps to
-    // finish, user input or autoreloads.
+    // This loop is run after code completes. It waits for fake sleeps to
+    // finish, waits for user input, or waits for an autoreload.
     #if CIRCUITPY_ALARM
     bool fake_sleeping = false;
     #endif
