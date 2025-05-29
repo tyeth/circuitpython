@@ -8,10 +8,6 @@
 
 #include "esp_log.h"
 
-#define RCLCPY_DOMAIN_ID 3
-#define RCLCPY_AGENT_IP "192.168.10.111"
-#define RCLCPY_AGENT_PORT "8888"
-
 rclcpy_context_t rclcpy_default_context = {
     .initialized = false,
 };
@@ -41,7 +37,10 @@ static void* microros_zero_allocate(size_t number_of_elements, size_t size_of_el
     return ptr;
 }
 
-void common_hal_rclcpy_init(void) {
+void rclcpy_reset(void) {
+}
+
+void common_hal_rclcpy_init(const char *agent_ip, const char *agent_port, int16_t domain_id) {
     // Get empty allocator
     rcl_allocator_t custom_allocator = rcutils_get_zero_initialized_allocator();
 
@@ -65,21 +64,22 @@ void common_hal_rclcpy_init(void) {
     if (ret != RCL_RET_OK) {
         ESP_LOGW("RCLCPY", "Options init failure: %d", ret);
     }
-	ret = rcl_init_options_set_domain_id(&rclcpy_default_context.init_options, RCLCPY_DOMAIN_ID);
+    if (domain_id < 0) {
+        mp_raise_RuntimeError(MP_ERROR_TEXT("Invalid ROS domain ID"));
+    }
+	ret = rcl_init_options_set_domain_id(&rclcpy_default_context.init_options, domain_id);
     if (ret != RCL_RET_OK) {
         ESP_LOGW("RCLCPY", "Options domain failure: %d", ret);
     }
 
     // Set up Agent
     rclcpy_default_context.rmw_options = rcl_init_options_get_rmw_init_options(&rclcpy_default_context.init_options);
-	ret = rmw_uros_options_set_udp_address(RCLCPY_AGENT_IP, RCLCPY_AGENT_PORT, rclcpy_default_context.rmw_options);
+	ret = rmw_uros_options_set_udp_address(agent_ip, agent_port, rclcpy_default_context.rmw_options);
     if (ret != RCL_RET_OK) {
         ESP_LOGW("RCLCPY", "Agent options failure: %d", ret);
     }
-	//RCCHECK(rmw_uros_discover_agent(rmw_options));
 
     // Support Init
-    // ret = rclc_support_init(&rclcpy_default_context.rcl_support, 0, NULL, &rclcpy_default_context.rcl_allocator);
     ret = rclc_support_init_with_options(&rclcpy_default_context.rcl_support,
             0,
             NULL,
@@ -87,7 +87,7 @@ void common_hal_rclcpy_init(void) {
             &rclcpy_default_context.rcl_allocator);
     if (ret != RCL_RET_OK) {
         ESP_LOGW("RCLCPY", "Initialization failure: %d", ret);
-        mp_raise_RuntimeError(MP_ERROR_TEXT("ROS failed to initialize"));
+        mp_raise_RuntimeError(MP_ERROR_TEXT("ROS failed to initialize. Is agent connected?"));
     } else {
         rclcpy_default_context.initialized = true;
     }

@@ -25,3 +25,4 @@ typedef struct {
 } rclcpy_context_t;
 
 extern rclcpy_context_t rclcpy_default_context;
+void rclcpy_reset(void);

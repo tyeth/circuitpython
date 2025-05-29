@@ -13,11 +13,24 @@
 #include "py/objstr.h"
 #include "py/runtime.h"
 
-static mp_obj_t rclcpy_init(void) {
-    common_hal_rclcpy_init();
+// static mp_obj_t rclcpy_init(void) {
+static mp_obj_t rclcpy_init(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    enum { ARG_agent_ip, ARG_agent_port, ARG_domain_id};
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_agent_ip, MP_ARG_REQUIRED | MP_ARG_OBJ },
+        { MP_QSTR_agent_port, MP_ARG_REQUIRED | MP_ARG_OBJ },
+        { MP_QSTR_domain_id, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0} },
+    };
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    const char *agent_ip = mp_obj_str_get_str(args[ARG_agent_ip].u_obj);
+    const char *agent_port = mp_obj_str_get_str(args[ARG_agent_port].u_obj);
+    int16_t domain_id = args[ARG_domain_id].u_int;
+
+    common_hal_rclcpy_init(agent_ip, agent_port, domain_id);
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_0(rclcpy_init_obj, rclcpy_init);
+static MP_DEFINE_CONST_FUN_OBJ_KW(rclcpy_init_obj, 2, rclcpy_init);
 
 
 // TODO: parallel implementation to Node constructor
