@@ -38,6 +38,23 @@ static void* microros_zero_allocate(size_t number_of_elements, size_t size_of_el
 }
 
 void rclcpy_reset(void) {
+    if (rclcpy_default_context.initialized) {
+        // Clean up support context
+        rcl_ret_t ret = rclc_support_fini(&rclcpy_default_context.rcl_support);
+        if (ret != RCL_RET_OK) {
+            ESP_LOGW("RCLCPY", "Support cleanup error: %d", ret);
+        }
+
+        // Clean up init options
+        ret = rcl_init_options_fini(&rclcpy_default_context.init_options);
+        if (ret != RCL_RET_OK) {
+            ESP_LOGW("RCLCPY", "Init options cleanup error: %d", ret);
+        }
+
+        // Reset context state
+        memset(&rclcpy_default_context, 0, sizeof(rclcpy_default_context));
+        rclcpy_default_context.initialized = false;
+    }
 }
 
 void common_hal_rclcpy_init(const char *agent_ip, const char *agent_port, int16_t domain_id) {

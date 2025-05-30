@@ -6,6 +6,7 @@
 
 #include "shared-bindings/rclcpy/Publisher.h"
 
+#include "esp_log.h"
 
 void common_hal_rclcpy_publisher_construct(rclcpy_publisher_obj_t *self, rclcpy_node_obj_t * node,
     const char *topic_name) {
@@ -18,10 +19,26 @@ void common_hal_rclcpy_publisher_construct(rclcpy_publisher_obj_t *self, rclcpy_
     rcl_ret_t rc = rclc_publisher_init_default(
     &self->rcl_publisher, &node->rcl_node,
     type_support, topic_name);
-
     if (RCL_RET_OK != rc) {
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS topic failed to initialize"));
     }
+
+    self->node = node;
+}
+
+bool common_hal_rclcpy_publisher_deinited(rclcpy_publisher_obj_t *self) {
+    return self->node == NULL;
+}
+
+void common_hal_rclcpy_publisher_deinit(rclcpy_publisher_obj_t *self) {
+    if (common_hal_rclcpy_publisher_deinited(self)) {
+        return;
+    }
+    rcl_ret_t ret = rcl_publisher_fini(&self->rcl_publisher, &self->node->rcl_node);
+    if (ret != RCL_RET_OK  || !rcl_publisher_is_valid(&self->rcl_publisher)) {
+        ESP_LOGW("RCLCPY", "Publisher cleanup warning: %d", ret);
+    }
+    self->node = NULL;
 }
 
 void common_hal_rclcpy_publisher_publish_int32(rclcpy_publisher_obj_t * self, int32_t data) {

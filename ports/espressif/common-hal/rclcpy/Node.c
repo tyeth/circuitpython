@@ -7,6 +7,8 @@
 #include "shared-bindings/rclcpy/Node.h"
 #include "shared-bindings/rclcpy/__init__.h"
 
+#include "esp_log.h"
+
 void common_hal_rclcpy_node_construct(rclcpy_node_obj_t *self,
     const char *node_name, const char *node_namespace) {
 
@@ -14,6 +16,22 @@ void common_hal_rclcpy_node_construct(rclcpy_node_obj_t *self,
     if (!rcl_node_is_valid(&self->rcl_node)) {
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS node failed to initialize"));
     }
+    self->deinited = false;
+}
+
+bool common_hal_rclcpy_node_deinited(rclcpy_node_obj_t * self) {
+    return self->deinited;
+}
+
+void common_hal_rclcpy_node_deinit(rclcpy_node_obj_t * self) {
+    if (common_hal_rclcpy_node_deinited(self)) {
+        return;
+    }
+    rcl_ret_t ret = rcl_node_fini(&self->rcl_node);
+    if (ret != RCL_RET_OK  || !rcl_node_is_valid(&self->rcl_node)) {
+        ESP_LOGW("RCLCPY", "Node cleanup error: %d", ret);
+    }
+    self->deinited = true;
 }
 
 const char * common_hal_rclcpy_node_get_name(rclcpy_node_obj_t *self) {
