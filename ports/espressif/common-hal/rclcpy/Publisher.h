@@ -16,12 +16,11 @@
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
 #include <stdio.h>
-
 #include <std_msgs/msg/int32.h>
 
 
 typedef struct {
     mp_obj_base_t base;
-    rclcpy_node_obj_t * node;
+    rclcpy_node_obj_t *node;
     rcl_publisher_t rcl_publisher;
 } rclcpy_publisher_obj_t;

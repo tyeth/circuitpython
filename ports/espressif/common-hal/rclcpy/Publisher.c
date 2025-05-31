@@ -8,17 +8,18 @@
 
 #include "esp_log.h"
 
-void common_hal_rclcpy_publisher_construct(rclcpy_publisher_obj_t *self, rclcpy_node_obj_t * node,
+
+void common_hal_rclcpy_publisher_construct(rclcpy_publisher_obj_t *self, rclcpy_node_obj_t *node,
     const char *topic_name) {
 
     // Create Int32 type object
     // TODO: support other message types through class imports
-    const rosidl_message_type_support_t * type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32);
+    const rosidl_message_type_support_t *type_support = ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32);
 
     // Creates a reliable Int32 publisher
     rcl_ret_t rc = rclc_publisher_init_default(
-    &self->rcl_publisher, &node->rcl_node,
-    type_support, topic_name);
+        &self->rcl_publisher, &node->rcl_node,
+        type_support, topic_name);
     if (RCL_RET_OK != rc) {
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS topic failed to initialize"));
     }
@@ -35,13 +36,13 @@ void common_hal_rclcpy_publisher_deinit(rclcpy_publisher_obj_t *self) {
         return;
     }
     rcl_ret_t ret = rcl_publisher_fini(&self->rcl_publisher, &self->node->rcl_node);
-    if (ret != RCL_RET_OK  || !rcl_publisher_is_valid(&self->rcl_publisher)) {
+    if (ret != RCL_RET_OK || !rcl_publisher_is_valid(&self->rcl_publisher)) {
         ESP_LOGW("RCLCPY", "Publisher cleanup warning: %d", ret);
     }
     self->node = NULL;
 }
 
-void common_hal_rclcpy_publisher_publish_int32(rclcpy_publisher_obj_t * self, int32_t data) {
+void common_hal_rclcpy_publisher_publish_int32(rclcpy_publisher_obj_t *self, int32_t data) {
     // Int32 message object
     std_msgs__msg__Int32 msg;
 

@@ -11,6 +11,7 @@
 #include "py/objtype.h"
 #include "py/runtime.h"
 
+
 //| class Publisher:
 //|     """A ROS2 publisher"""
 //|
@@ -58,7 +59,7 @@ static mp_obj_t rclcpy_publisher_publish_int32(mp_obj_t self_in, mp_obj_t in_msg
     rclcpy_publisher_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
     int32_t msg = mp_obj_get_int(in_msg);
-    common_hal_rclcpy_publisher_publish_int32(self,msg);
+    common_hal_rclcpy_publisher_publish_int32(self, msg);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(rclcpy_publisher_publish_int32_obj, rclcpy_publisher_publish_int32);
@@ -74,8 +75,8 @@ static MP_DEFINE_CONST_FUN_OBJ_2(rclcpy_publisher_publish_int32_obj, rclcpy_publ
 static mp_obj_t rclcpy_publisher_get_topic_name(mp_obj_t self_in) {
     rclcpy_publisher_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
-    const char * topic_str = common_hal_rclcpy_publisher_get_topic_name(self);
-    return mp_obj_new_str(topic_str,strlen(topic_str));
+    const char *topic_str = common_hal_rclcpy_publisher_get_topic_name(self);
+    return mp_obj_new_str(topic_str, strlen(topic_str));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(rclcpy_publisher_get_topic_name_obj, rclcpy_publisher_get_topic_name);
 
@@ -95,4 +96,4 @@ MP_DEFINE_CONST_OBJ_TYPE(
     MP_TYPE_FLAG_HAS_SPECIAL_ACCESSORS,
     make_new, rclcpy_publisher_make_new,
     locals_dict, &rclcpy_publisher_locals_dict
-);
+    );

@@ -12,6 +12,7 @@
 #include "py/objtype.h"
 #include "py/runtime.h"
 
+
 //| class Node:
 //|     """A ROS2 Node"""
 //|
@@ -88,7 +89,7 @@ static mp_obj_t rclcpy_node_create_publisher(mp_obj_t self_in, mp_obj_t topic) {
     const char *topic_name = mp_obj_str_get_str(topic);
 
     rclcpy_publisher_obj_t *publisher = mp_obj_malloc_with_finaliser(rclcpy_publisher_obj_t, &rclcpy_publisher_type);
-    common_hal_rclcpy_publisher_construct(publisher, self,topic_name);
+    common_hal_rclcpy_publisher_construct(publisher, self, topic_name);
     return (mp_obj_t)publisher;
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(rclcpy_node_create_publisher_obj, rclcpy_node_create_publisher);
@@ -104,8 +105,8 @@ static MP_DEFINE_CONST_FUN_OBJ_2(rclcpy_node_create_publisher_obj, rclcpy_node_c
 static mp_obj_t rclcpy_node_get_name(mp_obj_t self_in) {
     rclcpy_node_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
-    const char * name_str = common_hal_rclcpy_node_get_name(self);
-    return mp_obj_new_str(name_str,strlen(name_str));
+    const char *name_str = common_hal_rclcpy_node_get_name(self);
+    return mp_obj_new_str(name_str, strlen(name_str));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(rclcpy_node_get_name_obj, rclcpy_node_get_name);
 
@@ -120,8 +121,8 @@ static MP_DEFINE_CONST_FUN_OBJ_1(rclcpy_node_get_name_obj, rclcpy_node_get_name)
 static mp_obj_t rclcpy_node_get_namespace(mp_obj_t self_in) {
     rclcpy_node_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
-    const char * namespace_str = common_hal_rclcpy_node_get_namespace(self);
-    return mp_obj_new_str(namespace_str,strlen(namespace_str));
+    const char *namespace_str = common_hal_rclcpy_node_get_namespace(self);
+    return mp_obj_new_str(namespace_str, strlen(namespace_str));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(rclcpy_node_get_namespace_obj, rclcpy_node_get_namespace);
 
@@ -141,4 +142,4 @@ MP_DEFINE_CONST_OBJ_TYPE(
     MP_TYPE_FLAG_HAS_SPECIAL_ACCESSORS,
     make_new, rclcpy_node_make_new,
     locals_dict, &rclcpy_node_locals_dict
-);
+    );

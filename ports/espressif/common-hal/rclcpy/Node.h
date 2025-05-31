@@ -15,9 +15,9 @@
 #include <rclc/rclc.h>
 #include <stdio.h>
 
+
 typedef struct {
     mp_obj_base_t base;
     bool deinited;
     rcl_node_t rcl_node;
 } rclcpy_node_obj_t;
-
