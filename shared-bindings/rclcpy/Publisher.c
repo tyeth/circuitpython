@@ -11,10 +11,28 @@
 #include "py/objtype.h"
 #include "py/runtime.h"
 
+//| class Publisher:
+//|     """A ROS2 publisher"""
+//|
+//|     def __init__(self) -> None:
+//|         """Publishers cannot be created directly.
+//|
+//|         Use :meth:`Node.create_publisher` to create a publisher from a node.
+//|
+//|         :raises NotImplementedError: Always, as direct instantiation is not supported
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_publisher_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     mp_raise_NotImplementedError(MP_ERROR_TEXT("Publishers can only be created from a parent node"));
 }
 
+//|     def deinit(self) -> None:
+//|         """Deinitializes the publisher and frees any hardware or remote agent resources
+//|         used by it. Deinitialized publishers cannot be used again.
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_publisher_obj_deinit(mp_obj_t self_in) {
     rclcpy_publisher_obj_t *self = MP_OBJ_TO_PTR(self_in);
     common_hal_rclcpy_publisher_deinit(self);
@@ -28,6 +46,14 @@ static void check_for_deinit(rclcpy_publisher_obj_t *self) {
     }
 }
 
+//|     def publish_int32(self, message: int) -> None:
+//|         """Publish a 32-bit signed integer message to the topic.
+//|
+//|         :param int message: The integer value to publish. Must be within the range
+//|             of a 32-bit signed integer (-2,147,483,648 to 2,147,483,647)
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_publisher_publish_int32(mp_obj_t self_in, mp_obj_t in_msg) {
     rclcpy_publisher_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -37,6 +63,14 @@ static mp_obj_t rclcpy_publisher_publish_int32(mp_obj_t self_in, mp_obj_t in_msg
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(rclcpy_publisher_publish_int32_obj, rclcpy_publisher_publish_int32);
 
+//|     def get_topic_name(self) -> str:
+//|         """Get the name of the topic this publisher publishes to.
+//|
+//|         :return: The topic name as specified when the publisher was created
+//|         :rtype: str
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_publisher_get_topic_name(mp_obj_t self_in) {
     rclcpy_publisher_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);

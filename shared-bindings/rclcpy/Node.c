@@ -12,6 +12,27 @@
 #include "py/objtype.h"
 #include "py/runtime.h"
 
+//| class Node:
+//|     """A ROS2 Node"""
+//|
+//|     def __init__(
+//|         self,
+//|         node_name: str,
+//|         *,
+//|         namespace: str | None = None,
+//|     ) -> None:
+//|         """Create a Node.
+//|
+//|         Creates an instance of a ROS2 Node. Nodes can be used to create other ROS
+//|         entities like publishers or subscribers. Nodes must have a unique name, and
+//|         may also be constructed from their class.
+//|
+//|         :param str node_name: The name of the node. Must be a valid ROS 2 node name
+//|         :param str namespace: The namespace for the node. If None, the node will be
+//|             created in the root namespace
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_node_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     enum { ARG_node_name, ARG_namespace };
     static const mp_arg_t allowed_args[] = {
@@ -31,6 +52,12 @@ static mp_obj_t rclcpy_node_make_new(const mp_obj_type_t *type, size_t n_args, s
     return (mp_obj_t)self;
 }
 
+//|     def deinit(self) -> None:
+//|         """Deinitializes the node and frees any hardware or remote agent resources
+//|         used by it. Deinitialized nodes cannot be used again.
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_node_obj_deinit(mp_obj_t self_in) {
     rclcpy_node_obj_t *self = MP_OBJ_TO_PTR(self_in);
     common_hal_rclcpy_node_deinit(self);
@@ -44,6 +71,17 @@ static void check_for_deinit(rclcpy_node_obj_t *self) {
     }
 }
 
+//|     def create_publisher(self, topic: str) -> Publisher:
+//|         """Create a publisher for a given topic string.
+//|
+//|         Creates an instance of a ROS2 Publisher.
+//|
+//|         :param str topic: The name of the topic
+//|         :return: A new Publisher object for the specified topic
+//|         :rtype: Publisher
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_node_create_publisher(mp_obj_t self_in, mp_obj_t topic) {
     rclcpy_node_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -55,6 +93,14 @@ static mp_obj_t rclcpy_node_create_publisher(mp_obj_t self_in, mp_obj_t topic) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(rclcpy_node_create_publisher_obj, rclcpy_node_create_publisher);
 
+//|     def get_name(self) -> str:
+//|         """Get the name of the node.
+//|
+//|         :return: The node's name
+//|         :rtype: str
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_node_get_name(mp_obj_t self_in) {
     rclcpy_node_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -63,6 +109,14 @@ static mp_obj_t rclcpy_node_get_name(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(rclcpy_node_get_name_obj, rclcpy_node_get_name);
 
+//|     def get_namespace(self) -> str:
+//|         """Get the namespace of the node.
+//|
+//|         :return: The node's namespace
+//|         :rtype: str
+//|         """
+//|         ...
+//|
 static mp_obj_t rclcpy_node_get_namespace(mp_obj_t self_in) {
     rclcpy_node_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
