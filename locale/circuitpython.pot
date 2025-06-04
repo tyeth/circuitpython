@@ -848,6 +848,10 @@ msgstr ""
 msgid "Coordinate arrays types have different sizes"
 msgstr ""
 
+#: ports/espressif/common-hal/rclcpy/Publisher.c
+msgid "Could not publish to ROS topic"
+msgstr ""
+
 #: shared-bindings/_bleio/Adapter.c
 msgid "Could not set address"
 msgstr ""
@@ -1056,7 +1060,8 @@ msgstr ""
 msgid "File exists"
 msgstr ""
 
-#: shared-module/lvfontio/OnDiskFont.c shared-module/os/getenv.c
+#: shared-bindings/supervisor/__init__.c shared-module/lvfontio/OnDiskFont.c
+#: shared-module/os/getenv.c
 msgid "File not found"
 msgstr ""
 
@@ -1251,6 +1256,7 @@ msgstr ""
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2040.c py/argcheck.c
 #: shared-bindings/digitalio/DigitalInOut.c
 #: shared-bindings/epaperdisplay/EPaperDisplay.c shared-bindings/pwmio/PWMOut.c
+#: shared-bindings/supervisor/__init__.c
 #: shared-module/aurora_epaper/aurora_framebuffer.c
 #: shared-module/lvfontio/OnDiskFont.c
 msgid "Invalid %q"
@@ -1283,6 +1289,10 @@ msgstr ""
 
 #: shared-bindings/wifi/Radio.c
 msgid "Invalid MAC address"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "Invalid ROS domain ID"
 msgstr ""
 
 #: ports/espressif/common-hal/espidf/__init__.c py/moderrno.c
@@ -1839,6 +1849,10 @@ msgstr ""
 msgid "Program too long"
 msgstr ""
 
+#: shared-bindings/rclcpy/Publisher.c
+msgid "Publishers can only be created from a parent node"
+msgstr ""
+
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Pull not used when direction is output."
 msgstr ""
@@ -1857,6 +1871,22 @@ msgstr ""
 
 #: ports/stm/common-hal/os/__init__.c
 msgid "RNG Init Error"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS failed to initialize. Is agent connected?"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS memory allocator failure"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/Node.c
+msgid "ROS node failed to initialize"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/Publisher.c
+msgid "ROS topic failed to initialize"
 msgstr ""
 
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
@@ -2591,16 +2621,16 @@ msgstr ""
 msgid "bits must be 32 or less"
 msgstr ""
 
+#: shared-bindings/audiofreeverb/Freeverb.c
+msgid "bits_per_sample must be 16"
+msgstr ""
+
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
 #: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
-#: shared-bindings/audiodelays/Reverb.c
-msgid "bits_per_sample must be 16"
-msgstr ""
-
-#: shared-bindings/audiodelays/Echo.c shared-bindings/audiofilters/Distortion.c
-#: shared-bindings/audiofilters/Filter.c shared-bindings/audiomixer/Mixer.c
+#: shared-bindings/audiofilters/Filter.c shared-bindings/audiofilters/Phaser.c
+#: shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
 msgstr ""
 
@@ -4017,7 +4047,7 @@ msgstr ""
 msgid "rsplit(None,n)"
 msgstr ""
 
-#: shared-bindings/audiodelays/Reverb.c
+#: shared-bindings/audiofreeverb/Freeverb.c
 msgid "samples_signed must be true"
 msgstr ""
 
