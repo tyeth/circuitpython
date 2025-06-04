@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-04-25 15:04+0000\n"
+"PO-Revision-Date: 2025-06-04 14:01+0000\n"
 "Last-Translator: Andi Chandler <andi@gowling.com>\n"
 "Language-Team: none\n"
 "Language: en_GB\n"
@@ -2098,7 +2098,7 @@ msgstr "Tile width must exactly divide bitmap width"
 
 #: shared-module/tilepalettemapper/TilePaletteMapper.c
 msgid "TilePaletteMapper may only be bound to a TileGrid once"
-msgstr ""
+msgstr "TilePaletteMapper may only be bound to a TileGrid once"
 
 #: shared-bindings/alarm/time/TimeAlarm.c
 msgid "Time is in the past."
@@ -2393,7 +2393,7 @@ msgstr "Wi-Fi: "
 #: ports/raspberrypi/common-hal/wifi/Radio.c
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "WiFi is not enabled"
-msgstr ""
+msgstr "WiFi is not enabled"
 
 #: main.c
 msgid "Woken up by alarm.\n"
