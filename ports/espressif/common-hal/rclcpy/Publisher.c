@@ -56,6 +56,6 @@ void common_hal_rclcpy_publisher_publish_int32(rclcpy_publisher_obj_t *self, int
     }
 }
 
-const char * common_hal_rclcpy_publisher_get_topic_name(rclcpy_publisher_obj_t *self) {
+const char *common_hal_rclcpy_publisher_get_topic_name(rclcpy_publisher_obj_t *self) {
     return rcl_publisher_get_topic_name(&self->rcl_publisher);
 }

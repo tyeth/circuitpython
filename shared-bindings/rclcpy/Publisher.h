@@ -15,4 +15,4 @@ void common_hal_rclcpy_publisher_construct(rclcpy_publisher_obj_t *self, rclcpy_
 bool common_hal_rclcpy_publisher_deinited(rclcpy_publisher_obj_t *self);
 void common_hal_rclcpy_publisher_deinit(rclcpy_publisher_obj_t *self);
 void common_hal_rclcpy_publisher_publish_int32(rclcpy_publisher_obj_t *self, int32_t data);
-const char * common_hal_rclcpy_publisher_get_topic_name(rclcpy_publisher_obj_t *self);
+const char *common_hal_rclcpy_publisher_get_topic_name(rclcpy_publisher_obj_t *self);

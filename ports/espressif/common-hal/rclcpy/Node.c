@@ -35,10 +35,10 @@ void common_hal_rclcpy_node_deinit(rclcpy_node_obj_t *self) {
     self->deinited = true;
 }
 
-const char * common_hal_rclcpy_node_get_name(rclcpy_node_obj_t *self) {
+const char *common_hal_rclcpy_node_get_name(rclcpy_node_obj_t *self) {
     return rcl_node_get_name(&self->rcl_node);
 }
 
-const char * common_hal_rclcpy_node_get_namespace(rclcpy_node_obj_t *self) {
+const char *common_hal_rclcpy_node_get_namespace(rclcpy_node_obj_t *self) {
     return rcl_node_get_namespace(&self->rcl_node);
 }

@@ -13,7 +13,7 @@ rclcpy_context_t rclcpy_default_context = {
     .initialized = false,
 };
 
-static void * microros_allocate(size_t size, void *state) {
+static void *microros_allocate(size_t size, void *state) {
     (void)state;
     return m_malloc(size);
 }
@@ -23,12 +23,12 @@ static void microros_deallocate(void *pointer, void *state) {
     m_free(pointer);
 }
 
-static void * microros_reallocate(void *pointer, size_t size, void *state) {
+static void *microros_reallocate(void *pointer, size_t size, void *state) {
     (void)state;
     return m_realloc(pointer, size);
 }
 
-static void * microros_zero_allocate(size_t number_of_elements, size_t size_of_element, void *state) {
+static void *microros_zero_allocate(size_t number_of_elements, size_t size_of_element, void *state) {
     (void)state;
     size_t total_size = number_of_elements * size_of_element;
     void *ptr = m_malloc(total_size);
@@ -111,7 +111,7 @@ void common_hal_rclcpy_init(const char *agent_ip, const char *agent_port, int16_
     }
 }
 
-rclcpy_context_t * common_hal_rclcpy_get_default_context(void) {
+rclcpy_context_t *common_hal_rclcpy_get_default_context(void) {
     return &rclcpy_default_context;
 }
 
