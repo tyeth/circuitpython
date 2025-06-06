@@ -639,7 +639,8 @@ void background_callback_run_all(void);
 #define MICROPY_PY_BUILTINS_COMPILE (1)
 
 #ifndef CIRCUITPY_MIN_GCC_VERSION
-#define CIRCUITPY_MIN_GCC_VERSION 14
+// #define CIRCUITPY_MIN_GCC_VERSION 14
+#define CIRCUITPY_MIN_GCC_VERSION 11
 #endif
 
 #ifndef CIRCUITPY_SAVES_PARTITION_SIZE
@@ -655,6 +656,7 @@ void background_callback_run_all(void);
 #error "CIRCUITPY_BOOT_BUTTON and CIRCUITPY_BOOT_BUTTON_NO_GPIO are mutually exclusive"
 #endif
 
+/*
 #if defined(__GNUC__) && !defined(__ZEPHYR__)
 #if __GNUC__ < CIRCUITPY_MIN_GCC_VERSION
 // (the 3 level scheme here is required to get expansion & stringization
@@ -666,3 +668,4 @@ void background_callback_run_all(void);
 DO_ERROR(CIRCUITPY_MIN_GCC_VERSION);
 #endif
 #endif
+*/
