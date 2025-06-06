@@ -1065,7 +1065,7 @@ static mp_obj_t _pointsize(mp_obj_t self, mp_obj_t a0) {
 
 static MP_DEFINE_CONST_FUN_OBJ_2(pointsize_obj, _pointsize);
 
-//|     def Region(self, y: int: h: int, dest: int) -> None:
+//|     def Region(self, y: int, h: int, dest: int) -> None:
 //|         """Specify a cull region in the display list
 //|
 //|         :param int y: Starting Y band in the render buffer. Range 0-63
