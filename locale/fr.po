@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-07 16:03+0000\n"
+"PO-Revision-Date: 2025-06-09 12:01+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -1424,7 +1424,7 @@ msgstr "Sécurité MITM n'est pas supportée"
 #: ports/stm/common-hal/sdioio/SDCard.c
 #, c-format
 msgid "MMC/SDIO Clock Error %x"
-msgstr ""
+msgstr "Erreur d'horloge MMC/SDIO %x"
 
 #: shared-bindings/is31fl3741/IS31FL3741.c
 msgid "Mapping must be a tuple"
@@ -2679,7 +2679,7 @@ msgstr "les bits doivent être 32 ou moins"
 
 #: shared-bindings/audiofreeverb/Freeverb.c
 msgid "bits_per_sample must be 16"
-msgstr ""
+msgstr "bits_par_échantillon doit être de 16"
 
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
@@ -4128,7 +4128,7 @@ msgstr "rsplit(None, n)"
 
 #: shared-bindings/audiofreeverb/Freeverb.c
 msgid "samples_signed must be true"
-msgstr ""
+msgstr "samples_signed doit être vrai"
 
 #: ports/atmel-samd/common-hal/audiobusio/PDMIn.c
 #: ports/raspberrypi/common-hal/audiobusio/PDMIn.c
