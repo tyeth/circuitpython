@@ -158,7 +158,7 @@ msgstr ""
 msgid "%q length must be >= %d"
 msgstr ""
 
-#: py/modsys.c py/runtime.c
+#: py/runtime.c
 msgid "%q moved from %q to %q"
 msgstr ""
 
@@ -3693,7 +3693,7 @@ msgid "non-default argument follows default argument"
 msgstr ""
 
 #: py/objstr.c
-msgid "non-hex digit found"
+msgid "non-hex digit"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/Adapter.c
@@ -3780,10 +3780,6 @@ msgstr ""
 
 #: py/obj.c
 msgid "object with buffer protocol required"
-msgstr ""
-
-#: py/objstr.c
-msgid "odd-length string"
 msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
@@ -3972,10 +3968,6 @@ msgstr ""
 
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 msgid "pull masks conflict with direction masks"
-msgstr ""
-
-#: py/parse.c
-msgid "raw f-strings are not supported"
 msgstr ""
 
 #: extmod/ulab/code/numpy/fft/fft_tools.c

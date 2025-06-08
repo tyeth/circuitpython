@@ -45,7 +45,7 @@
 #include "py/stream.h"
 #include "py/runtime.h"
 #include "py/builtin.h"
-#include "py/stackctrl.h"
+#include "py/cstack.h"
 #include "py/gc.h"
 
 // CIRCUITPY-CHANGE
@@ -130,8 +130,8 @@ void mp_init(void) {
     MP_STATE_VM(mp_module_builtins_override_dict) = NULL;
     #endif
 
-    #if MICROPY_PERSISTENT_CODE_TRACK_RELOC_CODE
-    MP_STATE_VM(track_reloc_code_list) = MP_OBJ_NULL;
+    #if MICROPY_PERSISTENT_CODE_TRACK_FUN_DATA || MICROPY_PERSISTENT_CODE_TRACK_BSS_RODATA
+    MP_STATE_VM(persistent_code_root_pointers) = MP_OBJ_NULL;
     #endif
 
     #if MICROPY_PY_OS_DUPTERM
@@ -1465,7 +1465,7 @@ mp_obj_t mp_iternext_allow_raise(mp_obj_t o_in) {
 // will always return MP_OBJ_STOP_ITERATION instead of raising StopIteration() (or any subclass thereof)
 // may raise other exceptions
 mp_obj_t mp_iternext(mp_obj_t o_in) {
-    MP_STACK_CHECK(); // enumerate, filter, map and zip can recursively call mp_iternext
+    mp_cstack_check(); // enumerate, filter, map and zip can recursively call mp_iternext
     const mp_obj_type_t *type = mp_obj_get_type(o_in);
     if (TYPE_HAS_ITERNEXT(type)) {
         MP_STATE_THREAD(stop_iteration_arg) = MP_OBJ_NULL;

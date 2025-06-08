@@ -5,6 +5,5 @@ cause: MicroPython is optimised for code space.
 workaround: Always use balanced braces and brackets in expressions inside f-strings
 """
 
-# fmt: off
-print(f"{'hello { world'}")
-print(f"{'hello ] world'}")
+print(f'{"hello { world"}')
+print(f'{"hello ] world"}')
