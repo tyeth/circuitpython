@@ -8,7 +8,6 @@
 
 #include "esp_log.h"
 
-
 void common_hal_rclcpy_publisher_construct(rclcpy_publisher_obj_t *self, rclcpy_node_obj_t *node,
     const char *topic_name) {
 
@@ -35,9 +34,11 @@ void common_hal_rclcpy_publisher_deinit(rclcpy_publisher_obj_t *self) {
     if (common_hal_rclcpy_publisher_deinited(self)) {
         return;
     }
+    // Clean up Micro-ROS object
     rcl_ret_t ret = rcl_publisher_fini(&self->rcl_publisher, &self->node->rcl_node);
-    if (ret != RCL_RET_OK || !rcl_publisher_is_valid(&self->rcl_publisher)) {
-        ESP_LOGW("RCLCPY", "Publisher cleanup warning: %d", ret);
+    if (ret != RCL_RET_OK) {
+        ESP_LOGW("RCLCPY", "Publisher cleanup error: %d", ret);
+        // rclcpy_default_context.critical_fail=RCLCPY_PUB_FAIL;
     }
     self->node = NULL;
 }

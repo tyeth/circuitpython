@@ -724,13 +724,15 @@ ESP_IDF_COMPONENTS_EXPANDED += $(BUILD)/esp-idf/esp-idf/esp-camera/libesp-camera
 endif
 
 ifneq ($(CIRCUITPY_RCLCPY),0)
-ifeq ($(IDF_TARGET),esp32)
-BINARY_BLOBS += microros-lib/esp32/libmicroros.a
-else ifeq ($(IDF_TARGET),esp32s2)
-BINARY_BLOBS+= microros-lib/esp32s2/libmicroros.a
-else ifeq ($(IDF_TARGET),esp32s3)
-BINARY_BLOBS += microros-lib/esp32s3/libmicroros.a
-endif
+	ifeq ($(IDF_TARGET),esp32)
+		BINARY_BLOBS += microros-lib/esp32/libmicroros.a
+	else ifeq ($(IDF_TARGET),esp32s2)
+		BINARY_BLOBS+= microros-lib/esp32s2/libmicroros.a
+	else ifeq ($(IDF_TARGET),esp32s3)
+		BINARY_BLOBS += microros-lib/esp32s3/libmicroros.a
+	else
+		$(error Unsupported Espressif target for Micro-ROS: $(IDF_TARGET).)
+	endif
 endif
 
 ifneq ($(VALID_BOARD),)

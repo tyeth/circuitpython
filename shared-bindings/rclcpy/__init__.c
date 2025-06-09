@@ -22,11 +22,11 @@
 //| The underlying micro-ROS system uses a resource-constrained middleware layer
 //| (XRCE-DDS) that must be connected to an agent running within ROS2 on a host
 //| Linux computer. The API exposed by Circuitpython aims to be close to the
-//| standard Python API for ROS2, `rclpy`, with minor additions to support
+//| standard Python API for ROS2, ``rclpy`` with minor additions to support
 //| connecting to this agent.
 //|
 //| Wifi must be connected before calling any `rclcpy` functions. As with
-//| `rclpy`, the `rclcpy.init()` function must be run before creating any ROS
+//| ``rclpy``, the `rclcpy.init()` function must be run before creating any ROS
 //| objects. Child objects, such as publishers, must be created by their parent
 //| objects. For example::
 //|

@@ -19,6 +19,7 @@
 
 typedef struct {
     bool initialized;
+    uint8_t critical_fail;
     rcl_allocator_t rcl_allocator;
     rclc_support_t rcl_support;
     rcl_init_options_t init_options;

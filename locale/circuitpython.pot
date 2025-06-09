@@ -864,6 +864,11 @@ msgstr ""
 msgid "Couldn't allocate decoder"
 msgstr ""
 
+#: ports/espressif/common-hal/rclcpy/__init__.c
+#, c-format
+msgid "Critical ROS failure during soft reboot, reset required: %d"
+msgstr ""
+
 #: ports/stm/common-hal/analogio/AnalogOut.c
 msgid "DAC Channel Init Error"
 msgstr ""
@@ -1875,6 +1880,10 @@ msgstr ""
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS failed to initialize. Is agent connected?"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS internal setup failure"
 msgstr ""
 
 #: ports/espressif/common-hal/rclcpy/__init__.c

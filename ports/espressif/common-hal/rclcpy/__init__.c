@@ -8,9 +8,12 @@
 
 #include "esp_log.h"
 
+#define RCLCPY_SUPPORT_FAIL 1
+#define RCLCPY_OPTIONS_FAIL 2
 
 rclcpy_context_t rclcpy_default_context = {
     .initialized = false,
+    .critical_fail = 0,
 };
 
 static void *microros_allocate(size_t size, void *state) {
@@ -40,16 +43,16 @@ static void *microros_zero_allocate(size_t number_of_elements, size_t size_of_el
 
 void rclcpy_reset(void) {
     if (rclcpy_default_context.initialized) {
-        // Clean up support context
+        // Clean up micro-ROS objects
         rcl_ret_t ret = rclc_support_fini(&rclcpy_default_context.rcl_support);
         if (ret != RCL_RET_OK) {
-            ESP_LOGW("RCLCPY", "Support cleanup error: %d", ret);
+            // ESP_LOGW("RCLCPY", "Support cleanup error: %d", ret);
+            rclcpy_default_context.critical_fail = RCLCPY_SUPPORT_FAIL;
         }
-
-        // Clean up init options
         ret = rcl_init_options_fini(&rclcpy_default_context.init_options);
         if (ret != RCL_RET_OK) {
-            ESP_LOGW("RCLCPY", "Init options cleanup error: %d", ret);
+            // ESP_LOGW("RCLCPY", "Init options cleanup error: %d", ret);
+            rclcpy_default_context.critical_fail = RCLCPY_OPTIONS_FAIL;
         }
 
         // Reset context state
@@ -59,52 +62,51 @@ void rclcpy_reset(void) {
 }
 
 void common_hal_rclcpy_init(const char *agent_ip, const char *agent_port, int16_t domain_id) {
-    // Get empty allocator
-    rcl_allocator_t custom_allocator = rcutils_get_zero_initialized_allocator();
+    if (rclcpy_default_context.critical_fail != 0) {
+        mp_raise_RuntimeError_varg(MP_ERROR_TEXT("Critical ROS failure during soft reboot, reset required: %d"), rclcpy_default_context.critical_fail);
+    }
 
-    // Set custom allocation methods
+    // Set up circuitpython-friendly allocator
+    rcl_allocator_t custom_allocator = rcutils_get_zero_initialized_allocator();
     custom_allocator.allocate = microros_allocate;
     custom_allocator.deallocate = microros_deallocate;
     custom_allocator.reallocate = microros_reallocate;
     custom_allocator.zero_allocate = microros_zero_allocate;
-    // Set custom allocator as default
     if (!rcutils_set_default_allocator(&custom_allocator)) {
-        ESP_LOGW("RCLCPY", "allocator failure");
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS memory allocator failure"));
     }
     rclcpy_default_context.rcl_allocator = custom_allocator;
 
     rcl_ret_t ret;
 
-    // Options Init
+    // Micro-ROS options initialization
     rclcpy_default_context.init_options = rcl_get_zero_initialized_init_options();
     ret = rcl_init_options_init(&rclcpy_default_context.init_options, rclcpy_default_context.rcl_allocator);
     if (ret != RCL_RET_OK) {
-        ESP_LOGW("RCLCPY", "Options init failure: %d", ret);
+        mp_raise_RuntimeError(MP_ERROR_TEXT("ROS internal setup failure"));
     }
     if (domain_id < 0) {
         mp_raise_RuntimeError(MP_ERROR_TEXT("Invalid ROS domain ID"));
     }
     ret = rcl_init_options_set_domain_id(&rclcpy_default_context.init_options, domain_id);
     if (ret != RCL_RET_OK) {
-        ESP_LOGW("RCLCPY", "Options domain failure: %d", ret);
+        mp_raise_RuntimeError(MP_ERROR_TEXT("ROS internal setup failure"));
     }
 
-    // Set up Agent
+    // Set up Micro-ROS Agent
     rclcpy_default_context.rmw_options = rcl_init_options_get_rmw_init_options(&rclcpy_default_context.init_options);
     ret = rmw_uros_options_set_udp_address(agent_ip, agent_port, rclcpy_default_context.rmw_options);
     if (ret != RCL_RET_OK) {
-        ESP_LOGW("RCLCPY", "Agent options failure: %d", ret);
+        mp_raise_RuntimeError(MP_ERROR_TEXT("ROS internal setup failure"));
     }
 
-    // Support Init
+    // Final support object init requires a connected agent
     ret = rclc_support_init_with_options(&rclcpy_default_context.rcl_support,
         0,
         NULL,
         &rclcpy_default_context.init_options,
         &rclcpy_default_context.rcl_allocator);
     if (ret != RCL_RET_OK) {
-        ESP_LOGW("RCLCPY", "Initialization failure: %d", ret);
         mp_raise_RuntimeError(MP_ERROR_TEXT("ROS failed to initialize. Is agent connected?"));
     } else {
         rclcpy_default_context.initialized = true;

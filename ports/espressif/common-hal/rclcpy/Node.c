@@ -9,7 +9,6 @@
 
 #include "esp_log.h"
 
-
 void common_hal_rclcpy_node_construct(rclcpy_node_obj_t *self,
     const char *node_name, const char *node_namespace) {
 
@@ -28,9 +27,11 @@ void common_hal_rclcpy_node_deinit(rclcpy_node_obj_t *self) {
     if (common_hal_rclcpy_node_deinited(self)) {
         return;
     }
+    // Clean up Micro-ROS object
     rcl_ret_t ret = rcl_node_fini(&self->rcl_node);
-    if (ret != RCL_RET_OK || !rcl_node_is_valid(&self->rcl_node)) {
+    if (ret != RCL_RET_OK) {
         ESP_LOGW("RCLCPY", "Node cleanup error: %d", ret);
+        // rclcpy_default_context.critical_fail=RCLCPY_NODE_FAIL;
     }
     self->deinited = true;
 }

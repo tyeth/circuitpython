@@ -201,6 +201,9 @@ endif
 ifeq ($(CIRCUITPY_DISPLAYIO),1)
 SRC_PATTERNS += displayio/%
 endif
+ifeq ($(CIRCUITPY_DUALBANK),1)
+SRC_PATTERNS += dualbank/%
+endif
 ifeq ($(CIRCUITPY__EVE),1)
 SRC_PATTERNS += _eve/%
 endif
@@ -279,6 +282,9 @@ endif
 ifeq ($(CIRCUITPY_MAX3421E),1)
 SRC_PATTERNS += max3421e/%
 endif
+ifeq ($(CIRCUITPY_MDNS),1)
+SRC_PATTERNS += mdns/%
+endif
 ifeq ($(CIRCUITPY_MEMORYMAP),1)
 SRC_PATTERNS += memorymap/%
 endif
@@ -287,12 +293,6 @@ SRC_PATTERNS += memorymonitor/%
 endif
 ifeq ($(CIRCUITPY_MICROCONTROLLER),1)
 SRC_PATTERNS += microcontroller/%
-endif
-ifeq ($(CIRCUITPY_RCLCPY),1)
-SRC_PATTERNS += rclcpy/%
-endif
-ifeq ($(CIRCUITPY_MDNS),1)
-SRC_PATTERNS += mdns/%
 endif
 ifeq ($(CIRCUITPY_MSGPACK),1)
 SRC_PATTERNS += msgpack/%
@@ -308,9 +308,6 @@ SRC_PATTERNS += onewireio/%
 endif
 ifeq ($(CIRCUITPY_OS),1)
 SRC_PATTERNS += os/%
-endif
-ifeq ($(CIRCUITPY_DUALBANK),1)
-SRC_PATTERNS += dualbank/%
 endif
 ifeq ($(CIRCUITPY_PARALLELDISPLAYBUS),1)
 SRC_PATTERNS += paralleldisplaybus/%
@@ -344,6 +341,9 @@ SRC_PATTERNS += rainbowio/%
 endif
 ifeq ($(CIRCUITPY_RANDOM),1)
 SRC_PATTERNS += random/%
+endif
+ifeq ($(CIRCUITPY_RCLCPY),1)
+SRC_PATTERNS += rclcpy/%
 endif
 ifeq ($(CIRCUITPY_RGBMATRIX),1)
 SRC_PATTERNS += rgbmatrix/%
