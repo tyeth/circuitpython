@@ -324,6 +324,8 @@ typedef struct _mp_state_thread_t {
 
     #if MICROPY_PY_SSL_MBEDTLS_NEED_ACTIVE_CONTEXT
     struct _mp_obj_ssl_context_t *tls_ssl_context;
+    #endif
+
     // CIRCUITPY-CHANGE
     #if CIRCUITPY_WARNINGS
     warnings_action_t warnings_action;
@@ -354,4 +356,4 @@ extern mp_state_thread_t *mp_thread_get_state(void);
 #define mp_thread_is_main_thread() (true)
 #endif
 
-    #endif // MICROPY_INCLUDED_PY_MPSTATE_H
+#endif // MICROPY_INCLUDED_PY_MPSTATE_H

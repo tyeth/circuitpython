@@ -127,8 +127,9 @@ typedef long mp_off_t;
 #define MICROPY_HELPER_LEXER_UNIX   (1)
 #define MICROPY_VFS_POSIX           (1)
 #define MICROPY_READER_POSIX        (1)
-#if MICROPY_PY_FFI || MICROPY_BLUETOOTH_BTSTACK
-#define MICROPY_TRACKED_ALLOC       (1)
+// CIRCUITPY-CHANGE: define no matter what
+#ifndef MICROPY_TRACKED_ALLOC
+#define MICROPY_TRACKED_ALLOC       (MICROPY_PY_FFI || MICROPY_BLUETOOTH_BTSTACK)
 #endif
 
 // VFS stat functions should return time values relative to 1970/1/1

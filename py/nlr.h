@@ -117,10 +117,49 @@
 #endif
 #endif
 
-// CIRCUITPY-CHANGE
-// If MICROPY_NLR_SETJMP is not defined above -  define/disable it here
-#if !defined(MICROPY_NLR_SETJMP)
-    #define MICROPY_NLR_SETJMP (0)
+// CIRCUITPY-CHANGE: Avoid warnings by defining all these MICROPY_PY_NLR_* macros
+#ifndef MICROPY_NLR_AARCH64
+#define MICROPY_NLR_AARCH64 (0)
+#endif
+
+#ifndef MICROPY_NLR_MIPS
+#define MICROPY_NLR_MIPS (0)
+#endif
+
+#ifndef MICROPY_NLR_OS_WINDOWS
+#define MICROPY_NLR_OS_WINDOWS (0)
+#endif
+
+#ifndef MICROPY_NLR_POWERPC
+#define MICROPY_NLR_POWERPC (0)
+#endif
+
+#ifndef MICROPY_NLR_RV32I
+#define MICROPY_NLR_RV32I (0)
+#endif
+
+#ifndef MICROPY_NLR_RV64I
+#define MICROPY_NLR_RV64I (0)
+#endif
+
+#ifndef MICROPY_NLR_SETJMP
+#define MICROPY_NLR_SETJMP (0)
+#endif
+
+#ifndef MICROPY_NLR_THUMB
+#define MICROPY_NLR_THUMB (0)
+#endif
+
+#ifndef MICROPY_NLR_X64
+#define MICROPY_NLR_X64 (0)
+#endif
+
+#ifndef MICROPY_NLR_X86
+#define MICROPY_NLR_X86 (0)
+#endif
+
+#ifndef MICROPY_NLR_XTENSA
+#define MICROPY_NLR_XTENSA (0)
 #endif
 
 // *FORMAT-ON*

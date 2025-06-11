@@ -1,20 +1,6 @@
 extern "C" {
-// Include the complete public API to verify everything compiles as C++.
-#include <py/gc.h>
-#include <py/obj.h>
-#include <py/objarray.h>
-#include <py/objexcept.h>
-#include <py/objfun.h>
-#include <py/objgenerator.h>
-#include <py/objint.h>
-#include <py/objlist.h>
-#include <py/objmodule.h>
-#include <py/objnamedtuple.h>
-#include <py/objstr.h>
-#include <py/objstringio.h>
-#include <py/objtuple.h>
-#include <py/objtype.h>
-#include <py/runtime.h>
+// CIRCUITPY-CHANGE: do not include everything: it causes compilation warnings
+#include "py/obj.h"
 }
 
 #if defined(MICROPY_UNIX_COVERAGE)

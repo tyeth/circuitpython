@@ -251,8 +251,7 @@ mp_obj_t MICROPY_WRAP_MP_LOAD_GLOBAL(mp_load_global)(qstr qst) {
             #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
             mp_raise_msg(&mp_type_NameError, MP_ERROR_TEXT("name not defined"));
             #else
-            // CIRCUITPY-CHANGE: slight message change
-            mp_raise_msg_varg(&mp_type_NameError, MP_ERROR_TEXT("name '%q' is not defined"), qst);
+            mp_raise_msg_varg(&mp_type_NameError, MP_ERROR_TEXT("name '%q' isn't defined"), qst);
             #endif
         }
     }
@@ -739,8 +738,8 @@ mp_obj_t mp_call_function_n_kw(mp_obj_t fun_in, size_t n_args, size_t n_kw, cons
     #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
     mp_raise_TypeError(MP_ERROR_TEXT("object not callable"));
     #else
-    // CIRCUITPY-CHANGE: use new raise function and different message
-    mp_raise_TypeError_varg(MP_ERROR_TEXT("'%q' object is not callable"), mp_obj_get_type_qstr(fun_in));
+    // CIRCUITPY-CHANGE: more specific mp_raise
+    mp_raise_TypeError_varg(MP_ERROR_TEXT("'%q' object isn't callable"), mp_obj_get_type_qstr(fun_in));
     #endif
 }
 
@@ -1417,9 +1416,9 @@ mp_obj_t mp_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_buf) {
     #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
     mp_raise_TypeError(MP_ERROR_TEXT("object not iterable"));
     #else
-    // CIRCUITPY-CHANGE: raise function
+    // CIRCUITPY-CHANGE: more specific mp_raise
     mp_raise_TypeError_varg(
-        MP_ERROR_TEXT("'%q' object is not iterable"), mp_obj_get_type_qstr(o_in));
+        MP_ERROR_TEXT("'%q' object isn't iterable"), mp_obj_get_type_qstr(o_in));
     #endif
 
 }
@@ -1454,8 +1453,8 @@ mp_obj_t mp_iternext_allow_raise(mp_obj_t o_in) {
             #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
             mp_raise_TypeError(MP_ERROR_TEXT("object not an iterator"));
             #else
-            // CIRCUITPY-CHANGE: raise function
-            mp_raise_TypeError_varg(MP_ERROR_TEXT("'%q' object is not an iterator"),
+            // CIRCUITPY-CHANGE: more specific mp_raise
+            mp_raise_TypeError_varg(MP_ERROR_TEXT("'%q' object isn't an iterator"),
                 mp_obj_get_type_qstr(o_in));
             #endif
         }
@@ -1492,8 +1491,8 @@ mp_obj_t mp_iternext(mp_obj_t o_in) {
             #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
             mp_raise_TypeError(MP_ERROR_TEXT("object not an iterator"));
             #else
-            // CIRCUITPY-CHANGE: raise function
-            mp_raise_TypeError_varg(MP_ERROR_TEXT("'%q' object is not an iterator"),
+            // CIRCUITPY-CHANGE: more specific mp_raise
+            mp_raise_TypeError_varg(MP_ERROR_TEXT("'%q' object isn't an iterator"),
                 mp_obj_get_type_qstr(o_in));
             #endif
         }

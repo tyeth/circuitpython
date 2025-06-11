@@ -423,6 +423,11 @@
 #define MICROPY_EMIT_RV32 (0)
 #endif
 
+// CIRCUITPY-CHANGE: make sure MICROPY_EMIT_NATIVE_DEBUG is defined
+#ifndef MICROPY_EMIT_NATIVE_DEBUG
+#define MICROPY_EMIT_NATIVE_DEBUG (0)
+#endif
+
 // Convenience definition for whether any native emitter is enabled
 #define MICROPY_EMIT_NATIVE (MICROPY_EMIT_X64 || MICROPY_EMIT_X86 || MICROPY_EMIT_THUMB || MICROPY_EMIT_ARM || MICROPY_EMIT_XTENSA || MICROPY_EMIT_XTENSAWIN || MICROPY_EMIT_RV32 || MICROPY_EMIT_NATIVE_DEBUG)
 
@@ -1863,6 +1868,11 @@ typedef double mp_float_t;
 
 #ifndef MICROPY_PY_SSL
 #define MICROPY_PY_SSL (0)
+#endif
+
+// CIRCUITPY-CHANGE: avoid undefined warnings
+#ifndef MICROPY_PY_SSL_ECDSA_SIGN_ALT
+#define MICROPY_PY_SSL_ECDSA_SIGN_ALT (0)
 #endif
 
 // Whether to add finaliser code to ssl objects
