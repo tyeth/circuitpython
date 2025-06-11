@@ -304,18 +304,18 @@ void port_heap_init(void) {
 }
 
 void *port_malloc(size_t size, bool dma_capable) {
-    size_t caps = MALLOC_CAP_8BIT;
     if (dma_capable) {
-        caps |= MALLOC_CAP_DMA;
+        // SPIRAM is not DMA-capable, so don't bother to ask for it.
+        return heap_caps_malloc(size, MALLOC_CAP_8BIT | MALLOC_CAP_DMA);
     }
 
     void *ptr = NULL;
-    // Try SPIRAM first when available.
+    // Try SPIRAM first if available.
     #ifdef CONFIG_SPIRAM
-    ptr = heap_caps_malloc(size, caps | MALLOC_CAP_SPIRAM);
+    ptr = heap_caps_malloc(size, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
     #endif
     if (ptr == NULL) {
-        ptr = heap_caps_malloc(size, caps);
+        ptr = heap_caps_malloc(size, MALLOC_CAP_8BIT);
     }
     return ptr;
 }
