@@ -37,6 +37,8 @@ void common_hal_rclcpy_publisher_deinit(rclcpy_publisher_obj_t *self) {
     // Clean up Micro-ROS object
     rcl_ret_t ret = rcl_publisher_fini(&self->rcl_publisher, &self->node->rcl_node);
     if (ret != RCL_RET_OK) {
+        // TODO: publisher_fini returns a fail here, but doesn't impede microros
+        // from restarting. Debug left for future investigation.
         ESP_LOGW("RCLCPY", "Publisher cleanup error: %d", ret);
         // rclcpy_default_context.critical_fail=RCLCPY_PUB_FAIL;
     }
