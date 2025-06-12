@@ -88,7 +88,7 @@ Functions and types
 
    .. classmethod:: from_bytes(bytes, byteorder="big", *, signed=False)
 
-   .. method:: to_bytes(length, byteorder="big", *, signed=False)
+   .. method:: to_bytes(length=1, byteorder="big", *, signed=False)
 
 .. function:: isinstance()
 

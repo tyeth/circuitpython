@@ -2,6 +2,8 @@
 import skip_if
 skip_if.no_bigint()
 
+import sys
+
 # CIRCUITPY-CHANGE: signed support
 print((2**64).to_bytes(9, "little"))
 print((-2**64).to_bytes(9, "little", signed=True))

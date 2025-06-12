@@ -474,6 +474,8 @@ void mp_binary_set_val(char struct_type, char val_type, mp_obj_t val_in, byte *p
             bool signed_type = is_signed(val_type);
             #if MICROPY_LONGINT_IMPL != MICROPY_LONGINT_IMPL_NONE
             if (mp_obj_is_exact_type(val_in, &mp_type_int)) {
+                // It's a longint.
+                mp_obj_int_buffer_overflow_check(val_in, size, signed_type);
                 mp_obj_int_to_bytes_impl(val_in, struct_type == '>', size, p);
                 return;
             }
