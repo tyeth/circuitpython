@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-09 12:01+0000\n"
+"PO-Revision-Date: 2025-06-12 23:09+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -2176,9 +2176,7 @@ msgstr "La largeur de la tuile doit diviser exactement la largeur de l'image"
 
 #: shared-module/tilepalettemapper/TilePaletteMapper.c
 msgid "TilePaletteMapper may only be bound to a TileGrid once"
-msgstr ""
-"Le TilePaletteMapper ne peut être lié à une grille de tuiles qu'une seule "
-"fois"
+msgstr "TilePaletteMapper ne peut être lié à un TileGrid qu'une seule fois"
 
 #: shared-bindings/alarm/time/TimeAlarm.c
 msgid "Time is in the past."
@@ -2717,7 +2715,7 @@ msgstr "les bits doivent être 32 ou moins"
 
 #: shared-bindings/audiofreeverb/Freeverb.c
 msgid "bits_per_sample must be 16"
-msgstr "bits_par_échantillon doit être de 16"
+msgstr "bits_per_sample doit être de 16"
 
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
@@ -2726,7 +2724,7 @@ msgstr "bits_par_échantillon doit être de 16"
 #: shared-bindings/audiofilters/Filter.c shared-bindings/audiofilters/Phaser.c
 #: shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
-msgstr "'bits_per_sample' doivent être 8 ou 16"
+msgstr "bits_per_sample doivent être 8 ou 16"
 
 #: py/emitinlinethumb.c
 msgid "branch not in range"

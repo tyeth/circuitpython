@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-07 16:03+0000\n"
+"PO-Revision-Date: 2025-06-12 23:09+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
@@ -1048,7 +1048,8 @@ msgstr "Verbindung nicht erfolgreich: timeout"
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to create continuous channels: invalid arg"
-msgstr "Erstellen kontinuierlicher Kanäle fehlgeschlagen: ungültiges Argument"
+msgstr ""
+"Kontinuierliche Kanäle konnten nicht erstellt werden: ungültiges Argument"
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to create continuous channels: invalid state"
@@ -1057,7 +1058,7 @@ msgstr ""
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to create continuous channels: no mem"
-msgstr "Erstellen von kontinuierlichen Kanälen fehlgeschlagen: kein Speicher"
+msgstr "Kontinuierliche Kanäle konnten nicht erstellt werden: kein Speicher"
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to create continuous channels: not found"
@@ -1065,7 +1066,7 @@ msgstr "Kontinuierliche Kanäle konnten nicht erstellt werden: nicht gefunden"
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to enable continuous"
-msgstr "ntinuierliche Aktivierung fehlgeschlagen"
+msgstr "Kontinuierliche Aktivierung fehlgeschlagen"
 
 #: shared-module/audiomp3/MP3Decoder.c
 msgid "Failed to parse MP3 file"
@@ -1073,7 +1074,7 @@ msgstr "MP3-Datei konnte nicht analysiert werden"
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to register continuous events callback"
-msgstr "Rüclruf für kontinuierliche Ereignisse konnte nicht registriert werden"
+msgstr "Rückruf für kontinuierliche Ereignisse konnte nicht registriert werden"
 
 #: ports/nordic/sd_mutex.c
 #, c-format
