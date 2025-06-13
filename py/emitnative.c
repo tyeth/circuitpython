@@ -60,6 +60,26 @@
 #endif
 
 // CIRCUITPY-CHANGE: force definitions
+#ifndef N_ARM
+#define N_ARM (0)
+#endif
+
+#ifndef N_DEBUG
+#define N_DEBUG (0)
+#endif
+
+#ifndef N_NLR_SETJMP
+#define N_NLR_SETJMP (0)
+#endif
+
+#ifndef N_RV32
+#define N_RV32 (0)
+#endif
+
+#ifndef N_THUMB
+#define N_THUMB (0)
+#endif
+
 #ifndef N_X64
 #define N_X64 (0)
 #endif
@@ -68,20 +88,12 @@
 #define N_X86 (0)
 #endif
 
-#ifndef N_THUMB
-#define N_THUMB (0)
-#endif
-
-#ifndef N_ARM
-#define N_ARM (0)
-#endif
-
 #ifndef N_XTENSA
 #define N_XTENSA (0)
 #endif
 
-#ifndef N_NLR_SETJMP
-#define N_NLR_SETJMP (0)
+#ifndef N_XTENSAWIN
+#define N_XTENSWIN (0)
 #endif
 
 #ifndef N_PRELUDE_AS_BYTES_OBJ
