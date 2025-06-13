@@ -6,8 +6,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-05-15 08:01+0000\n"
-"Last-Translator: Jonny Bergdahl <jonny@bergdahl.it>\n"
+"PO-Revision-Date: 2025-06-14 12:03+0000\n"
+"Last-Translator: Jonny Bergdahl <github@bergdahl.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -1915,23 +1915,23 @@ msgstr "RNG Init-fel"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS failed to initialize. Is agent connected?"
-msgstr ""
+msgstr "Fel vid ROS initialisering, är agent ansluten?"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS internal setup failure"
-msgstr ""
+msgstr "Fel vid ROS intern inställning"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS memory allocator failure"
-msgstr ""
+msgstr "Fel vid ROS minnesallokering"
 
 #: ports/espressif/common-hal/rclcpy/Node.c
 msgid "ROS node failed to initialize"
-msgstr ""
+msgstr "Fel vid ROS-nods initialisering"
 
 #: ports/espressif/common-hal/rclcpy/Publisher.c
 msgid "ROS topic failed to initialize"
-msgstr ""
+msgstr "Fel vid initialisering av ROS topic"
 
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c
