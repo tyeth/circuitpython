@@ -27,7 +27,7 @@ Functions
    written which run under both CPython and MicroPython, by following the above
    pattern.
 
-.. function:: opt_level([level])
+.. CIRCUITPY-CHANGE: REMOVE .. function:: opt_level([level])
 
    If *level* is given then this function sets the optimisation level for subsequent
    compilation of scripts, and returns ``None``.  Otherwise it returns the current
@@ -45,7 +45,7 @@ Functions
 
    The default optimisation level is usually level 0.
 
-.. function:: alloc_emergency_exception_buf(size)
+.. CIRCUITPY-CHANGE: REMOVE .. function:: alloc_emergency_exception_buf(size)
 
    Allocate *size* bytes of RAM for the emergency exception buffer (a good
    size is around 100 bytes).  The buffer is used to create exceptions in cases
@@ -56,7 +56,7 @@ Functions
    (eg ``boot.py`` or ``main.py``) and then the emergency exception buffer will be active
    for all the code following it.
 
-.. function:: mem_info([verbose])
+.. CIRCUITPY-CHANGE: REMOVE .. function:: mem_info([verbose])
 
    Print information about currently used memory.  If the *verbose* argument
    is given then extra information is printed.
@@ -65,7 +65,7 @@ Functions
    includes the amount of stack and heap used.  In verbose mode it prints out
    the entire heap indicating which blocks are used and which are free.
 
-.. function:: qstr_info([verbose])
+.. CIRCUITPY-CHANGE: REMOVE .. function:: qstr_info([verbose])
 
    Print information about currently interned strings.  If the *verbose*
    argument is given then extra information is printed.
@@ -74,15 +74,15 @@ Functions
    includes the number of interned strings and the amount of RAM they use.  In
    verbose mode it prints out the names of all RAM-interned strings.
 
-.. function:: stack_use()
+.. CIRCUITPY-CHANGE: REMOVE .. function:: stack_use()
 
    Return an integer representing the current amount of stack that is being
    used.  The absolute value of this is not particularly useful, rather it
    should be used to compute differences in stack usage at different points.
 
-.. function:: heap_lock()
-.. function:: heap_unlock()
-.. function:: heap_locked()
+.. CIRCUITPY-CHANGE: REMOVE .. function:: heap_lock()
+.. CIRCUITPY-CHANGE: REMOVE .. function:: heap_unlock()
+.. CIRCUITPY-CHANGE: REMOVE .. function:: heap_locked()
 
    Lock or unlock the heap.  When locked no memory allocation can occur and a
    `builtins.MemoryError` will be raised if any heap allocation is attempted.
@@ -102,7 +102,7 @@ Functions
    Note: `heap_locked()` is not enabled on most ports by default,
    requires ``MICROPY_PY_MICROPYTHON_HEAP_LOCKED``.
 
-.. function:: kbd_intr(chr)
+.. CIRCUITPY-CHANGE: REMOVE .. function:: kbd_intr(chr)
 
    Set the character that will raise a `KeyboardInterrupt` exception.  By
    default this is set to 3 during script execution, corresponding to Ctrl-C.
@@ -113,7 +113,7 @@ Functions
    incoming stream of characters that is usually used for the REPL, in case
    that stream is used for other purposes.
 
-.. function:: schedule(func, arg)
+.. CIRCUITPY-CHANGE: REMOVE .. function:: schedule(func, arg)
 
    Schedule the function *func* to be executed "very soon".  The function
    is passed the value *arg* as its single argument.  "Very soon" means that
