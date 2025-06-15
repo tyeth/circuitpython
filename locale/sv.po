@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-14 12:03+0000\n"
+"PO-Revision-Date: 2025-06-15 23:04+0000\n"
 "Last-Translator: Jonny Bergdahl <github@bergdahl.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -870,7 +870,7 @@ msgstr "Arrayer för koordinater har olika storlek"
 
 #: ports/espressif/common-hal/rclcpy/Publisher.c
 msgid "Could not publish to ROS topic"
-msgstr ""
+msgstr "Kan inte publicera till ROS topic"
 
 #: shared-bindings/_bleio/Adapter.c
 msgid "Could not set address"
@@ -887,7 +887,7 @@ msgstr "Det gick inte att allokera avkodaren"
 #: ports/espressif/common-hal/rclcpy/__init__.c
 #, c-format
 msgid "Critical ROS failure during soft reboot, reset required: %d"
-msgstr ""
+msgstr "Kritiskt ROS-fel vid mjuk omstart, reset krävs: %d"
 
 #: ports/stm/common-hal/analogio/AnalogOut.c
 msgid "DAC Channel Init Error"
@@ -1325,7 +1325,7 @@ msgstr "Ogiltig MAC-adress"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "Invalid ROS domain ID"
-msgstr ""
+msgstr "Ogiltigt ROS domän-id"
 
 #: ports/espressif/common-hal/espidf/__init__.c py/moderrno.c
 msgid "Invalid argument"
@@ -1891,7 +1891,7 @@ msgstr "Programmet är för långt"
 
 #: shared-bindings/rclcpy/Publisher.c
 msgid "Publishers can only be created from a parent node"
-msgstr ""
+msgstr "Publicerare kan bara skapas from föräldranod"
 
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Pull not used when direction is output."
