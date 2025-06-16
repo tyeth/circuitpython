@@ -81,8 +81,8 @@ msgstr " 산출:\n"
 
 #: py/objstr.c
 #, c-format
-msgid "%%c requires int or char"
-msgstr "%%c 전수(int)또는 캐릭터(char)필요합니다"
+msgid "%%c needs int or char"
+msgstr ""
 
 #: shared-bindings/rgbmatrix/RGBMatrix.c
 #, c-format
@@ -171,7 +171,7 @@ msgstr "%q 길이는 <= %d>여야 합니다"
 msgid "%q length must be >= %d"
 msgstr "%q 길이는 >= %d이어야 합니다"
 
-#: py/modsys.c py/runtime.c
+#: py/runtime.c
 #, fuzzy
 msgid "%q moved from %q to %q"
 msgstr "%q가 %q에서 %q로 이동했습니다"
@@ -338,8 +338,8 @@ msgid "'%q' object isn't an iterator"
 msgstr "'%q' 개체가 iterator가 아닙니다"
 
 #: py/objtype.c py/runtime.c shared-module/atexit/__init__.c
-msgid "'%q' object is not callable"
-msgstr "'%q' 개체를 호출할 수 없습니다"
+msgid "'%q' object isn't callable"
+msgstr ""
 
 #: py/runtime.c
 msgid "'%q' object isn't iterable"
@@ -2843,6 +2843,10 @@ msgstr ""
 msgid "can't convert to str implicitly"
 msgstr ""
 
+#: py/objtype.c
+msgid "can't create '%q' instances"
+msgstr ""
+
 #: py/compile.c
 msgid "can't declare nonlocal in outer code"
 msgstr ""
@@ -2939,10 +2943,6 @@ msgstr ""
 
 #: extmod/ulab/code/ndarray.c
 msgid "cannot convert complex type"
-msgstr ""
-
-#: py/objtype.c
-msgid "cannot create '%q' instances"
 msgstr ""
 
 #: py/objtype.c
@@ -3260,6 +3260,14 @@ msgstr ""
 
 #: py/objstr.c
 msgid "format needs a dict"
+msgstr ""
+
+#: py/objstr.c
+msgid "format string didn't convert all arguments"
+msgstr ""
+
+#: py/objstr.c
+msgid "format string needs more arguments"
 msgstr ""
 
 #: py/objdeque.c
@@ -3808,7 +3816,7 @@ msgid "non-default argument follows default argument"
 msgstr ""
 
 #: py/objstr.c
-msgid "non-hex digit found"
+msgid "non-hex digit"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/Adapter.c
@@ -3825,14 +3833,6 @@ msgstr ""
 
 #: py/parse.c
 msgid "not a constant"
-msgstr ""
-
-#: py/objstr.c
-msgid "not all arguments converted during string formatting"
-msgstr ""
-
-#: py/objstr.c
-msgid "not enough arguments for format string"
 msgstr ""
 
 #: extmod/ulab/code/numpy/carray/carray_tools.c
@@ -3895,10 +3895,6 @@ msgstr ""
 
 #: py/obj.c
 msgid "object with buffer protocol required"
-msgstr ""
-
-#: py/objstr.c
-msgid "odd-length string"
 msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
@@ -4087,10 +4083,6 @@ msgstr ""
 
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 msgid "pull masks conflict with direction masks"
-msgstr ""
-
-#: py/parse.c
-msgid "raw f-strings are not supported"
 msgstr ""
 
 #: extmod/ulab/code/numpy/fft/fft_tools.c
@@ -4566,6 +4558,13 @@ msgstr ""
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr ""
+
+#, c-format
+#~ msgid "%%c requires int or char"
+#~ msgstr "%%c 전수(int)또는 캐릭터(char)필요합니다"
+
+#~ msgid "'%q' object is not callable"
+#~ msgstr "'%q' 개체를 호출할 수 없습니다"
 
 #~ msgid "Cannot remount '/' when visible via USB."
 #~ msgstr "USB를 통해 표시될 때 '/'은 다시 마운트할 수 없습니다."

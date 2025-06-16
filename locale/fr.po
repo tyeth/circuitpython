@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-12 23:09+0000\n"
-"Last-Translator: MAE <martin-aehle@hotmail.de>\n"
+"PO-Revision-Date: 2025-06-16 14:49+0000\n"
+"Last-Translator: Franck Sauvé <fksauve@gmail.com>\n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -883,7 +883,7 @@ msgstr "Les types des tableaux de coordonnées sont de longueur différentes"
 
 #: ports/espressif/common-hal/rclcpy/Publisher.c
 msgid "Could not publish to ROS topic"
-msgstr ""
+msgstr "Ne peut publier sur le Topic ROS"
 
 #: shared-bindings/_bleio/Adapter.c
 msgid "Could not set address"
@@ -900,7 +900,7 @@ msgstr "Ne peux allouer le décodeur"
 #: ports/espressif/common-hal/rclcpy/__init__.c
 #, c-format
 msgid "Critical ROS failure during soft reboot, reset required: %d"
-msgstr ""
+msgstr "Erreur critique lors du reboot à chaud, reset requis: %d"
 
 #: ports/stm/common-hal/analogio/AnalogOut.c
 msgid "DAC Channel Init Error"
@@ -1089,7 +1089,7 @@ msgstr "Écchec de liberaton du mutex, err 0x%04x"
 
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "Failed to set hostname"
-msgstr ""
+msgstr "hostname impossible à initialiser"
 
 #: ports/espressif/common-hal/audioio/AudioOut.c
 msgid "Failed to start async audio"
@@ -1344,7 +1344,7 @@ msgstr "Adresse MAC invalide"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "Invalid ROS domain ID"
-msgstr ""
+msgstr "ROS domain ID invalide"
 
 #: ports/espressif/common-hal/espidf/__init__.c py/moderrno.c
 msgid "Invalid argument"
@@ -1920,7 +1920,7 @@ msgstr "Programme trop long"
 
 #: shared-bindings/rclcpy/Publisher.c
 msgid "Publishers can only be created from a parent node"
-msgstr ""
+msgstr "Les Publishers ne peuvent etre crées que du noeud parent"
 
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Pull not used when direction is output."
@@ -1944,23 +1944,23 @@ msgstr "Erreur d'initialisation du RNG"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS failed to initialize. Is agent connected?"
-msgstr ""
+msgstr "L'agent est-il connecté? ROS échoue son initialisation"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS internal setup failure"
-msgstr ""
+msgstr "ROS échec de configuration interne"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS memory allocator failure"
-msgstr ""
+msgstr "Erreur d'allocation mémoire ROS"
 
 #: ports/espressif/common-hal/rclcpy/Node.c
 msgid "ROS node failed to initialize"
-msgstr ""
+msgstr "ROS node échoue a s'initialiser"
 
 #: ports/espressif/common-hal/rclcpy/Publisher.c
 msgid "ROS topic failed to initialize"
-msgstr ""
+msgstr "Le topic ROS échoue à s'initialiser"
 
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c

@@ -82,8 +82,8 @@ msgstr " вывод:\n"
 
 #: py/objstr.c
 #, c-format
-msgid "%%c requires int or char"
-msgstr "%%c требует int или char"
+msgid "%%c needs int or char"
+msgstr ""
 
 #: shared-bindings/rgbmatrix/RGBMatrix.c
 #, c-format
@@ -173,7 +173,7 @@ msgstr "Длинна %q должна быть <= %d"
 msgid "%q length must be >= %d"
 msgstr "Длинна %q должна быть >= %d"
 
-#: py/modsys.c py/runtime.c
+#: py/runtime.c
 msgid "%q moved from %q to %q"
 msgstr "%q переместился из %q в %q"
 
@@ -328,8 +328,8 @@ msgid "'%q' object isn't an iterator"
 msgstr "Объект '%q' не является итератором"
 
 #: py/objtype.c py/runtime.c shared-module/atexit/__init__.c
-msgid "'%q' object is not callable"
-msgstr "Объект '%q' не является вызываемым"
+msgid "'%q' object isn't callable"
+msgstr ""
 
 #: py/runtime.c
 msgid "'%q' object isn't iterable"
@@ -2838,6 +2838,10 @@ msgstr "Не удается преобразовать в int"
 msgid "can't convert to str implicitly"
 msgstr "не может превратиться в полосу неявно"
 
+#: py/objtype.c
+msgid "can't create '%q' instances"
+msgstr ""
+
 #: py/compile.c
 msgid "can't declare nonlocal in outer code"
 msgstr "не может объявить нелокальный во внешнем коде"
@@ -2939,10 +2943,6 @@ msgstr "не может превратить комплекс в dtype"
 #: extmod/ulab/code/ndarray.c
 msgid "cannot convert complex type"
 msgstr "Не удается преобразовать сложный тип"
-
-#: py/objtype.c
-msgid "cannot create '%q' instances"
-msgstr "Не удается создать экземпляры '%q'"
 
 #: py/objtype.c
 msgid "cannot create instance"
@@ -3266,6 +3266,14 @@ msgstr "формат"
 #: py/objstr.c
 msgid "format needs a dict"
 msgstr "Формат требует диктата"
+
+#: py/objstr.c
+msgid "format string didn't convert all arguments"
+msgstr ""
+
+#: py/objstr.c
+msgid "format string needs more arguments"
+msgstr ""
 
 #: py/objdeque.c
 msgid "full"
@@ -3821,8 +3829,8 @@ msgstr ""
 "умолчанию"
 
 #: py/objstr.c
-msgid "non-hex digit found"
-msgstr "Ненайдена шестнадцатеричная цифра"
+msgid "non-hex digit"
+msgstr ""
 
 #: ports/nordic/common-hal/_bleio/Adapter.c
 msgid "non-zero timeout must be > 0.01"
@@ -3839,14 +3847,6 @@ msgstr "не 128-битный UUID"
 #: py/parse.c
 msgid "not a constant"
 msgstr "не константа"
-
-#: py/objstr.c
-msgid "not all arguments converted during string formatting"
-msgstr "Не все аргументы преобразуются при форматировании строки"
-
-#: py/objstr.c
-msgid "not enough arguments for format string"
-msgstr "Недостаточно аргументов для строки форматирования"
 
 #: extmod/ulab/code/numpy/carray/carray_tools.c
 msgid "not implemented for complex dtype"
@@ -3909,10 +3909,6 @@ msgstr "объект типа «%s» не имеет len()"
 #: py/obj.c
 msgid "object with buffer protocol required"
 msgstr "Объект с обязательным буферным протоколом"
-
-#: py/objstr.c
-msgid "odd-length string"
-msgstr "Строка нечетной длины"
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "off"
@@ -4101,10 +4097,6 @@ msgstr "pow() с 3 аргументами требует целых чисел"
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 msgid "pull masks conflict with direction masks"
 msgstr "Маски вытягивания конфликтуют с масками направления"
-
-#: py/parse.c
-msgid "raw f-strings are not supported"
-msgstr "Необработанные F-строки не поддерживаются"
 
 #: extmod/ulab/code/numpy/fft/fft_tools.c
 msgid "real and imaginary parts must be of equal length"
@@ -4584,6 +4576,31 @@ msgstr "zi должно быть типа float"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi должен иметь форму (n_section, 2)"
+
+#, c-format
+#~ msgid "%%c requires int or char"
+#~ msgstr "%%c требует int или char"
+
+#~ msgid "'%q' object is not callable"
+#~ msgstr "Объект '%q' не является вызываемым"
+
+#~ msgid "cannot create '%q' instances"
+#~ msgstr "Не удается создать экземпляры '%q'"
+
+#~ msgid "non-hex digit found"
+#~ msgstr "Ненайдена шестнадцатеричная цифра"
+
+#~ msgid "not all arguments converted during string formatting"
+#~ msgstr "Не все аргументы преобразуются при форматировании строки"
+
+#~ msgid "not enough arguments for format string"
+#~ msgstr "Недостаточно аргументов для строки форматирования"
+
+#~ msgid "odd-length string"
+#~ msgstr "Строка нечетной длины"
+
+#~ msgid "raw f-strings are not supported"
+#~ msgstr "Необработанные F-строки не поддерживаются"
 
 #~ msgid "Unsupported format"
 #~ msgstr "Неподдерживаемый формат"

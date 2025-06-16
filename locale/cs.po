@@ -80,8 +80,8 @@ msgstr " výstup:\n"
 
 #: py/objstr.c
 #, c-format
-msgid "%%c requires int or char"
-msgstr "%%c vyžaduje int nebo char"
+msgid "%%c needs int or char"
+msgstr ""
 
 #: shared-bindings/rgbmatrix/RGBMatrix.c
 #, c-format
@@ -169,7 +169,7 @@ msgstr "Délka %q musí být <= %d"
 msgid "%q length must be >= %d"
 msgstr "Délka %q musí být >= %d"
 
-#: py/modsys.c py/runtime.c
+#: py/runtime.c
 msgid "%q moved from %q to %q"
 msgstr ""
 
@@ -324,8 +324,8 @@ msgid "'%q' object isn't an iterator"
 msgstr "Objekt '%q' není iterátor"
 
 #: py/objtype.c py/runtime.c shared-module/atexit/__init__.c
-msgid "'%q' object is not callable"
-msgstr "Objekt '%q' nelze zavolat"
+msgid "'%q' object isn't callable"
+msgstr ""
 
 #: py/runtime.c
 msgid "'%q' object isn't iterable"
@@ -2794,6 +2794,10 @@ msgstr "nelze převést na int"
 msgid "can't convert to str implicitly"
 msgstr ""
 
+#: py/objtype.c
+msgid "can't create '%q' instances"
+msgstr ""
+
 #: py/compile.c
 msgid "can't declare nonlocal in outer code"
 msgstr ""
@@ -2891,10 +2895,6 @@ msgstr "nelze převést complex na dtype"
 #: extmod/ulab/code/ndarray.c
 msgid "cannot convert complex type"
 msgstr "nelze převést typ complex"
-
-#: py/objtype.c
-msgid "cannot create '%q' instances"
-msgstr ""
 
 #: py/objtype.c
 msgid "cannot create instance"
@@ -3211,6 +3211,14 @@ msgstr ""
 
 #: py/objstr.c
 msgid "format needs a dict"
+msgstr ""
+
+#: py/objstr.c
+msgid "format string didn't convert all arguments"
+msgstr ""
+
+#: py/objstr.c
+msgid "format string needs more arguments"
 msgstr ""
 
 #: py/objdeque.c
@@ -3759,7 +3767,7 @@ msgid "non-default argument follows default argument"
 msgstr ""
 
 #: py/objstr.c
-msgid "non-hex digit found"
+msgid "non-hex digit"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/Adapter.c
@@ -3777,14 +3785,6 @@ msgstr ""
 #: py/parse.c
 msgid "not a constant"
 msgstr "není konstanta"
-
-#: py/objstr.c
-msgid "not all arguments converted during string formatting"
-msgstr ""
-
-#: py/objstr.c
-msgid "not enough arguments for format string"
-msgstr ""
 
 #: extmod/ulab/code/numpy/carray/carray_tools.c
 msgid "not implemented for complex dtype"
@@ -3846,10 +3846,6 @@ msgstr "objekt typu '%s' nemá len()"
 
 #: py/obj.c
 msgid "object with buffer protocol required"
-msgstr ""
-
-#: py/objstr.c
-msgid "odd-length string"
 msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
@@ -4039,10 +4035,6 @@ msgstr ""
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 msgid "pull masks conflict with direction masks"
 msgstr ""
-
-#: py/parse.c
-msgid "raw f-strings are not supported"
-msgstr "surové f-stringy nesjou podporované"
 
 #: extmod/ulab/code/numpy/fft/fft_tools.c
 msgid "real and imaginary parts must be of equal length"
@@ -4517,6 +4509,16 @@ msgstr ""
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr ""
+
+#, c-format
+#~ msgid "%%c requires int or char"
+#~ msgstr "%%c vyžaduje int nebo char"
+
+#~ msgid "'%q' object is not callable"
+#~ msgstr "Objekt '%q' nelze zavolat"
+
+#~ msgid "raw f-strings are not supported"
+#~ msgstr "surové f-stringy nesjou podporované"
 
 #~ msgid "Unsupported format"
 #~ msgstr "Nepodporovaný formát"
