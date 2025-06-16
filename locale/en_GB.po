@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-04-25 15:04+0000\n"
+"PO-Revision-Date: 2025-06-15 23:04+0000\n"
 "Last-Translator: Andi Chandler <andi@gowling.com>\n"
 "Language-Team: none\n"
 "Language: en_GB\n"
@@ -865,6 +865,10 @@ msgstr "Coordinate arrays have different lengths"
 msgid "Coordinate arrays types have different sizes"
 msgstr "Coordinate arrays types have different sizes"
 
+#: ports/espressif/common-hal/rclcpy/Publisher.c
+msgid "Could not publish to ROS topic"
+msgstr "Could not publish to ROS topic"
+
 #: shared-bindings/_bleio/Adapter.c
 msgid "Could not set address"
 msgstr "Could not set address"
@@ -876,6 +880,11 @@ msgstr "Could not start interrupt, RX busy"
 #: shared-module/audiomp3/MP3Decoder.c
 msgid "Couldn't allocate decoder"
 msgstr "Couldn't allocate decoder"
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+#, c-format
+msgid "Critical ROS failure during soft reboot, reset required: %d"
+msgstr "Critical ROS failure during soft reboot, reset required: %d"
 
 #: ports/stm/common-hal/analogio/AnalogOut.c
 msgid "DAC Channel Init Error"
@@ -1305,6 +1314,10 @@ msgstr "Invalid BSSID"
 #: shared-bindings/wifi/Radio.c
 msgid "Invalid MAC address"
 msgstr "Invalid MAC address"
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "Invalid ROS domain ID"
+msgstr "Invalid ROS domain ID"
 
 #: ports/espressif/common-hal/espidf/__init__.c py/moderrno.c
 msgid "Invalid argument"
@@ -1865,6 +1878,10 @@ msgstr "Program size invalid"
 msgid "Program too long"
 msgstr "Program too long"
 
+#: shared-bindings/rclcpy/Publisher.c
+msgid "Publishers can only be created from a parent node"
+msgstr "Publishers can only be created from a parent node"
+
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Pull not used when direction is output."
 msgstr "Pull not used when direction is output."
@@ -1884,6 +1901,26 @@ msgstr "RNG deinit Error"
 #: ports/stm/common-hal/os/__init__.c
 msgid "RNG Init Error"
 msgstr "RNG init Error"
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS failed to initialize. Is agent connected?"
+msgstr "ROS failed to initialise. Is agent connected?"
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS internal setup failure"
+msgstr "ROS internal setup failure"
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS memory allocator failure"
+msgstr "ROS memory allocator failure"
+
+#: ports/espressif/common-hal/rclcpy/Node.c
+msgid "ROS node failed to initialize"
+msgstr "ROS node failed to initialise"
+
+#: ports/espressif/common-hal/rclcpy/Publisher.c
+msgid "ROS topic failed to initialize"
+msgstr "ROS topic failed to initialise"
 
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c
@@ -2098,7 +2135,7 @@ msgstr "Tile width must exactly divide bitmap width"
 
 #: shared-module/tilepalettemapper/TilePaletteMapper.c
 msgid "TilePaletteMapper may only be bound to a TileGrid once"
-msgstr ""
+msgstr "TilePaletteMapper may only be bound to a TileGrid once"
 
 #: shared-bindings/alarm/time/TimeAlarm.c
 msgid "Time is in the past."
@@ -2393,7 +2430,7 @@ msgstr "Wi-Fi: "
 #: ports/raspberrypi/common-hal/wifi/Radio.c
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "WiFi is not enabled"
-msgstr ""
+msgstr "WiFi is not enabled"
 
 #: main.c
 msgid "Woken up by alarm.\n"
