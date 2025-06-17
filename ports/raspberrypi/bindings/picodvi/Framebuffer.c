@@ -179,7 +179,7 @@ MP_PROPERTY_GETTER(picodvi_framebuffer_height_obj,
     (mp_obj_t)&picodvi_framebuffer_get_height_obj);
 
 //|     color_depth: int
-//|     """The width of the framebuffer, in pixels. It may be doubled for output."""
+//|     """The color depth of the framebuffer."""
 static mp_obj_t picodvi_framebuffer_get_color_depth(mp_obj_t self_in) {
     picodvi_framebuffer_obj_t *self = (picodvi_framebuffer_obj_t *)self_in;
     check_for_deinit(self);
