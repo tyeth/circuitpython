@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2024-07-03 19:09+0000\n"
-"Last-Translator: Hacı <qwehacim3542qwe@gmail.com>\n"
+"PO-Revision-Date: 2025-06-18 17:01+0000\n"
+"Last-Translator: Dan Halbert <halbert@halwitz.org>\n"
 "Language-Team: none\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.7-dev\n"
+"X-Generator: Weblate 5.12.1\n"
 
 #: main.c
 msgid ""
@@ -750,7 +750,7 @@ msgstr ""
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
 msgid "Can only alarm on RTC IO from deep sleep."
-msgstr ""
+msgstr "Sadece alarm RTC IO'yu uyandırabilir."
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
 msgid "Can only alarm on one low pin while others alarm high from deep sleep."
