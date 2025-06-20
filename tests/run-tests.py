@@ -341,7 +341,7 @@ special_tests = [
         # CIRCUITPY-CHANGE: removal and additions
         # REMOVE "esp32/partition_ota.py",
         "circuitpython/traceback_test.py",
-        "circuitpython/traceback_test_chained.py", add
+        "circuitpython/traceback_test_chained.py",
     )
 ]
 
@@ -954,7 +954,7 @@ def run_tests(pyb, tests, args, result_dir, num_threads=1):
             # Expected output is result of running unittest.
             output_expected = None
         else:
-           test_file_expected = test_file + ".exp"
+            test_file_expected = test_file + ".exp"
             if os.path.isfile(test_file_expected):
                 # Expected output given by a file, so read that in.
                 with open(test_file_expected, "rb") as f:
@@ -1325,14 +1325,15 @@ the last matching regex is used:
     if not args.keep_path:
         # Clear search path to make sure tests use only builtin modules, those in
         # extmod, and a path to unittest in case it's needed.
-        # CIRCUITPY-CHANGE: Add testlib for skip_if and our async stuff.        os.environ["MICROPYPATH"] = (
+        # CIRCUITPY-CHANGE: Add testlib for skip_if and our async stuff.
+        os.environ["MICROPYPATH"] = (
             ".frozen"
             + os.pathsep
-            + base_path("testlib"),
+            + base_path("testlib")
             + os.pathsep
-            + base_path("../frozen/Adafruit_CircuitPython_asyncio"),
+            + base_path("../frozen/Adafruit_CircuitPython_asyncio")
             + os.pathsep
-            + base_path("../frozen/Adafruit_CircuitPython_Ticks"),
+            + base_path("../frozen/Adafruit_CircuitPython_Ticks")
             + os.pathsep
             + base_path("../extmod")
             + os.pathsep

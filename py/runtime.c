@@ -50,7 +50,7 @@
 
 #if MICROPY_VFS_ROM && MICROPY_VFS_ROM_IOCTL
 #include "extmod/vfs.h"
-#endif 
+#endif
 
 // CIRCUITPY-CHANGE
 #if CIRCUITPY_WARNINGS

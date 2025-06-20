@@ -8,9 +8,6 @@
 # Ruff settings copied from MicroPython
 
 [tool.ruff]
-# Exclude third-party code from linting and formatting
-extend-exclude = ["lib"]
-line-length = 99
 target-version = "py37"
 
 line-length = 99
