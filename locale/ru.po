@@ -173,10 +173,6 @@ msgstr "Длинна %q должна быть <= %d"
 msgid "%q length must be >= %d"
 msgstr "Длинна %q должна быть >= %d"
 
-#: py/runtime.c
-msgid "%q moved from %q to %q"
-msgstr "%q переместился из %q в %q"
-
 #: py/argcheck.c
 msgid "%q must be %d"
 msgstr "%q должно быть %d"
@@ -265,7 +261,7 @@ msgstr "%q за пределом"
 msgid "%q out of range"
 msgstr "%q вне диапазона"
 
-#: py/objmodule.c py/runtime.c
+#: py/objmodule.c
 msgid "%q renamed %q"
 msgstr "%q переименован %q"
 
@@ -2770,6 +2766,10 @@ msgstr "Калибровка доступна только для чтения"
 msgid "can only have one parent"
 msgstr "может иметь только одного родителя"
 
+#: py/emitinlinerv32.c
+msgid "can only have up to 4 parameters for RV32 assembly"
+msgstr ""
+
 #: py/emitinlinethumb.c
 msgid "can only have up to 4 parameters to Thumb assembly"
 msgstr "может иметь только до 4 параметров для сборки большого пальца"
@@ -3958,6 +3958,30 @@ msgstr "поддерживаются только срезы с шагом = 1 (
 msgid "opcode"
 msgstr "код операции"
 
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: expecting %q"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: must not be zero"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: out of range"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: undefined label '%q'"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: unknown register"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q': expecting %d arguments"
+msgstr ""
+
 #: extmod/ulab/code/ndarray.c extmod/ulab/code/numpy/bitwise.c
 #: extmod/ulab/code/numpy/compare.c extmod/ulab/code/numpy/vector.c
 msgid "operands could not be broadcast together"
@@ -4048,6 +4072,10 @@ msgstr "Упаковка ожидаемых %d товаров для упако�
 #: shared-bindings/_stage/Layer.c shared-bindings/_stage/Text.c
 msgid "palette must be 32 bytes long"
 msgstr "Длина палитры должна составлять 32 байта"
+
+#: py/emitinlinerv32.c
+msgid "parameters must be registers in sequence a0 to a3"
+msgstr ""
 
 #: py/emitinlinextensa.c
 msgid "parameters must be registers in sequence a2 to a5"
@@ -4238,10 +4266,6 @@ msgstr "source_bitmap должен иметь значение_счет 8"
 msgid "splitting with sub-captures"
 msgstr "разделение с помощью подзахватов"
 
-#: py/objstr.c
-msgid "start/end indices"
-msgstr "Начальные/конечные индексы"
-
 #: shared-bindings/random/__init__.c
 msgid "stop not reachable from start"
 msgstr "Остановка недоступна с начального запуска"
@@ -4405,6 +4429,10 @@ msgstr "Экранирование имен в Юникоде"
 #: py/parse.c
 msgid "unindent doesn't match any outer indent level"
 msgstr "Отступ не совпадает ни с одним уровнем внешнего отступа"
+
+#: py/emitinlinerv32.c
+msgid "unknown RV32 instruction '%q'"
+msgstr ""
 
 #: py/objstr.c
 #, c-format
@@ -4576,6 +4604,12 @@ msgstr "zi должно быть типа float"
 #: extmod/ulab/code/scipy/signal/signal.c
 msgid "zi must be of shape (n_section, 2)"
 msgstr "zi должен иметь форму (n_section, 2)"
+
+#~ msgid "%q moved from %q to %q"
+#~ msgstr "%q переместился из %q в %q"
+
+#~ msgid "start/end indices"
+#~ msgstr "Начальные/конечные индексы"
 
 #, c-format
 #~ msgid "%%c requires int or char"
