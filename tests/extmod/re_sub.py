@@ -49,7 +49,8 @@ print(re.sub("(abc)", r"\g<1>\g<1>", "abc"))
 print(re.sub("a", "b", "c"))
 
 # with maximum substitution count specified
-if sys.implementation.name != "micropython":
+# CIRCUITPY-CHANGE: was "micropython"
+if sys.implementation.name != "circuitpython":
     # On CPython 3.13 and later the substitution count must be a keyword argument.
     print(re.sub("a", "b", "1a2a3a", count=2))
 else:

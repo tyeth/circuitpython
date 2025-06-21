@@ -93,7 +93,7 @@
 #endif
 
 #ifndef N_XTENSAWIN
-#define N_XTENSWIN (0)
+#define N_XTENSAWIN (0)
 #endif
 
 #ifndef N_PRELUDE_AS_BYTES_OBJ
