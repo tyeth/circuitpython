@@ -169,10 +169,6 @@ msgstr "Délka %q musí být <= %d"
 msgid "%q length must be >= %d"
 msgstr "Délka %q musí být >= %d"
 
-#: py/runtime.c
-msgid "%q moved from %q to %q"
-msgstr ""
-
 #: py/argcheck.c
 msgid "%q must be %d"
 msgstr "%q musí být %d"
@@ -261,7 +257,7 @@ msgstr "%q je mimo hranice"
 msgid "%q out of range"
 msgstr "%q je mimo rozsah"
 
-#: py/objmodule.c py/runtime.c
+#: py/objmodule.c
 msgid "%q renamed %q"
 msgstr ""
 
@@ -2727,6 +2723,10 @@ msgstr ""
 msgid "can only have one parent"
 msgstr "může mít pouze jednoho rodiče"
 
+#: py/emitinlinerv32.c
+msgid "can only have up to 4 parameters for RV32 assembly"
+msgstr ""
+
 #: py/emitinlinethumb.c
 msgid "can only have up to 4 parameters to Thumb assembly"
 msgstr ""
@@ -3896,6 +3896,30 @@ msgstr ""
 msgid "opcode"
 msgstr "opcode"
 
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: expecting %q"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: must not be zero"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: out of range"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: undefined label '%q'"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q' argument %d: unknown register"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "opcode '%q': expecting %d arguments"
+msgstr ""
+
 #: extmod/ulab/code/ndarray.c extmod/ulab/code/numpy/bitwise.c
 #: extmod/ulab/code/numpy/compare.c extmod/ulab/code/numpy/vector.c
 msgid "operands could not be broadcast together"
@@ -3985,6 +4009,10 @@ msgstr ""
 
 #: shared-bindings/_stage/Layer.c shared-bindings/_stage/Text.c
 msgid "palette must be 32 bytes long"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "parameters must be registers in sequence a0 to a3"
 msgstr ""
 
 #: py/emitinlinextensa.c
@@ -4176,10 +4204,6 @@ msgstr ""
 msgid "splitting with sub-captures"
 msgstr ""
 
-#: py/objstr.c
-msgid "start/end indices"
-msgstr ""
-
 #: shared-bindings/random/__init__.c
 msgid "stop not reachable from start"
 msgstr ""
@@ -4340,6 +4364,10 @@ msgstr ""
 
 #: py/parse.c
 msgid "unindent doesn't match any outer indent level"
+msgstr ""
+
+#: py/emitinlinerv32.c
+msgid "unknown RV32 instruction '%q'"
 msgstr ""
 
 #: py/objstr.c
