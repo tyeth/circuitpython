@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-09 12:01+0000\n"
+"PO-Revision-Date: 2025-06-29 13:02+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: none\n"
 "Language: nl\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.12-dev\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -1524,7 +1524,7 @@ msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "No IP"
-msgstr ""
+msgstr "Geen IP"
 
 #: ports/atmel-samd/common-hal/microcontroller/__init__.c
 #: ports/cxd56/common-hal/microcontroller/__init__.c
@@ -2192,7 +2192,7 @@ msgstr ""
 
 #: main.c
 msgid "UID:"
-msgstr ""
+msgstr "UID:"
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
@@ -2409,7 +2409,7 @@ msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "Wi-Fi: "
-msgstr ""
+msgstr "Wi-Fi: "
 
 #: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
@@ -3893,7 +3893,7 @@ msgstr "alleen segmenten met step=1 (ook wel None) worden ondersteund"
 
 #: py/vm.c
 msgid "opcode"
-msgstr ""
+msgstr "opcode"
 
 #: extmod/ulab/code/ndarray.c extmod/ulab/code/numpy/bitwise.c
 #: extmod/ulab/code/numpy/compare.c extmod/ulab/code/numpy/vector.c
