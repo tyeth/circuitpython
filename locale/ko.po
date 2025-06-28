@@ -7,15 +7,15 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2023-12-23 14:56+0000\n"
-"Last-Translator: 오수아 <tsuki@ajou.ac.kr>\n"
+"PO-Revision-Date: 2025-06-29 13:02+0000\n"
+"Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.4-dev\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -2250,7 +2250,7 @@ msgstr ""
 
 #: main.c
 msgid "UID:"
-msgstr ""
+msgstr "UID:"
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
@@ -3942,7 +3942,7 @@ msgstr ""
 
 #: py/vm.c
 msgid "opcode"
-msgstr ""
+msgstr "opcode"
 
 #: py/emitinlinerv32.c
 msgid "opcode '%q' argument %d: expecting %q"
@@ -4508,7 +4508,7 @@ msgstr ""
 
 #: extmod/moddeflate.c
 msgid "wbits"
-msgstr ""
+msgstr "wbits"
 
 #: shared-bindings/bitmapfilter/__init__.c
 msgid ""
