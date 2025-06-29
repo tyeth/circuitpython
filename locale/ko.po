@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-29 13:02+0000\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
@@ -497,7 +497,7 @@ msgstr "AP를 시작할 수 없습니다"
 #: shared-bindings/_bleio/Address.c shared-bindings/ipaddress/IPv4Address.c
 #, c-format
 msgid "Address must be %d bytes long"
-msgstr "주소 길이는 % d 바이트 여야합니다"
+msgstr "주소 길이는 %d 바이트 여야합니다"
 
 #: ports/espressif/common-hal/memorymap/AddressRange.c
 #: ports/nordic/common-hal/memorymap/AddressRange.c
@@ -2716,7 +2716,7 @@ msgstr ""
 #: shared-bindings/audiofilters/Filter.c shared-bindings/audiofilters/Phaser.c
 #: shared-bindings/audiomixer/Mixer.c
 msgid "bits_per_sample must be 8 or 16"
-msgstr "bits_per_sample은 8 또는 16이어야합니다."
+msgstr "bits_per_sample은 8 또는 16이어야합니다"
 
 #: py/emitinlinethumb.c
 msgid "branch not in range"
@@ -3942,7 +3942,7 @@ msgstr ""
 
 #: py/vm.c
 msgid "opcode"
-msgstr "opcode"
+msgstr ""
 
 #: py/emitinlinerv32.c
 msgid "opcode '%q' argument %d: expecting %q"
@@ -4508,7 +4508,7 @@ msgstr ""
 
 #: extmod/moddeflate.c
 msgid "wbits"
-msgstr "wbits"
+msgstr ""
 
 #: shared-bindings/bitmapfilter/__init__.c
 msgid ""
