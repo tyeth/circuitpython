@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-29 13:02+0000\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -4460,7 +4460,7 @@ msgstr ""
 
 #: extmod/moddeflate.c
 msgid "wbits"
-msgstr "wbits"
+msgstr ""
 
 #: shared-bindings/bitmapfilter/__init__.c
 msgid ""
