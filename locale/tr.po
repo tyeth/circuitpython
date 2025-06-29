@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"PO-Revision-Date: 2025-06-29 13:02+0000\n"
+"PO-Revision-Date: 2025-06-30 16:02+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: none\n"
 "Language: tr\n"
@@ -773,7 +773,7 @@ msgstr "USB aygıtları şu an değiştirilemez"
 
 #: shared-bindings/_bleio/Adapter.c
 msgid "Cannot create a new Adapter; use _bleio.adapter;"
-msgstr "yeni Adaptör oluşturulamadı, _bleio.adapter kullanın"
+msgstr "yeni Adaptör oluşturulamadı; _bleio.adapter kullanın;"
 
 #: shared-bindings/displayio/Bitmap.c
 #: shared-bindings/memorymonitor/AllocationSize.c
@@ -3889,7 +3889,7 @@ msgstr ""
 
 #: py/vm.c
 msgid "opcode"
-msgstr "opcode"
+msgstr ""
 
 #: py/emitinlinerv32.c
 msgid "opcode '%q' argument %d: expecting %q"
@@ -4455,7 +4455,7 @@ msgstr ""
 
 #: extmod/moddeflate.c
 msgid "wbits"
-msgstr "wbits"
+msgstr ""
 
 #: shared-bindings/bitmapfilter/__init__.c
 msgid ""
