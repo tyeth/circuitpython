@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-29 13:02+0000\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: none\n"
 "Language: ja\n"
@@ -227,7 +227,7 @@ msgstr "%q は 'h' 型の array である必要があります"
 
 #: shared-bindings/audiobusio/PDMIn.c
 msgid "%q must be multiple of 8."
-msgstr "%q は 8 の倍数である必要があります"
+msgstr "%q は 8 の倍数である必要があります."
 
 #: ports/raspberrypi/bindings/cyw43/__init__.c py/argcheck.c py/objexcept.c
 #: shared-bindings/bitmapfilter/__init__.c shared-bindings/canio/CAN.c
