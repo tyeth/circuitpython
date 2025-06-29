@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-29 13:02+0000\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: none\n"
 "Language: nl\n"
@@ -3327,7 +3327,7 @@ msgstr ""
 #: ports/espressif/common-hal/pulseio/PulseIn.c
 #: shared-bindings/bitmaptools/__init__.c
 msgid "index out of range"
-msgstr "index is buiten bereik"
+msgstr "index buiten bereik"
 
 #: py/obj.c
 msgid "indices must be integers"
@@ -3893,7 +3893,7 @@ msgstr "alleen segmenten met step=1 (ook wel None) worden ondersteund"
 
 #: py/vm.c
 msgid "opcode"
-msgstr "opcode"
+msgstr ""
 
 #: extmod/ulab/code/ndarray.c extmod/ulab/code/numpy/bitwise.c
 #: extmod/ulab/code/numpy/compare.c extmod/ulab/code/numpy/vector.c
