@@ -202,12 +202,12 @@ else
 endif
 
 ifeq ($(IDF_TARGET_ARCH),xtensa)
-	# Remove the last two flags once TinyUSB is updated with the `#include <xtensa_api.h>` instead of
-	# `#include "xtensa/xtensa_api.h"`.
+# Remove the last two flags once TinyUSB is updated with the `#include <xtensa_api.h>` instead of
+# `#include "xtensa/xtensa_api.h"`.
 
 	CFLAGS += -mlongcalls -isystem esp-idf/components/xtensa/deprecated_include/ -Wno-error=cpp
 
-	# Wrap longjmp with a patched version that protects register window update with a critical section
+# Wrap longjmp with a patched version that protects register window update with a critical section
 	LDFLAGS += -Wl,--wrap=longjmp
 else ifeq ($(IDF_TARGET_ARCH),riscv)
 
@@ -567,27 +567,38 @@ $(BUILD)/esp-idf:
 TARGET_SDKCONFIG = esp-idf-config/sdkconfig-$(IDF_TARGET).defaults
 
 
-ifeq ($(CIRCUITPY_ESP_FLASH_SIZE), 2MB)
-	FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2.defaults
-else
+# Choose the correct partition layout, based on UF2 or not, flash size, etc.
 UF2_BOOTLOADER ?= $(CIRCUITPY_USB_DEVICE)
-ifeq ($(UF2_BOOTLOADER), 1)
-# UF2-capable board
-	FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE).defaults
-else
-# non-UF2 partition layout
-ifeq ($(CIRCUITPY_ESP_FLASH_SIZE), 4MB)
-	ifeq ($(CIRCUITPY_4MB_FLASH_LARGE_USER_FS_LAYOUT), 1)
-# Some boards use a 2MB firmware and almost 2MB user filesystem, for historical reasons.
-		FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2-large-user_fs.defaults
+
+ifeq ($(CIRCUITPY_ESP_FLASH_SIZE), 2MB)
+####### No 2MB UF2 boards, so always no OTA, not UF2
+	FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2.defaults
+else ifeq ($(CIRCUITPY_ESP_FLASH_SIZE), 4MB)
+	ifeq ($(UF2_BOOTLOADER), 1)
+############### TODO: For right now, use no-ota only for ESP32-S3. Eventually it will be for ESP32-S2 as well.
+		ifeq ($(IDF_TARGET),esp32s3)
+			FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota.defaults
+		else
+			FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE).defaults
+		endif
 	else
-		FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2.defaults
+############### Non-UF2 4MB: C3, C6, etc.
+		ifeq ($(CIRCUITPY_4MB_FLASH_LARGE_USER_FS_LAYOUT), 1)
+######################  Some boards use a 2MB firmware and almost 2MB user filesystem, for historical reasons.
+			FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2-large-user_fs.defaults
+		else
+			FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2.defaults
+		endif
 	endif
 else
-	FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-uf2.defaults
+####### All the rest are >4MB flash
+	ifeq ($(UF2_BOOTLOADER), 1)
+		FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE).defaults
+	else
+		FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-uf2.defaults
+	endif
 endif
-endif
-endif
+
 FLASH_MODE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_MODE).defaults
 FLASH_SPEED_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_FREQ).defaults
 
