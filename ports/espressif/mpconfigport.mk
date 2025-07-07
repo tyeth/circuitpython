@@ -164,6 +164,11 @@ CIRCUITPY_TOUCHIO_USE_NATIVE = 0
 CIRCUITPY_USB_DEVICE = 0
 CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 1
 
+# Some C3 boards have only 2MB flash
+ifeq ($(CIRCUITPY_ESP_FLASH_SIZE),2MB)
+CIRCUITPY_BLEIO_NATIVE = 0
+endif
+
 else ifeq ($(IDF_TARGET),esp32c6)
 # Modules
 CIRCUITPY_ESPCAMERA = 0
@@ -257,6 +262,11 @@ CIRCUITPY_SDIOIO = 0
 
 CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 0
 
+# TODO: remove this after ESP32-S2 4MB boards get combined OTA partition.
+ifeq ($(CIRCUITPY_ESP_FLASH_SIZE),4MB)
+CIRCUITPY__EVE = 0
+endif
+
 else ifeq ($(IDF_TARGET),esp32s3)
 # Modules
 CIRCUITPY_ALARM_TOUCH = 1
@@ -267,6 +277,7 @@ endif
 # No room for large modules on 2MB boards
 # 2MB boards have a single firmware partition, and can't do dualbank.
 ifeq ($(CIRCUITPY_ESP_FLASH_SIZE),2MB)
+CIRCUITPY__EVE = 0
 CIRCUITPY_AUDIOMP3 = 0
 CIRCUITPY_BITMAPFILTER ?= 0
 CIRCUITPY_BLEIO_NATIVE ?= 0
