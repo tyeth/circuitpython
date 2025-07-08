@@ -6,15 +6,15 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-18 17:01+0000\n"
-"Last-Translator: Dan Halbert <halbert@halwitz.org>\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
+"Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ID\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.12.1\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -243,7 +243,7 @@ msgstr "%q harus bertipe %q, %q, atau %q, bukan %q"
 #: shared-module/audiodelays/MultiTapDelay.c shared-module/synthio/Note.c
 #: shared-module/synthio/__init__.c
 msgid "%q must be of type %q, not %q"
-msgstr "%q harus bertipe %q, %q, atau %q, bukan %q"
+msgstr "%q harus dari tipe %q, bukan %q"
 
 #: ports/atmel-samd/common-hal/busio/UART.c
 msgid "%q must be power of 2"
@@ -1934,7 +1934,7 @@ msgstr ""
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c
 msgid "RS485"
-msgstr ""
+msgstr "RS485"
 
 #: ports/espressif/common-hal/busio/UART.c
 #: ports/mimxrt10xx/common-hal/busio/UART.c
@@ -1996,7 +1996,6 @@ msgstr "Format benar tapi tidak didukung"
 msgid "Running in safe mode! Not running saved code.\n"
 msgstr ""
 "Berjalan di mode aman(safe mode)! Tidak menjalankan kode yang disimpan.\n"
-"Berjalan di mode aman(safe mode)! tidak menjalankan kode yang tersimpan.\n"
 
 #: shared-module/sdcardio/SDCard.c
 msgid "SD card CSD format not supported"
@@ -2166,7 +2165,7 @@ msgstr "Sampel memiliki terlalu banyak saluran"
 
 #: ports/raspberrypi/common-hal/audiobusio/I2SOut.c
 msgid "Too many channels in sample."
-msgstr "Terlalu banyak channel dalam sampel"
+msgstr "Terlalu banyak channel dalam sampel."
 
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 msgid "Too many descriptors"
@@ -2219,7 +2218,7 @@ msgstr ""
 
 #: main.c
 msgid "UID:"
-msgstr ""
+msgstr "UID:"
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
@@ -2484,7 +2483,7 @@ msgstr "Anda menekan tombol BOOT saat memulai"
 #: ports/espressif/boards/adafruit_itsybitsy_esp32/mpconfigboard.h
 #: ports/espressif/boards/waveshare_esp32_c6_lcd_1_47/mpconfigboard.h
 msgid "You pressed the BOOT button at start up."
-msgstr "Anda menekan tombol BOOT saat memulai"
+msgstr "Anda menekan tombol BOOT saat memulai."
 
 #: ports/espressif/boards/adafruit_huzzah32_breakout/mpconfigboard.h
 msgid "You pressed the GPIO0 button at start up."
@@ -4070,7 +4069,7 @@ msgstr ""
 
 #: py/builtinimport.c
 msgid "relative import"
-msgstr "relative import"
+msgstr "impor relatif"
 
 #: py/obj.c
 #, c-format

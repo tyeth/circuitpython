@@ -6,8 +6,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2024-10-06 01:15+0000\n"
-"Last-Translator: Diamond Rivero <diamant3@proton.me>\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
+"Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: fil\n"
 "Language: fil\n"
 "MIME-Version: 1.0\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1 && n != 2 && n != 3 && (n % 10 == 4 "
 "|| n % 10 == 6 || n % 10 == 9);\n"
-"X-Generator: Weblate 5.8-dev\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -472,9 +472,9 @@ msgid "AP could not be started"
 msgstr ""
 
 #: shared-bindings/_bleio/Address.c shared-bindings/ipaddress/IPv4Address.c
-#, fuzzy, c-format
+#, c-format
 msgid "Address must be %d bytes long"
-msgstr "ang palette ay dapat 32 bytes ang haba"
+msgstr "Dapat na %d bytes ang haba ng address"
 
 #: ports/espressif/common-hal/memorymap/AddressRange.c
 #: ports/nordic/common-hal/memorymap/AddressRange.c
@@ -712,14 +712,13 @@ msgstr ""
 #: ports/espressif/common-hal/paralleldisplaybus/ParallelBus.c
 #: ports/nordic/common-hal/paralleldisplaybus/ParallelBus.c
 #: ports/raspberrypi/common-hal/paralleldisplaybus/ParallelBus.c
-#, fuzzy, c-format
+#, c-format
 msgid "Bus pin %d is already in use"
-msgstr "Ginagamit na ang DAC"
+msgstr "Ginagamit na ang bus pin %d"
 
 #: shared-bindings/_bleio/UUID.c
-#, fuzzy
 msgid "Byte buffer must be 16 bytes."
-msgstr "buffer ay dapat bytes-like object"
+msgstr "Ang byte buffer ay dapat na 16 byte."
 
 #: shared-bindings/aesio/aes.c
 msgid "CBC blocks must be multiples of 16 bytes"
@@ -990,9 +989,9 @@ msgid "Failed sending command."
 msgstr ""
 
 #: ports/nordic/sd_mutex.c
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to acquire mutex, err 0x%04x"
-msgstr "Nabigo sa pag kuha ng mutex, status: 0x%08lX"
+msgstr "Nabigong makuha ang mutex, err 0x%04x"
 
 #: ports/raspberrypi/common-hal/mdns/Server.c
 msgid "Failed to add service TXT record"
@@ -1057,9 +1056,9 @@ msgid "Failed to register continuous events callback"
 msgstr ""
 
 #: ports/nordic/sd_mutex.c
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to release mutex, err 0x%04x"
-msgstr "Nabigo sa pagrelease ng mutex, status: 0x%08lX"
+msgstr "Nabigong ilabas ang mutex, err 0x%04x"
 
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "Failed to set hostname"
@@ -2410,7 +2409,7 @@ msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "Wi-Fi: "
-msgstr ""
+msgstr "Wi-Fi: "
 
 #: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
@@ -2755,7 +2754,7 @@ msgstr "hindi ma-convert %s sa complex"
 #: py/obj.c
 #, c-format
 msgid "can't convert %s to float"
-msgstr "hindi ma-convert %s sa int"
+msgstr "hindi ma-convert %s sa float"
 
 #: py/objint.c py/runtime.c
 #, c-format
@@ -2906,7 +2905,7 @@ msgstr ""
 
 #: py/emitnative.c
 msgid "casting"
-msgstr "casting"
+msgstr "paghahagis"
 
 #: ports/stm/common-hal/pwmio/PWMOut.c
 msgid "channel re-init"
@@ -4053,7 +4052,7 @@ msgstr ""
 
 #: py/builtinimport.c
 msgid "relative import"
-msgstr "relative import"
+msgstr "kamag-anak na import"
 
 #: py/obj.c
 #, c-format
@@ -4145,7 +4144,7 @@ msgstr ""
 
 #: py/objint.c py/sequence.c
 msgid "small int overflow"
-msgstr "small int overflow"
+msgstr "maliit na int overflow"
 
 #: main.c
 msgid "soft reboot\n"

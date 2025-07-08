@@ -6,14 +6,14 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-12 23:09+0000\n"
+"PO-Revision-Date: 2025-06-29 13:01+0000\n"
 "Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.12-dev\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -875,7 +875,7 @@ msgstr "Typen der Koordinaten-Arrays haben unterschiedliche Längen"
 
 #: ports/espressif/common-hal/rclcpy/Publisher.c
 msgid "Could not publish to ROS topic"
-msgstr ""
+msgstr "Kann nicht im ROS-Thema veröffentlicht werden"
 
 #: shared-bindings/_bleio/Adapter.c
 msgid "Could not set address"
@@ -892,7 +892,7 @@ msgstr "Decoder konnte nicht zugeordnet werden"
 #: ports/espressif/common-hal/rclcpy/__init__.c
 #, c-format
 msgid "Critical ROS failure during soft reboot, reset required: %d"
-msgstr ""
+msgstr "Kritischer ROS-Fehler beim Soft-Reboot, Reset erforderlich: %d"
 
 #: ports/stm/common-hal/analogio/AnalogOut.c
 msgid "DAC Channel Init Error"
@@ -1336,7 +1336,7 @@ msgstr "Ungültige MAC-Adresse"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "Invalid ROS domain ID"
-msgstr ""
+msgstr "Ungültige ROS-Domain ID"
 
 #: ports/espressif/common-hal/espidf/__init__.c py/moderrno.c
 msgid "Invalid argument"
@@ -1909,7 +1909,7 @@ msgstr "Programm zu lang"
 
 #: shared-bindings/rclcpy/Publisher.c
 msgid "Publishers can only be created from a parent node"
-msgstr ""
+msgstr "Herausgeber können nur aus einem übergeordneten Knoten erstellt werden"
 
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Pull not used when direction is output."
@@ -1933,23 +1933,23 @@ msgstr "RNG-Init-Fehler"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS failed to initialize. Is agent connected?"
-msgstr ""
+msgstr "ROS konnte nicht initialisiert werden. Ist der Agent verbunden?"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS internal setup failure"
-msgstr ""
+msgstr "ROS interner Setup-Fehler"
 
 #: ports/espressif/common-hal/rclcpy/__init__.c
 msgid "ROS memory allocator failure"
-msgstr ""
+msgstr "ROS-Speicherzuweisungsfehler"
 
 #: ports/espressif/common-hal/rclcpy/Node.c
 msgid "ROS node failed to initialize"
-msgstr ""
+msgstr "ROS-Knoten konnte nicht initialisiert werden"
 
 #: ports/espressif/common-hal/rclcpy/Publisher.c
 msgid "ROS topic failed to initialize"
-msgstr ""
+msgstr "ROS-Thema konnte nicht initialisiert werden"
 
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c

@@ -7,15 +7,15 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2025-06-18 17:01+0000\n"
-"Last-Translator: Dan Halbert <halbert@halwitz.org>\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
+"Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: \n"
 "Language: it_IT\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.12.1\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -807,7 +807,7 @@ msgstr ""
 
 #: shared-bindings/digitalio/DigitalInOut.c
 msgid "Cannot set value when direction is input."
-msgstr "non si può impostare un valore quando direzione è input"
+msgstr "non si può impostare un valore quando direzione è input."
 
 #: ports/espressif/common-hal/busio/UART.c
 #: ports/mimxrt10xx/common-hal/busio/UART.c
@@ -906,9 +906,8 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/Adapter.c
 #: ports/nordic/common-hal/_bleio/Adapter.c
-#, fuzzy
 msgid "Data too large for advertisement packet"
-msgstr "Impossibile inserire dati nel pacchetto di advertisement."
+msgstr "Impossibile inserire dati nel pacchetto di advertisement"
 
 #: ports/stm/common-hal/alarm/pin/PinAlarm.c
 msgid "Deep sleep pins must use a rising edge with pulldown"
@@ -1830,9 +1829,7 @@ msgstr ""
 
 #: py/builtinhelp.c
 msgid "Plus any modules on the filesystem\n"
-msgstr ""
-"Imposssibile rimontare il filesystem\\n"
-"\n"
+msgstr "Imposssibile rimontare il filesystem\n"
 
 #: shared-module/vectorio/Polygon.c
 msgid "Polygon needs at least 3 points"
@@ -1917,7 +1914,7 @@ msgstr ""
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c
 msgid "RS485"
-msgstr ""
+msgstr "RS485"
 
 #: ports/espressif/common-hal/busio/UART.c
 #: ports/mimxrt10xx/common-hal/busio/UART.c
@@ -2194,7 +2191,7 @@ msgstr ""
 
 #: main.c
 msgid "UID:"
-msgstr ""
+msgstr "UID:"
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
@@ -2409,7 +2406,7 @@ msgstr ""
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "Wi-Fi: "
-msgstr ""
+msgstr "Wi-Fi: "
 
 #: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
@@ -4148,7 +4145,7 @@ msgstr ""
 
 #: py/objint.c py/sequence.c
 msgid "small int overflow"
-msgstr "small int overflow"
+msgstr "piccolo int overflow"
 
 #: main.c
 msgid "soft reboot\n"
