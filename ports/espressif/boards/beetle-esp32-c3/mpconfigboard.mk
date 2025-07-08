@@ -1,4 +1,4 @@
-# TODO
+# A better directory name for this board would be dfrobot_beetle_esp32_c3.
 CIRCUITPY_CREATOR_ID =  0x10101010
 CIRCUITPY_CREATION_ID = 0x00C30001
 
