@@ -580,14 +580,14 @@ else ifeq ($(CIRCUITPY_ESP_FLASH_SIZE), 4MB)
 	else
 # ............. Non-UF2 4MB: C3, C6, etc.
 		ifeq ($(CIRCUITPY_4MB_FLASH_LARGE_USER_FS_LAYOUT), 1)
-######################  Some boards use a 2MB firmware and almost 2MB user filesystem, for historical reasons.
+# ....................  Some boards use a 2MB firmware and almost 2MB user filesystem, for historical reasons.
 			FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2-large-user_fs.defaults
 		else
 			FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE)-no-ota-no-uf2.defaults
 		endif
 	endif
 else
-####### All the rest are >4MB flash
+# ..... All the rest are >4MB flash
 	ifeq ($(UF2_BOOTLOADER), 1)
 		FLASH_SIZE_SDKCONFIG ?= esp-idf-config/sdkconfig-flash-$(CIRCUITPY_ESP_FLASH_SIZE).defaults
 	else
