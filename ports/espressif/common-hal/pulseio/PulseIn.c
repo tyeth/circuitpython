@@ -82,7 +82,7 @@ void common_hal_pulseio_pulsein_construct(pulseio_pulsein_obj_t *self, const mcu
     // captured because we may skip the first portion of a symbol.
     self->raw_symbols_size = (maxlen / 2 + 1) * sizeof(rmt_symbol_word_t);
     // RMT DMA mode cannot access PSRAM -> ensure raw_symbols is in internal ram
-    self->raw_symbols = (rmt_symbol_word_t *)port_malloc(self->raw_symbols_size, true);
+    self->raw_symbols = (rmt_symbol_word_t *)heap_caps_malloc(self->raw_symbols_size, MALLOC_CAP_INTERNAL);
     if (self->raw_symbols == NULL) {
         m_free(self->buffer);
         m_malloc_fail(self->raw_symbols_size);
@@ -116,7 +116,7 @@ void common_hal_pulseio_pulsein_construct(pulseio_pulsein_obj_t *self, const mcu
     // If we fail here, the self->buffer will be garbage collected.
     esp_err_t result = rmt_new_rx_channel(&config, &self->channel);
     if (result != ESP_OK) {
-        port_free(self->raw_symbols);
+        heap_caps_free(self->raw_symbols);
         raise_esp_error(result);
     }
 
@@ -127,7 +127,7 @@ void common_hal_pulseio_pulsein_construct(pulseio_pulsein_obj_t *self, const mcu
     rmt_enable(self->channel);
     result = rmt_receive(self->channel, self->raw_symbols, self->raw_symbols_size, &rx_config);
     if (result != ESP_OK) {
-        port_free(self->raw_symbols);
+        heap_caps_free(self->raw_symbols);
         raise_esp_error(result);
     }
 }
