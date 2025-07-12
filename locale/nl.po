@@ -631,7 +631,7 @@ msgid ""
 "Auto-reload is on. Simply save files over USB to run them or enter REPL to "
 "disable.\n"
 msgstr ""
-"Auto-herlaad staat aan. Sla bestanden simpelweg op over USB om ze uit te "
+"Auto-herlaad staat aan. Sla bestanden simpelweg via USB op om ze uit te "
 "voeren of voer REPL in om ze uit te schakelen.\n"
 
 #: ports/espressif/common-hal/canio/CAN.c
