@@ -632,7 +632,7 @@ msgid ""
 "disable.\n"
 msgstr ""
 "Auto-herlaad staat aan. Sla bestanden simpelweg via USB op om ze uit te "
-"voeren of voer REPL in om ze uit te schakelen.\n"
+"voeren of start REPL om ze uit te schakelen.\n"
 
 #: ports/espressif/common-hal/canio/CAN.c
 msgid "Baudrate not supported by peripheral"
@@ -1845,7 +1845,7 @@ msgstr "Prefix buffer moet op de heap zijn"
 #: main.c
 msgid "Press any key to enter the REPL. Use CTRL-D to reload.\n"
 msgstr ""
-"Druk een willekeurige toets om de REPL te starten. Gebruik CTRL+D om te "
+"Druk op een willekeurige toets om de REPL te starten. Gebruik CTRL+D om te "
 "herstarten.\n"
 
 #: main.c
