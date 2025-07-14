@@ -262,11 +262,6 @@ CIRCUITPY_SDIOIO = 0
 
 CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 0
 
-# TODO: remove this after ESP32-S2 4MB boards get combined OTA partition.
-ifeq ($(CIRCUITPY_ESP_FLASH_SIZE),4MB)
-CIRCUITPY__EVE = 0
-endif
-
 else ifeq ($(IDF_TARGET),esp32s3)
 # Modules
 CIRCUITPY_ALARM_TOUCH = 1
