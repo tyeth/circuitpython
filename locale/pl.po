@@ -7,16 +7,16 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
-"PO-Revision-Date: 2023-11-16 15:03+0000\n"
-"Last-Translator: Szymon Jakubiak <sz.a.jakubiak@gmail.com>\n"
+"PO-Revision-Date: 2025-06-30 16:01+0000\n"
+"Last-Translator: MAE <martin-aehle@hotmail.de>\n"
 "Language-Team: pl\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 5.2\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Weblate 5.13-dev\n"
 
 #: main.c
 msgid ""
@@ -317,7 +317,7 @@ msgid "'%q' object does not support '%q'"
 msgstr "Obiekt '%q' nie wspiera '%q'"
 
 #: py/runtime.c
-msgid "'%q' object is not an iterator"
+msgid "'%q' object isn't an iterator"
 msgstr "Obiekt '%q' nie jest iteratorem"
 
 #: py/objtype.c py/runtime.c shared-module/atexit/__init__.c
@@ -325,7 +325,7 @@ msgid "'%q' object is not callable"
 msgstr "Obiekt '%q' nie jest wywoływalny"
 
 #: py/runtime.c
-msgid "'%q' object is not iterable"
+msgid "'%q' object isn't iterable"
 msgstr "Obiekt '%q' nie jest iterowalny"
 
 #: py/emitinlinethumb.c py/emitinlinextensa.c
@@ -864,6 +864,10 @@ msgstr ""
 msgid "Coordinate arrays types have different sizes"
 msgstr ""
 
+#: ports/espressif/common-hal/rclcpy/Publisher.c
+msgid "Could not publish to ROS topic"
+msgstr ""
+
 #: shared-bindings/_bleio/Adapter.c
 msgid "Could not set address"
 msgstr "Nie można ustawić adresu"
@@ -875,6 +879,11 @@ msgstr "Nie można rozpocząć przerwania, RX jest zajęty"
 #: shared-module/audiomp3/MP3Decoder.c
 msgid "Couldn't allocate decoder"
 msgstr "Nie udało się przydzielić dekodera"
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+#, c-format
+msgid "Critical ROS failure during soft reboot, reset required: %d"
+msgstr ""
 
 #: ports/stm/common-hal/analogio/AnalogOut.c
 msgid "DAC Channel Init Error"
@@ -1309,6 +1318,10 @@ msgstr ""
 
 #: shared-bindings/wifi/Radio.c
 msgid "Invalid MAC address"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "Invalid ROS domain ID"
 msgstr ""
 
 #: ports/espressif/common-hal/espidf/__init__.c py/moderrno.c
@@ -1754,7 +1767,7 @@ msgstr ""
 
 #: ports/stm/common-hal/pwmio/PWMOut.c
 msgid "PWM restart"
-msgstr ""
+msgstr "Ponowne uruchomienie PWM"
 
 #: ports/raspberrypi/common-hal/countio/Counter.c
 msgid "PWM slice already in use"
@@ -1770,7 +1783,7 @@ msgstr ""
 
 #: shared-module/jpegio/JpegDecoder.c
 msgid "Parameter error"
-msgstr ""
+msgstr "Błąd parametru"
 
 #: ports/espressif/common-hal/audiobusio/__init__.c
 msgid "Peripheral in use"
@@ -1867,6 +1880,10 @@ msgstr ""
 
 #: ports/espressif/common-hal/espulp/ULP.c
 msgid "Program too long"
+msgstr "Program zbyt długi"
+
+#: shared-bindings/rclcpy/Publisher.c
+msgid "Publishers can only be created from a parent node"
 msgstr ""
 
 #: shared-bindings/digitalio/DigitalInOut.c
@@ -1889,10 +1906,30 @@ msgstr "Błąd RNG DeInit"
 msgid "RNG Init Error"
 msgstr "Błąd inicjalizacji RNG"
 
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS failed to initialize. Is agent connected?"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS internal setup failure"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/__init__.c
+msgid "ROS memory allocator failure"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/Node.c
+msgid "ROS node failed to initialize"
+msgstr ""
+
+#: ports/espressif/common-hal/rclcpy/Publisher.c
+msgid "ROS topic failed to initialize"
+msgstr ""
+
 #: ports/atmel-samd/common-hal/busio/UART.c ports/cxd56/common-hal/busio/UART.c
 #: ports/nordic/common-hal/busio/UART.c ports/stm/common-hal/busio/UART.c
 msgid "RS485"
-msgstr ""
+msgstr "RS485"
 
 #: ports/espressif/common-hal/busio/UART.c
 #: ports/mimxrt10xx/common-hal/busio/UART.c
@@ -1924,7 +1961,7 @@ msgstr "Otrzymana odpowiedź była nieprawidłowa"
 
 #: supervisor/shared/bluetooth/bluetooth.c
 msgid "Reconnecting"
-msgstr ""
+msgstr "Ponowne połączenie"
 
 #: shared-bindings/epaperdisplay/EPaperDisplay.c
 msgid "Refresh too soon"
@@ -2009,7 +2046,7 @@ msgstr ""
 
 #: ports/cxd56/common-hal/camera/Camera.c
 msgid "Size not supported"
-msgstr ""
+msgstr "Rozmiar nieobsługiwany"
 
 #: shared-bindings/alarm/SleepMemory.c shared-bindings/memorymap/AddressRange.c
 #: shared-bindings/nvm/ByteArray.c
@@ -2140,7 +2177,7 @@ msgstr ""
 #: ports/raspberrypi/common-hal/alarm/touch/TouchAlarm.c
 #: ports/stm/common-hal/alarm/touch/TouchAlarm.c
 msgid "Touch alarms not available"
-msgstr ""
+msgstr "Alarmy dotykowe niedostępne"
 
 #: py/obj.c
 msgid "Traceback (most recent call last):\n"
@@ -2169,7 +2206,7 @@ msgstr ""
 
 #: main.c
 msgid "UID:"
-msgstr ""
+msgstr "UID:"
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
@@ -2185,7 +2222,7 @@ msgstr ""
 
 #: shared-module/usb_hid/Device.c
 msgid "USB error"
-msgstr ""
+msgstr "Błąd USB"
 
 #: shared-bindings/_bleio/UUID.c
 msgid "UUID integer value must be 0-0xffff"
@@ -2251,7 +2288,7 @@ msgstr ""
 
 #: shared-bindings/alarm/SleepMemory.c
 msgid "Unable to write to sleep_memory."
-msgstr ""
+msgstr "Nie można zapisać do sleep_memory."
 
 #: ports/nordic/common-hal/_bleio/UUID.c
 msgid "Unexpected nrfx uuid type"
@@ -2342,7 +2379,7 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Adapter.c
 #: ports/espressif/common-hal/dualbank/__init__.c
 msgid "Update failed"
-msgstr ""
+msgstr "Aktualizacja nie powiodła się"
 
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 #: ports/nordic/common-hal/_bleio/Characteristic.c
@@ -2381,16 +2418,21 @@ msgid ""
 "\n"
 "To list built-in modules type `help(\"modules\")`.\n"
 msgstr ""
+"Witamy w Adafruit CircuitPython %s!\n"
+"\n"
+"Odwiedź circuitpython.org po więcej informacji.\n"
+"\n"
+"Aby wyświetlić listę wbudowanych modułów wpisz `help(„modules”)`.\n"
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "Wi-Fi: "
-msgstr ""
+msgstr "Wi-Fi: "
 
 #: ports/espressif/common-hal/wifi/Radio.c
 #: ports/raspberrypi/common-hal/wifi/Radio.c
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "WiFi is not enabled"
-msgstr ""
+msgstr "WiFi nie jest włączone"
 
 #: main.c
 msgid "Woken up by alarm.\n"
@@ -2611,7 +2653,7 @@ msgstr "brak dwu-argumentowego operatora %q"
 
 #: ports/espressif/common-hal/audiobusio/PDMIn.c
 msgid "bit_depth must be 8, 16, 24, or 32."
-msgstr ""
+msgstr "bit_depth musi wynosić 8, 16, 24 lub 32."
 
 #: shared-module/bitmapfilter/__init__.c
 msgid "bitmap size and depth must match"
@@ -2623,11 +2665,11 @@ msgstr ""
 
 #: extmod/modrandom.c
 msgid "bits must be 32 or less"
-msgstr ""
+msgstr "bitów musi wynosić 32 lub mniej"
 
 #: shared-bindings/audiofreeverb/Freeverb.c
 msgid "bits_per_sample must be 16"
-msgstr ""
+msgstr "bits_per_sample musi wynosić 16"
 
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
@@ -2838,7 +2880,7 @@ msgstr ""
 
 #: extmod/modasyncio.c
 msgid "can't wait"
-msgstr ""
+msgstr "nie mogę się doczekać"
 
 #: extmod/ulab/code/ndarray.c
 msgid "cannot assign new shape"
@@ -3025,7 +3067,7 @@ msgstr ""
 
 #: extmod/ulab/code/numpy/create.c
 msgid "divide by zero"
-msgstr ""
+msgstr "dziel przez zero"
 
 #: py/runtime.c
 msgid "division by zero"
@@ -3045,7 +3087,7 @@ msgstr "puste"
 
 #: extmod/ulab/code/numpy/io/io.c
 msgid "empty file"
-msgstr ""
+msgstr "puste plik"
 
 #: extmod/modasyncio.c extmod/modheapq.c
 msgid "empty heap"
@@ -3164,7 +3206,7 @@ msgstr "float zbyt wielki"
 
 #: py/nativeglue.c
 msgid "float unsupported"
-msgstr ""
+msgstr "float nieobsługiwany"
 
 #: shared-bindings/_stage/Text.c
 msgid "font must be 2048 bytes long"
@@ -3172,10 +3214,10 @@ msgstr "font musi mieć 2048 bajtów długości"
 
 #: extmod/moddeflate.c
 msgid "format"
-msgstr ""
+msgstr "format"
 
 #: py/objstr.c
-msgid "format requires a dict"
+msgid "format needs a dict"
 msgstr "format wymaga słownika"
 
 #: py/objdeque.c
@@ -3273,7 +3315,7 @@ msgstr ""
 
 #: py/persistentcode.c
 msgid "incompatible .mpy file"
-msgstr ""
+msgstr "niekompatybilny plik .mpy"
 
 #: py/objstr.c
 msgid "incomplete format"
@@ -3635,7 +3677,7 @@ msgid "must use keyword argument for key function"
 msgstr "funkcja key musi być podana jako argument nazwany"
 
 #: py/runtime.c
-msgid "name '%q' is not defined"
+msgid "name '%q' isn't defined"
 msgstr "nazwa '%q' niezdefiniowana"
 
 #: py/runtime.c
@@ -3685,7 +3727,7 @@ msgstr ""
 
 #: shared-module/sdcardio/SDCard.c
 msgid "no SD card"
-msgstr ""
+msgstr "brak karty SD"
 
 #: py/vm.c
 msgid "no active exception to reraise"
@@ -3766,7 +3808,7 @@ msgstr "liczba punktów musi wynosić co najmniej 2"
 
 #: py/builtinhelp.c
 msgid "object "
-msgstr ""
+msgstr "obiekt "
 
 #: py/obj.c
 #, c-format
@@ -3820,7 +3862,7 @@ msgstr "łańcuch o nieparzystej długości"
 
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "off"
-msgstr ""
+msgstr "wył"
 
 #: extmod/ulab/code/utils/utils.c
 msgid "offset is too large"
@@ -4276,11 +4318,11 @@ msgid "tx and rx cannot both be None"
 msgstr "tx i rx nie mogą być oba None"
 
 #: py/objtype.c
-msgid "type '%q' is not an acceptable base type"
+msgid "type '%q' isn't an acceptable base type"
 msgstr "typ '%q' nie może być bazowy"
 
 #: py/objtype.c
-msgid "type is not an acceptable base type"
+msgid "type isn't an acceptable base type"
 msgstr "typ nie może być bazowy"
 
 #: py/runtime.c
@@ -4684,13 +4726,13 @@ msgstr ""
 #~ msgid "'%s' object does not support item deletion"
 #~ msgstr "'%s' obiekt nie wspiera usuwania elementów"
 
-#~ msgid "'%s' object is not an iterator"
+#~ msgid "'%s' object isn't an iterator"
 #~ msgstr "'%s' obiekt nie jest iteratorem"
 
 #~ msgid "'%s' object is not callable"
 #~ msgstr "'%s' nie można wywoływać obiektu"
 
-#~ msgid "'%s' object is not iterable"
+#~ msgid "'%s' object isn't iterable"
 #~ msgstr "'%s' nie można iterować po obiekcie"
 
 #~ msgid "'%s' object is not subscriptable"
@@ -5454,7 +5496,7 @@ msgstr ""
 #~ msgid "firstbit must be MSB"
 #~ msgstr "firstbit musi być MSB"
 
-#~ msgid "function does not take keyword arguments"
+#~ msgid "function doesn't take keyword arguments"
 #~ msgstr "funkcja nie bierze argumentów nazwanych"
 
 #~ msgid "int() arg 2 must be >= 2 and <= 36"
@@ -5502,7 +5544,7 @@ msgstr ""
 #~ msgid "name must be a string"
 #~ msgstr "nazwa musi być łańcuchem"
 
-#~ msgid "name reused for argument"
+#~ msgid "argument name reused"
 #~ msgstr "nazwa użyta ponownie jako argument"
 
 #~ msgid "no available NIC"
