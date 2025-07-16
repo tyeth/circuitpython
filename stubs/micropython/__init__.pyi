@@ -1,12 +1,8 @@
 """Access and control MicroPython internals"""
 
-from typing import TypeVar
-
-T = TypeVar("T")
-
-def const(expr: T) -> T:
+def const[T](expr: T) -> T:
     """Used to declare that the expression is a constant so that the compiler
-    can optimise it. The use of this function should be as follows:
+    can optimise it. The use of this function should be as follows::
 
         from micropython import const
 
@@ -18,7 +14,7 @@ def const(expr: T) -> T:
     begins with an underscore then it is hidden, it is not available as a global
     variable, and does not take up any memory during execution.
 
-    This const function is recognised directly by the MicroPython parser and is
-    provided as part of the micropython module mainly so that scripts can be
+    This `const` function is recognised directly by the MicroPython parser and is
+    provided as part of the :mod:`micropython` module mainly so that scripts can be
     written which run under both CPython and MicroPython, by following the above
     pattern."""
