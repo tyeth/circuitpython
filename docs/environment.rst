@@ -54,8 +54,9 @@ CircuitPython behavior
 ----------------------
 
 CircuitPython will also read the environment to configure its behavior. Some keys are read at
-startup once and others are read on reload. If a reload doesn't change things, then try a restart.
-Other keys are ignored by CircuitPython. Here are the keys it uses:
+startup once and others are read on reload (ctrl-D in the REPL). If a reload doesn't change things,
+then try a reset (a power cycle or pressing the reset button). Other keys are ignored by CircuitPython.
+Here are the keys it uses:
 
 Core CircuitPython keys
 ^^^^^^^^^^^^^^^^^^^^^^^
