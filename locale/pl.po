@@ -8,7 +8,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-04 12:55-0600\n"
 "PO-Revision-Date: 2025-07-23 09:07+0000\n"
-"Last-Translator: MuskoM <muskomatt@outlook.com>\n"
+"Last-Translator: Mr Mati <mati7042@users.noreply.hosted.weblate.org>\n"
 "Language-Team: pl\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -32,7 +32,7 @@ msgid ""
 "Code stopped by auto-reload. Reloading soon.\n"
 msgstr ""
 "\n"
-"Wykonywanie zatrzymane przez auto-reload. Wkrótce przeładowanie.\n"
+"Wykonywanie zatrzymane przez auto-reload. Wkrótce nastąpi przeładowanie.\n"
 
 #: supervisor/shared/safe_mode.c
 msgid ""
@@ -98,11 +98,11 @@ msgstr "%q and %q muszą być różne"
 
 #: ports/atmel-samd/common-hal/audiobusio/I2SOut.c
 msgid "%q and %q must share a clock unit"
-msgstr ""
+msgstr "%q i %q muszą współdzielić jednostkę zegara"
 
 #: ports/nordic/common-hal/watchdog/WatchDogTimer.c
 msgid "%q cannot be changed once mode is set to %q"
-msgstr ""
+msgstr "%q nie może zostać zmienione po ustawieniu trybu %q"
 
 #: shared-bindings/microcontroller/Pin.c
 msgid "%q contains duplicate pins"
@@ -114,7 +114,7 @@ msgstr "%q niepowodzenie: %d"
 
 #: shared-module/audiodelays/MultiTapDelay.c
 msgid "%q in %q must be of type %q or %q, not %q"
-msgstr ""
+msgstr "%q w %q musi być typu %q lub %q, nie %q"
 
 #: py/argcheck.c shared-module/audiofilters/Filter.c
 msgid "%q in %q must be of type %q, not %q"
@@ -162,11 +162,11 @@ msgstr "długość %q musi być w zakresie od %d do %d"
 
 #: py/argcheck.c
 msgid "%q length must be <= %d"
-msgstr ""
+msgstr "długość %q musi być <= %d"
 
 #: py/argcheck.c
 msgid "%q length must be >= %d"
-msgstr ""
+msgstr "długość %q musi być >= %d"
 
 #: py/modsys.c py/runtime.c
 msgid "%q moved from %q to %q"
@@ -174,7 +174,7 @@ msgstr ""
 
 #: py/argcheck.c
 msgid "%q must be %d"
-msgstr ""
+msgstr "%q musi być %d"
 
 #: py/argcheck.c shared-bindings/busdisplay/BusDisplay.c
 #: shared-bindings/displayio/Bitmap.c
@@ -182,16 +182,16 @@ msgstr ""
 #: shared-bindings/is31fl3741/FrameBuffer.c
 #: shared-bindings/rgbmatrix/RGBMatrix.c
 msgid "%q must be %d-%d"
-msgstr ""
+msgstr "%q musi być %d-%d"
 
 #: shared-bindings/busdisplay/BusDisplay.c
 msgid "%q must be 1 when %q is True"
-msgstr ""
+msgstr "%q musi wynosić 1, gdy %q jest True"
 
 #: py/argcheck.c shared-bindings/gifio/GifWriter.c
 #: shared-module/gifio/OnDiskGif.c
 msgid "%q must be <= %d"
-msgstr ""
+msgstr "%q musi być <= %d"
 
 #: ports/espressif/common-hal/watchdog/WatchDogTimer.c
 msgid "%q must be <= %u"
@@ -568,7 +568,7 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 msgid "Already in progress"
-msgstr ""
+msgstr "Już trwa"
 
 #: ports/espressif/bindings/espnow/ESPNow.c
 #: ports/espressif/common-hal/espulp/ULP.c
