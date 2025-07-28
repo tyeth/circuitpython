@@ -31,8 +31,6 @@
 
 #include "zephyr_device.h"
 
-static machine_i2c_target_data_t i2c_target_data[4];
-
 typedef struct _machine_i2c_target_obj_t {
     mp_obj_base_t base;
     const struct device *dev;
@@ -50,7 +48,7 @@ static int i2c_target_write_requested(struct i2c_target_config *config) {
     // printk("wr req\n");
     writing = true;
     reading = false;
-    machine_i2c_target_data_addr_match(&i2c_target_data[0], false);
+    machine_i2c_target_data_addr_match(&machine_i2c_target_data[0], false);
     return 0;
 }
 
@@ -58,7 +56,7 @@ static int i2c_target_write_received(struct i2c_target_config *config, uint8_t v
     // printk("wr recv %d\n", val);
     global_val = val;
     machine_i2c_target_obj_t *self = CONTAINER_OF(config, machine_i2c_target_obj_t, cfg);
-    machine_i2c_target_data_t *data = &i2c_target_data[0];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[0];
     machine_i2c_target_data_write_request(self, data);
     return 0;
 }
@@ -70,7 +68,7 @@ static int i2c_target_read_requested(struct i2c_target_config *config, uint8_t *
     // printk("rd req\n");
     writing = false;
     machine_i2c_target_obj_t *self = CONTAINER_OF(config, machine_i2c_target_obj_t, cfg);
-    machine_i2c_target_data_t *data = &i2c_target_data[0];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[0];
     if (!reading) {
         machine_i2c_target_data_addr_match(data, true);
         machine_i2c_target_data_read_request(self, data);
@@ -83,7 +81,7 @@ static int i2c_target_read_requested(struct i2c_target_config *config, uint8_t *
 static int i2c_target_read_processed(struct i2c_target_config *config, uint8_t *val) {
     // printk("rd processed\n");
     machine_i2c_target_obj_t *self = CONTAINER_OF(config, machine_i2c_target_obj_t, cfg);
-    machine_i2c_target_data_t *data = &i2c_target_data[0];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[0];
     machine_i2c_target_data_read_request(self, data);
     *val = global_val;
     return 0;
@@ -94,11 +92,11 @@ static int i2c_target_stop(struct i2c_target_config *config) {
     // printk("stop\n");
     if (!writing && !reading) {
         // Assume a stop without a start is a 0-byte write.
-        machine_i2c_target_data_addr_match(&i2c_target_data[0], false);
+        machine_i2c_target_data_addr_match(&machine_i2c_target_data[0], false);
     }
     writing = false;
     reading = false;
-    machine_i2c_target_data_t *data = &i2c_target_data[0];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[0];
     machine_i2c_target_data_stop(data);
     return 0;
 }
@@ -113,6 +111,10 @@ static struct i2c_target_callbacks i2c_target_callbacks = {
 
 /******************************************************************************/
 // I2CTarget port implementation
+
+static inline size_t mp_machine_i2c_target_get_index(machine_i2c_target_obj_t *self) {
+    return 0;
+}
 
 static void mp_machine_i2c_target_deinit_all_port(void) {
 }
@@ -167,8 +169,8 @@ static mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t
     self->cfg.callbacks = &i2c_target_callbacks;
 
     // Initialise data.
-    MP_STATE_PORT(i2c_target_mem_obj)[0] = args[ARG_mem].u_obj;
-    machine_i2c_target_data_t *data = &i2c_target_data[0];
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[0] = args[ARG_mem].u_obj;
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[0];
     machine_i2c_target_data_init(data, args[ARG_mem].u_obj, args[ARG_mem_addrsize].u_int);
 
     #if 0
@@ -188,6 +190,8 @@ static mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t
         self->sda = sda;
     }
     #endif
+
+    // TODO check that only one can be created at once.
 
     // Initialise the I2C target.
     // TODO: don't reinitialize if no arguments given.
