@@ -1,1 +1,8 @@
-#
+--- instance0 ---
+b'abcdefgh'
+--- instance1 ---
+IRQ_ADDR_MATCH_WRITE
+bytearray(b'abcdefgh')
+IRQ_ADDR_MATCH_WRITE
+IRQ_ADDR_MATCH_READ
+done

@@ -6,14 +6,13 @@
 
 import time
 from machine import I2C, I2CTarget
-import machine
 
 ADDR = 67
 
 
 # I2C controller
 def instance0():
-    i2c = machine.I2C("Y")
+    i2c = I2C("Y")
 
     multitest.next()
     multitest.wait("target stage 1")
@@ -26,15 +25,19 @@ def instance0():
 
 
 def irq(i2c_target):
-    print(i2c_target.irq().flags())
+    flags = i2c_target.irq().flags()
+    if flags & I2CTarget.IRQ_ADDR_MATCH_READ:
+        print("IRQ_ADDR_MATCH_READ")
+    if flags & I2CTarget.IRQ_ADDR_MATCH_WRITE:
+        print("IRQ_ADDR_MATCH_WRITE")
     time.sleep_us(100)
 
 
 # I2C target
 def instance1():
     buf = bytearray(8)
-    i2c_target = machine.I2CTarget(0, ADDR, scl=9, sda=8, mem=buf)
-    i2c_target.irq(irq, I2CTarget.IRQ_ADDR_MATCH, hard=True)
+    i2c_target = I2CTarget(0, ADDR, scl=9, sda=8, mem=buf)
+    i2c_target.irq(irq, I2CTarget.IRQ_ADDR_MATCH_READ | I2CTarget.IRQ_ADDR_MATCH_WRITE, hard=True)
 
     multitest.next()
     multitest.broadcast("target stage 1")
@@ -42,4 +45,4 @@ def instance1():
     print(buf)
     multitest.broadcast("target stage 3")
     multitest.wait("controller stage 4")
-    print('done')
+    print("done")
