@@ -15,10 +15,20 @@ import unittest
 
 ADDR = 67
 
+kwargs_target = {}
+
 # Configure pins based on the target.
 if sys.platform == "alif" and sys.implementation._build == "ALIF_ENSEMBLE":
     args_controller = {"scl": "P1_1", "sda": "P1_0"}
     args_target = (0,)
+elif sys.platform == "esp32":
+    # tested on UM_TINY_PICO
+    # args_controller = {"scl": 14, "sda": 15}
+    # args_target = (0,)  # should be on 18/19
+    # for s2 (UM_FEATHERS2)
+    args_controller = {"scl": 5, "sda": 6}
+    args_target = (0,)  # should be on 18/19
+    kwargs_target = {"scl": 9, "sda": 8}
 elif sys.platform == "rp2":
     args_controller = {"scl": 5, "sda": 4}
     args_target = (1,)
@@ -65,7 +75,7 @@ class TestMemory(unittest.TestCase):
     def setUpClass(cls):
         cls.mem = bytearray(8)
         cls.i2c = SoftI2C(**args_controller)
-        cls.i2c_target = I2CTarget(*args_target, addr=ADDR, mem=cls.mem)
+        cls.i2c_target = I2CTarget(*args_target, **kwargs_target, addr=ADDR, mem=cls.mem)
         config_pull_up()
 
     @classmethod
@@ -86,6 +96,10 @@ class TestMemory(unittest.TestCase):
         self.mem[:] = b"01234567"
         self.i2c.writeto_mem(ADDR, 6, b"test")
         self.assertEqual(self.mem, bytearray(b"st2345te"))
+
+    @unittest.skipIf(sys.platform == "esp32", "write lengths larger than buffer unsupported")
+    def test_write_wrap_large(self):
+        self.mem[:] = b"01234567"
         self.i2c.writeto_mem(ADDR, 0, b"testTESTmore")
         self.assertEqual(self.mem, bytearray(b"moreTEST"))
 
@@ -99,9 +113,107 @@ class TestMemory(unittest.TestCase):
         self.assertEqual(self.i2c.readfrom_mem(ADDR, 0, 4), b"0123")
         self.assertEqual(self.i2c.readfrom_mem(ADDR, 2, 4), b"2345")
         self.assertEqual(self.i2c.readfrom_mem(ADDR, 6, 4), b"6701")
+
+    @unittest.skipIf(sys.platform == "esp32", "read lengths larger than buffer unsupported")
+    def test_read_wrap_large(self):
+        self.mem[:] = b"01234567"
         self.assertEqual(self.i2c.readfrom_mem(ADDR, 0, 12), b"012345670123")
 
+    def test_write_read(self):
+        self.mem[:] = b"01234567"
+        self.assertEqual(self.i2c.writeto(ADDR, b"\x02"), 1)
+        self.assertEqual(self.i2c.readfrom(ADDR, 4), b"2345")
 
+    @unittest.skipIf(sys.platform == "esp32", "read after read unsupported")
+    def test_write_read_read(self):
+        self.mem[:] = b"01234567"
+        self.assertEqual(self.i2c.writeto(ADDR, b"\x02"), 1)
+        self.assertEqual(self.i2c.readfrom(ADDR, 4), b"2345")
+        self.assertEqual(self.i2c.readfrom(ADDR, 4), b"7012")
+
+
+@unittest.skipUnless(hasattr(I2CTarget, "IRQ_END_READ"), "IRQ unsupported")
+class TestMemoryIRQ(unittest.TestCase):
+    @staticmethod
+    def irq_handler(i2c_target):
+        flags = i2c_target.irq().flags()
+        TestMemoryIRQ.events[TestMemoryIRQ.num_events] = flags
+        TestMemoryIRQ.events[TestMemoryIRQ.num_events + 1] = i2c_target.memaddr()
+        TestMemoryIRQ.num_events += 2
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mem = bytearray(8)
+        cls.events = [0] * 8
+        cls.num_events = 0
+        cls.i2c = SoftI2C(**args_controller)
+        cls.i2c_target = I2CTarget(*args_target, **kwargs_target, addr=ADDR, mem=cls.mem)
+        cls.i2c_target.irq(TestMemoryIRQ.irq_handler)
+        config_pull_up()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.i2c_target.deinit()
+
+    @unittest.skipIf(sys.platform == "esp32", "scan doesn't trigger IRQ_END_WRITE")
+    def test_scan(self):
+        TestMemoryIRQ.num_events = 0
+        self.i2c.scan()
+        self.assertEqual(self.events[: self.num_events], [I2CTarget.IRQ_END_WRITE, 0])
+
+    def test_write(self):
+        TestMemoryIRQ.num_events = 0
+        self.mem[:] = b"01234567"
+        self.i2c.writeto_mem(ADDR, 2, b"test")
+        self.assertEqual(self.mem, bytearray(b"01test67"))
+        self.assertEqual(self.events[: self.num_events], [I2CTarget.IRQ_END_WRITE, 2])
+
+    def test_read(self):
+        TestMemoryIRQ.num_events = 0
+        self.mem[:] = b"01234567"
+        self.assertEqual(self.i2c.readfrom_mem(ADDR, 2, 4), b"2345")
+        self.assertEqual(self.events[: self.num_events], [I2CTarget.IRQ_END_READ, 2])
+
+
+@unittest.skipUnless(hasattr(I2CTarget, "IRQ_WRITE_REQ"), "IRQ unsupported")
+@unittest.skipIf(sys.platform == "pyboard", "can't queue more than one byte ")
+class TestPolling(unittest.TestCase):
+    @staticmethod
+    def irq_handler(i2c_target, buf=bytearray(1)):
+        flags = i2c_target.irq().flags()
+        if flags & I2CTarget.IRQ_READ_REQ:
+            i2c_target.write(b"0123")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.i2c = SoftI2C(**args_controller)
+        cls.i2c_target = I2CTarget(*args_target, addr=ADDR)  # , mem=mem)
+        cls.i2c_target.irq(
+            TestPolling.irq_handler,
+            I2CTarget.IRQ_WRITE_REQ | I2CTarget.IRQ_READ_REQ,
+            hard=True,
+        )
+        config_pull_up()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.i2c_target.deinit()
+
+    def test_read(self):
+        # doesn't work, queued data is lost
+        self.assertEqual(self.i2c_target.write(b"abcd"), 4)
+        # data is written via IRQ_READ_REQ
+        self.assertEqual(self.i2c.readfrom(ADDR, 4), b"0123")
+
+    def test_write(self):
+        # works, but requires IRQ_WRITE_REQ
+        self.assertEqual(self.i2c.writeto(ADDR, b"0123"), 4)
+        buf = bytearray(8)
+        self.assertEqual(self.i2c_target.readinto(buf), 4)
+        self.assertEqual(buf, b"0123\x00\x00\x00\x00")
+
+
+@unittest.skipUnless(hasattr(I2CTarget, "IRQ_ADDR_MATCH_READ"), "IRQ unsupported")
 class TestIRQ(unittest.TestCase):
     @staticmethod
     def irq_handler(i2c_target, buf=bytearray(1)):
@@ -123,10 +235,12 @@ class TestIRQ(unittest.TestCase):
         cls.i2c_target = I2CTarget(*args_target, addr=ADDR)
         cls.i2c_target.irq(
             TestIRQ.irq_handler,
-            I2CTarget.IRQ_ADDR_MATCH
+            I2CTarget.IRQ_ADDR_MATCH_READ
+            | I2CTarget.IRQ_ADDR_MATCH_WRITE
             | I2CTarget.IRQ_WRITE_REQ
             | I2CTarget.IRQ_READ_REQ
-            | I2CTarget.IRQ_END,
+            | I2CTarget.IRQ_END_READ
+            | I2CTarget.IRQ_END_WRITE,
             hard=True,
         )
         config_pull_up()
@@ -141,8 +255,8 @@ class TestIRQ(unittest.TestCase):
         self.assertEqual(
             self.events[: self.num_events],
             [
-                I2CTarget.IRQ_ADDR_MATCH,
-                I2CTarget.IRQ_END,
+                I2CTarget.IRQ_ADDR_MATCH_WRITE,
+                I2CTarget.IRQ_END_WRITE,
             ],
         )
 
@@ -152,14 +266,14 @@ class TestIRQ(unittest.TestCase):
         self.assertEqual(
             self.events[: self.num_events],
             [
-                I2CTarget.IRQ_ADDR_MATCH,
+                I2CTarget.IRQ_ADDR_MATCH_WRITE,
                 I2CTarget.IRQ_WRITE_REQ,
                 ord(b"X"),
                 I2CTarget.IRQ_WRITE_REQ,
                 ord(b"Y"),
                 I2CTarget.IRQ_WRITE_REQ,
                 ord(b"Z"),
-                I2CTarget.IRQ_END,
+                I2CTarget.IRQ_END_WRITE,
             ],
         )
 
@@ -169,10 +283,10 @@ class TestIRQ(unittest.TestCase):
         self.assertEqual(
             self.events[: self.num_events],
             [
-                I2CTarget.IRQ_ADDR_MATCH,
+                I2CTarget.IRQ_ADDR_MATCH_READ,
                 I2CTarget.IRQ_READ_REQ,
                 I2CTarget.IRQ_READ_REQ,
-                I2CTarget.IRQ_END,
+                I2CTarget.IRQ_END_READ,
             ],
         )
 
@@ -183,13 +297,14 @@ class TestIRQ(unittest.TestCase):
         self.assertEqual(
             self.events[: self.num_events],
             [
-                I2CTarget.IRQ_ADDR_MATCH,
+                I2CTarget.IRQ_ADDR_MATCH_WRITE,
                 I2CTarget.IRQ_WRITE_REQ,
                 ord(b"X"),
-                I2CTarget.IRQ_ADDR_MATCH,
+                I2CTarget.IRQ_END_WRITE,
+                I2CTarget.IRQ_ADDR_MATCH_READ,
                 I2CTarget.IRQ_READ_REQ,
                 I2CTarget.IRQ_READ_REQ,
-                I2CTarget.IRQ_END,
+                I2CTarget.IRQ_END_READ,
             ],
         )
 
