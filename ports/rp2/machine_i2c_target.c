@@ -80,8 +80,6 @@ typedef struct _machine_i2c_target_obj_t {
     bool irq_active;
 } machine_i2c_target_obj_t;
 
-static machine_i2c_target_data_t i2c_target_data[4];
-
 static machine_i2c_target_obj_t machine_i2c_target_obj[] = {
     {{&machine_i2c_target_type}, i2c0, MICROPY_HW_I2C0_SCL, MICROPY_HW_I2C0_SDA},
     {{&machine_i2c_target_type}, i2c1, MICROPY_HW_I2C1_SCL, MICROPY_HW_I2C1_SDA},
@@ -96,7 +94,7 @@ static void check_stop_pending(machine_i2c_target_obj_t *self) {
     }
     if (self->stop_pending && !(self->i2c_inst->hw->status & I2C_IC_STATUS_RFNE_BITS)) {
         unsigned int i2c_id = self - &machine_i2c_target_obj[0];
-        machine_i2c_target_data_t *data = &i2c_target_data[i2c_id];
+        machine_i2c_target_data_t *data = &machine_i2c_target_data[i2c_id];
         self->stop_pending = false;
         self->state = STATE_IDLE;
         machine_i2c_target_data_restart_or_stop(data);
@@ -106,7 +104,7 @@ static void check_stop_pending(machine_i2c_target_obj_t *self) {
 static void i2c_target_handler(i2c_inst_t *i2c) {
     unsigned int i2c_id = i2c == i2c0 ? 0 : 1;
     machine_i2c_target_obj_t *self = &machine_i2c_target_obj[i2c_id];
-    machine_i2c_target_data_t *data = &i2c_target_data[i2c_id];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[i2c_id];
 
     self->irq_active = true;
 
@@ -224,6 +222,10 @@ static void i2c_slave_deinit(i2c_inst_t *i2c) {
 /******************************************************************************/
 // I2CTarget port implementation
 
+static inline size_t mp_machine_i2c_target_get_index(machine_i2c_target_obj_t *self) {
+    return self - &machine_i2c_target_obj[0];
+}
+
 static void mp_machine_i2c_target_deinit_all_port(void) {
 }
 
@@ -267,7 +269,6 @@ static void mp_machine_i2c_target_irq_config(machine_i2c_target_obj_t *self, uns
 }
 
 static mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    // TODO: reconsider order of arguments
     enum { ARG_id, ARG_addr, ARG_addrsize, ARG_mem, ARG_mem_addrsize, ARG_scl, ARG_sda };
     static const mp_arg_t allowed_args[] = {
         #ifdef PICO_DEFAULT_I2C
@@ -301,8 +302,8 @@ static mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t
     self->state = STATE_IDLE;
     self->stop_pending = false;
     self->irq_active = false;
-    MP_STATE_PORT(i2c_target_mem_obj)[i2c_id] = args[ARG_mem].u_obj;
-    machine_i2c_target_data_t *data = &i2c_target_data[i2c_id];
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[i2c_id] = args[ARG_mem].u_obj;
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[i2c_id];
     machine_i2c_target_data_init(data, args[ARG_mem].u_obj, args[ARG_mem_addrsize].u_int);
 
     // Set SCL/SDA pins if configured.
