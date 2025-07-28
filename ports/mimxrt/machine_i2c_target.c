@@ -32,8 +32,6 @@
 #include "machine_i2c.h"
 #include CLOCK_CONFIG_H
 
-static machine_i2c_target_data_t i2c_target_data[FSL_FEATURE_SOC_LPI2C_COUNT];
-
 typedef struct _machine_i2c_target_obj_t {
     mp_obj_base_t base;
     LPI2C_Type *i2c_inst;
@@ -43,12 +41,9 @@ typedef struct _machine_i2c_target_obj_t {
     lpi2c_slave_handle_t handle;
 } machine_i2c_target_obj_t;
 
-
-MP_REGISTER_ROOT_POINTER(mp_obj_t pyb_i2cslave_mem[FSL_FEATURE_SOC_LPI2C_COUNT]);
-
 static void lpi2c_slave_callback(LPI2C_Type *base, lpi2c_slave_transfer_t *xfer, void *param) {
     machine_i2c_target_obj_t *self = (machine_i2c_target_obj_t *)param;
-    machine_i2c_target_data_t *data = &i2c_target_data[self->i2c_id];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[self->i2c_id];
 
     switch (xfer->event)
     {
@@ -78,6 +73,10 @@ static void lpi2c_slave_callback(LPI2C_Type *base, lpi2c_slave_transfer_t *xfer,
 
 /******************************************************************************/
 // I2CTarget port implementation
+
+static inline size_t mp_machine_i2c_target_get_index(machine_i2c_target_obj_t *self) {
+    return self->i2c_id;
+}
 
 static void mp_machine_i2c_target_deinit_all_port(void) {
 }
@@ -141,8 +140,8 @@ static mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t
     // Set the target address.
     self->addr = args[ARG_addr].u_int;
     // Initialise data.
-    MP_STATE_PORT(pyb_i2cslave_mem)[i2c_id] = args[ARG_mem].u_obj;
-    machine_i2c_target_data_t *data = &i2c_target_data[self->i2c_id];
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[i2c_id] = args[ARG_mem].u_obj;
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[self->i2c_id];
     machine_i2c_target_data_init(data, args[ARG_mem].u_obj, args[ARG_mem_addrsize].u_int);
 
     // Initialise the GPIO pins
@@ -172,5 +171,5 @@ static void mp_machine_i2c_target_print(const mp_print_t *print, mp_obj_t self_i
 // Stop the Slave transfer and free the memory objects.
 static void mp_machine_i2c_target_deinit(machine_i2c_target_obj_t *self) {
     LPI2C_SlaveDeinit(self->i2c_inst);
-    MP_STATE_PORT(pyb_i2cslave_mem)[self->i2c_id] = NULL;
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[self->i2c_id] = MP_OBJ_NULL;
 }
