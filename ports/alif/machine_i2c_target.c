@@ -41,8 +41,6 @@ typedef struct _machine_i2c_target_obj_t {
     uint8_t state;
 } machine_i2c_target_obj_t;
 
-static machine_i2c_target_data_t i2c_target_data[4];
-
 static machine_i2c_target_obj_t machine_i2c_target_obj[] = {
     #if defined(MICROPY_HW_I2C0_SCL)
     [0] = {{&machine_i2c_target_type}, (I2C_Type *)I2C0_BASE, I2C0_IRQ_IRQn, MICROPY_HW_I2C0_SCL, MICROPY_HW_I2C0_SDA},
@@ -69,7 +67,7 @@ static machine_i2c_target_obj_t machine_i2c_target_obj[] = {
 
 static void i2c_target_irq_handler(machine_i2c_target_obj_t *self) {
     unsigned int i2c_id = self - &machine_i2c_target_obj[0];
-    machine_i2c_target_data_t *data = &i2c_target_data[i2c_id];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[i2c_id];
     I2C_Type *i2c = self->i2c;
 
     // Get the interrupt status.
@@ -136,6 +134,10 @@ void I2C3_IRQHandler(void) {
 
 /******************************************************************************/
 // I2CTarget port implementation
+
+static inline size_t mp_machine_i2c_target_get_index(machine_i2c_target_obj_t *self) {
+    return self - &machine_i2c_target_obj[0];
+}
 
 static void mp_machine_i2c_target_deinit_all_port(void) {
 }
@@ -204,8 +206,8 @@ static mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t
     self->state = STATE_IDLE;
 
     // Initialise data.
-    MP_STATE_PORT(i2c_target_mem_obj)[i2c_id] = args[ARG_mem].u_obj;
-    machine_i2c_target_data_t *data = &i2c_target_data[i2c_id];
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[i2c_id] = args[ARG_mem].u_obj;
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[i2c_id];
     machine_i2c_target_data_init(data, args[ARG_mem].u_obj, args[ARG_mem_addrsize].u_int);
 
     // Set SCL/SDA pins if given.
