@@ -62,17 +62,57 @@ General Methods
 
    Write out the bytes from the buffer.  Returns the number of bytes written.
 
-.. method:: I2CTarget.irq(handler=None, trigger=0, hard=False)
+.. method:: I2CTarget.memaddr()
 
-   Configure an IRQ handler.
+   Get the last memory address that was selected by the controller.  Returns an
+   integer.
+
+.. method:: I2CTarget.irq(handler=None, trigger=IRQ_END_READ|IRQ_END_WRITE, hard=False)
+
+   Configure an IRQ *handler* to be called when an event occurs.  The possible events are
+   given by the following constants, which can be or'd together and passed to the *trigger*
+   argument:
+
+      - ``IRQ_ADDR_MATCH_READ`` indicates that the target was addressed by a
+        controller for a read transaction.
+      - ``IRQ_ADDR_MATCH_READ`` indicates that the target was addressed by a
+        controller for a write transaction.
+      - ``IRQ_READ_REQ`` indicates that the controller is requesting data, and this
+        request must be satisfied by calling `I2CTarget.write` with the data to be
+        passed back to the controller.
+      - ``IRQ_WRITE_REQ`` indicates that the controller has written data, and the
+        data must be read by calling `I2CTarget.readinto`.
+      - ``IRQ_END_READ`` indicates that the controller has finished a read transaction.
+      - ``IRQ_END_WRITE`` indicates that the controller has finished a write transaction.
+
+   Not all triggers are available on all ports.  If a port has the constant then that
+   event is available.
+
+   Note the following restrictions:
+
+      - ``IRQ_ADDR_MATCH_READ``, ``IRQ_ADDR_MATCH_READ``, ``IRQ_READ_REQ`` and
+        ``IRQ_WRITE_REQ`` must be handled by a hard IRQ callback (with the *hard* argument
+        set to ``True``).  This is because these events have very strict timing requirements
+        and must usually be satisfied synchronously with the hardware event.
+
+      - ``IRQ_END_READ`` and ``IRQ_END_WRITE`` may be handled by either a soft or hard
+        IRQ callback (although note that all events must be registered with the same handler,
+        so if any events need a hard callback then all events must be hard).
+
+      - If a memory buffer has been supplied in the constructor then ``IRQ_END_WRITE``
+        is not emitted for the transaction that writes the memory address.  This is to
+        allow ``IRQ_END_READ`` and ``IRQ_END_WRITE`` to function correctly as soft IRQ
+        callbacks, where the IRQ handler may be called quite some time after the actual
+        hardware event.
 
 Constants
 ---------
 
-.. data:: I2CTarget.IRQ_ADDR_MATCH
+.. data:: I2CTarget.IRQ_ADDR_MATCH_READ
+.. data:: I2CTarget.IRQ_ADDR_MATCH_WRITE
           I2CTarget.IRQ_READ_REQ
           I2CTarget.IRQ_WRITE_REQ
-          I2CTarget.IRQ_END
-          I2CTarget.IRQ_STOP
+          I2CTarget.IRQ_END_READ
+          I2CTarget.IRQ_END_WRITE
 
     IRQ trigger sources.
