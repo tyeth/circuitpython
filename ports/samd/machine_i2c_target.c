@@ -52,13 +52,10 @@ typedef struct _machine_i2c_target_obj_t {
 
 uint8_t machine_i2c_pin_config(mp_obj_t pin_obj, uint8_t id, uint8_t pad_nr);
 
-static machine_i2c_target_data_t i2c_target_data[SERCOM_INST_NUM];
-MP_REGISTER_ROOT_POINTER(mp_obj_t pyb_i2cslave_mem[SERCOM_INST_NUM]);
-
 void common_i2c_target_irq_handler(int i2c_id) {
     // Handle Sercom I2C IRQ for target memory mode.
     machine_i2c_target_obj_t *self = MP_STATE_PORT(sercom_table[i2c_id]);
-    machine_i2c_target_data_t *data = &i2c_target_data[i2c_id];
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[i2c_id];
 
     if (self != NULL) {
         Sercom *i2c = self->instance;
@@ -94,6 +91,10 @@ void common_i2c_target_irq_handler(int i2c_id) {
 
 /******************************************************************************/
 // I2CTarget port implementation
+
+static inline size_t mp_machine_i2c_target_get_index(machine_i2c_target_obj_t *self) {
+    return self->id;
+}
 
 static void mp_machine_i2c_target_deinit_all_port(void) {
 }
@@ -161,8 +162,8 @@ mp_obj_t mp_machine_i2c_target_make_new(const mp_obj_type_t *type, size_t n_args
 
     // Get the address and initialise data.
     self->addr = args[ARG_addr].u_int;
-    MP_STATE_PORT(pyb_i2cslave_mem)[id] = args[ARG_mem].u_obj;
-    machine_i2c_target_data_t *data = &i2c_target_data[id];
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[id] = args[ARG_mem].u_obj;
+    machine_i2c_target_data_t *data = &machine_i2c_target_data[id];
     machine_i2c_target_data_init(data, args[ARG_mem].u_obj, args[ARG_mem_addrsize].u_int);
 
     // Set up the clocks
@@ -210,6 +211,6 @@ static void mp_machine_i2c_target_print(const mp_print_t *print, mp_obj_t self_i
 static void mp_machine_i2c_target_deinit(machine_i2c_target_obj_t *self) {
     // Disable I2C
     sercom_enable(self->instance, 0);
-    MP_STATE_PORT(pyb_i2cslave_mem)[self->id] = NULL;
+    MP_STATE_PORT(machine_i2c_target_mem_obj)[self->id] = MP_OBJ_NULL;
     MP_STATE_PORT(sercom_table[self->id]) = NULL;
 }
