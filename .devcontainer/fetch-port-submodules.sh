@@ -12,6 +12,8 @@ cd "$REPO_ROOT"
 if [ -z "$CP_PORT" ]; then
   echo -e "[fetch-port-submodules.sh] CP_PORT not set. Cannot fetch submodules!"
   exit 3
+else
+  echo -e "[fetch-port-submodules.sh] CP_PORT=$CP_PORT"
 fi
 
 cd "ports/$CP_PORT"

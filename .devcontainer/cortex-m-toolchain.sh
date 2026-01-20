@@ -11,7 +11,7 @@ echo -e "[cortex-m-toolchain.sh] starting install"
 # --- tooling   --------------------------------------------------------------
 
 echo -e "[cortex-m-toolchain.sh] downloading and installing gcc-arm-non-eabi toolchain"
-cd /workspaces
+cd /tmp
 
 wget -qO gcc-arm-none-eabi.tar.xz \
   https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi.tar.xz
@@ -21,4 +21,4 @@ ln -s arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi gcc-arm-none-eabi
 rm -f gcc-arm-none-eabi.tar.xz
 
 echo -e "[cortex-m-toolchain.sh] update PATH in environment"
-echo -e "\nexport PATH=/workspaces/gcc-arm-none-eabi/bin:$PATH"  >> $HOME/.bashrc
+echo -e "\nexport PATH=/tmp/gcc-arm-none-eabi/bin:$PATH"  >> $HOME/.bashrc

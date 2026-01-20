@@ -23,8 +23,8 @@ REPO_ROOT="/workspaces/circuitpython"
 
 on_exit() {
   rc=$?
-  if [ -f /workspaces/install_build_env.log.active ]; then
-    mv /workspaces/install_build_env.log.active /workspaces/install_build_env.log
+  if [ -f /tmp/install_build_env.log.active ]; then
+    mv /tmp/install_build_env.log.active /tmp/install_build_env.log
   fi
   rm -rf /tmp/install_build_env
   exit $rc
@@ -32,12 +32,12 @@ on_exit() {
 
 # --- test prerequisites for installation   ------------------------------------
 
-while ! test -f /workspaces/post_create.finished; do
-  echo -e "[install_build_env.sh] waiting for /workspaces/post_create.finished ..."
+while ! test -f /tmp/post_create.finished; do
+  echo -e "[install_build_env.sh] waiting for /tmp/post_create.finished ..."
   sleep 1
 done
 
-if [ -f /workspaces/install_build_env.log ]; then
+if [ -f /tmp/install_build_env.log ]; then
   echo -e "[install_build_env.sh] installation already done"
   exit 0
 elif ! mkdir /tmp/install_build_env 2>/dev/null; then
@@ -58,7 +58,7 @@ echo -e "[install_build_env.sh] starting install"
 "$REPO_ROOT/.devcontainer/$CP_TOOLCHAIN-toolchain.sh" || exit 3
 "$REPO_ROOT/.devcontainer/make-mpy-cross.sh" || exit 3
 echo -e "Setup complete!\nStart a new terminal and build CircuitPython!\n"
-) |& tee /workspaces/install_build_env.log.active
+) |& tee /tmp/install_build_env.log.active
 
 echo -e "[install_build_env.sh] Setup complete!"
 exit 0
