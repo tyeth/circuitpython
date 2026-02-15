@@ -20,7 +20,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_NEOPIXEL), MP_ROM_PTR(&pin_GPIO48) },
     { MP_ROM_QSTR(MP_QSTR_D48), MP_ROM_PTR(&pin_GPIO48) },
     { MP_ROM_QSTR(MP_QSTR_IO48), MP_ROM_PTR(&pin_GPIO48) },
-    
+
     // --- Left Header (Top to Bottom) ---
     // UART0 TX
     { MP_ROM_QSTR(MP_QSTR_TX), MP_ROM_PTR(&pin_GPIO43) },
@@ -63,7 +63,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
     // --- Right Header (Bottom to Top) ---
     // Note: 5V, GND, 3V3 are not GPIOs
-    
+
     { MP_ROM_QSTR(MP_QSTR_D13), MP_ROM_PTR(&pin_GPIO13) },
     { MP_ROM_QSTR(MP_QSTR_A13), MP_ROM_PTR(&pin_GPIO13) },
     { MP_ROM_QSTR(MP_QSTR_IO13), MP_ROM_PTR(&pin_GPIO13) },
@@ -90,7 +90,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
 
 
     // --- Extra Pads (Left Side) ---
-    
+
     { MP_ROM_QSTR(MP_QSTR_D38), MP_ROM_PTR(&pin_GPIO38) },
     { MP_ROM_QSTR(MP_QSTR_IO38), MP_ROM_PTR(&pin_GPIO38) },
 
