@@ -1,5 +1,5 @@
 USB_VID = 0x303a
-USB_PID = 0x81B4
+USB_PID = 0x8247
 USB_PRODUCT = "Super Mini ESP32-S3"
 USB_MANUFACTURER = "Generic"
 
@@ -15,3 +15,4 @@ CIRCUITPY_ESP_PSRAM_FREQ = 80m
 
 # Include these Python libraries in firmware.
 FROZEN_MPY_DIRS += $(TOP)/frozen/Adafruit_CircuitPython_NeoPixel
+
