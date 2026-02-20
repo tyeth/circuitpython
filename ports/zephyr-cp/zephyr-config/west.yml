@@ -14,7 +14,7 @@ manifest:
       path: bootloader/mcuboot
     - name: zephyr
       url: https://github.com/adafruit/zephyr
-      revision: fda76219340714f5059466abc5e31c47f4d9f9dc
+      revision: 9d97ab575bc3be080d504209028a0562a1693462
       clone-depth: 100
       import:
         # Skip what no CircuitPython board can use, so west update fetches 37
