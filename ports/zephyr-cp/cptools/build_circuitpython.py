@@ -73,7 +73,7 @@ DEFAULT_MODULES = [
     "select",
 ]
 # Flags that don't match with with a *bindings module. Some used by adafruit_requests
-MPCONFIG_FLAGS = ["array", "errno", "io", "json", "math"]
+MPCONFIG_FLAGS = ["array", "errno", "io", "json", "math", "binascii"]
 
 # extmod-based modules that should appear in the autogen list even though they
 # don't have shared-bindings/ or bindings/ directories.

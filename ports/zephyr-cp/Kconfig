@@ -81,3 +81,9 @@ config BT_BUF_ACL_RX_COUNT_EXTRA
 
 config BT_BUF_ACL_RX_SIZE
 	default 255
+
+config BT_GATT_DYNAMIC_DB
+	default y
+
+config BT_GATT_CLIENT
+	default y
