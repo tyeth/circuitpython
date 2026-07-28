@@ -95,11 +95,11 @@ endif # samd21
 ######################################################################
 
 ######################################################################
-# Put samd51/same51-only choices here.
+# Put samx5x-only choices here.
 
-ifneq ($(filter $(CHIP_FAMILY),samd51 same51),)
+ifneq ($(filter $(CHIP_FAMILY),samd51 same51 same54),)
 
-# No native touchio on SAMx51.
+# No native touchio on SAMx5x.
 CIRCUITPY_TOUCHIO_USE_NATIVE = 0
 
 ifeq ($(CIRCUITPY_FULL_BUILD),0)
@@ -135,7 +135,7 @@ ifeq ($(CHIP_VARIANT),SAMD51G19A)
 CIRCUITPY_AUDIOBUSIO = 0
 endif
 
-endif # samd51 / same51
+endif # samx5x
 ######################################################################
 
 CIRCUITPY_BUILD_EXTENSIONS ?= uf2
