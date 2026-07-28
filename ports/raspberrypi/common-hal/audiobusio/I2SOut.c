@@ -167,16 +167,16 @@ bitloop0:
     0x6201, //  9: out    pins, 1         side 0 [2]
 };
 
-// Clock-follower TX. BCLK and WS are inputs driven by something
+// External-clock TX. BCLK and WS are inputs driven by something
 // else, so the state machine side-sets nothing and waits on the two clocks
-// instead. `wait gpio` encodes an absolute pin index, so unlike the clock-source
+// instead. `wait gpio` encodes an absolute pin index, so unlike the internal-clock
 // programs above this one cannot be a static table: it is assembled at
 // construct time with the pin numbers patched in.
 //
 //     0: wait 0 gpio W
 //     1: wait 1 gpio W          ; right channel starts (WS changes on a BCLK fall)
 //        .wrap_target
-//     2: pull noblock           ; refills OSR from X on underflow, as the clock-source program does
+//     2: pull noblock           ; refills OSR from X on underflow, as the internal-clock program does
 //     3: mov x, osr
 //     4: set y, 31
 //     5: wait 1 gpio B
@@ -190,12 +190,12 @@ bitloop0:
 // otherwise lands on the Philips delay bit, so no pre-roll is needed.
 //
 // One 32-bit FIFO word covers a whole 16-bit stereo frame; at 24/32 bits the
-// frame is two words (right then left). Same layout the clock-source programs use.
-#define I2S_FOLLOWER_PROGRAM_LEN (9)
-#define I2S_FOLLOWER_WRAP_TARGET (2)
-#define I2S_FOLLOWER_WRAP (8)
+// frame is two words (right then left). Same layout the internal-clock programs use.
+#define I2S_EXT_CLOCK_PROGRAM_LEN (9)
+#define I2S_EXT_CLOCK_WRAP_TARGET (2)
+#define I2S_EXT_CLOCK_WRAP (8)
 
-static void build_i2sout_follower_program(uint16_t *prog, uint8_t bclk, uint8_t ws, bool left_justified) {
+static void build_i2sout_ext_clock_program(uint16_t *prog, uint8_t bclk, uint8_t ws, bool left_justified) {
     const uint16_t wait_0_bclk = 0x2000 | bclk;
     const uint16_t wait_1_bclk = 0x2080 | bclk;
     prog[0] = 0x2000 | ws;  // wait 0 gpio W
@@ -231,20 +231,20 @@ void i2sout_reset(void) {
 void common_hal_audiobusio_i2sout_construct(audiobusio_i2sout_obj_t *self,
     const mcu_pin_obj_t *bit_clock, const mcu_pin_obj_t *word_select,
     const mcu_pin_obj_t *data, const mcu_pin_obj_t *main_clock, bool left_justified,
-    bool clock_follower) {
+    bool external_clock) {
     if (main_clock != NULL) {
         mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_main_clock);
     }
     const mcu_pin_obj_t *sideset_pin = NULL;
     const uint16_t *program = NULL;
     size_t program_len = 0;
-    uint16_t follower_program[I2S_FOLLOWER_PROGRAM_LEN];
+    uint16_t ext_clock_program[I2S_EXT_CLOCK_PROGRAM_LEN];
     pio_pinmask_t wait_gpio_mask = PIO_PINMASK_NONE;
 
-    self->clock_follower = clock_follower;
+    self->external_clock = external_clock;
 
-    if (clock_follower) {
-        // As a clock follower the clocks are `wait gpio` targets, so they
+    if (external_clock) {
+        // In external clock mode the clocks are `wait gpio` targets, so they
         // need not be sequential GPIOs.
         uint8_t gpio_offset = 0;
         #if NUM_BANK0_GPIOS > 32
@@ -252,12 +252,12 @@ void common_hal_audiobusio_i2sout_construct(audiobusio_i2sout_obj_t *self,
             gpio_offset = 16;
         }
         #endif
-        build_i2sout_follower_program(follower_program,
+        build_i2sout_ext_clock_program(ext_clock_program,
             i2s_wait_gpio_index(bit_clock, gpio_offset),
             i2s_wait_gpio_index(word_select, gpio_offset),
             left_justified);
-        program = follower_program;
-        program_len = I2S_FOLLOWER_PROGRAM_LEN;
+        program = ext_clock_program;
+        program_len = I2S_EXT_CLOCK_PROGRAM_LEN;
         wait_gpio_mask = PIO_PINMASK_OR(PIO_PINMASK_FROM_PIN(bit_clock->number),
             PIO_PINMASK_FROM_PIN(word_select->number));
     } else if (bit_clock->number == word_select->number - 1) {
@@ -290,9 +290,9 @@ void common_hal_audiobusio_i2sout_construct(audiobusio_i2sout_obj_t *self,
     common_hal_rp2pio_statemachine_construct(
         &self->state_machine,
         program, program_len,
-        // Clock at 44.1 khz to warm the DAC up. As a clock follower the SM
+        // Clock at 44.1 khz to warm the DAC up. In external clock mode the SM
         // is driven by the waits, not the clock divider, so run it at sysclk.
-        clock_follower ? 0 : 44100 * 32 * 6,
+        external_clock ? 0 : 44100 * 32 * 6,
         NULL, 0, // init
         NULL, 0, // may_exec
         data, 1, PIO_PINMASK32_NONE, PIO_PINMASK32_ALL, // out pin
@@ -310,8 +310,8 @@ void common_hal_audiobusio_i2sout_construct(audiobusio_i2sout_obj_t *self,
         false, // Wait for txstall
         false, 32, false, // in settings
         false, // Not user-interruptible.
-        clock_follower ? I2S_FOLLOWER_WRAP_TARGET : 0,
-        clock_follower ? I2S_FOLLOWER_WRAP : -1, // wrap settings
+        external_clock ? I2S_EXT_CLOCK_WRAP_TARGET : 0,
+        external_clock ? I2S_EXT_CLOCK_WRAP : -1, // wrap settings
         PIO_ANY_OFFSET,
         PIO_FIFO_TYPE_DEFAULT,
         PIO_MOV_STATUS_DEFAULT,
@@ -366,7 +366,7 @@ void common_hal_audiobusio_i2sout_play(audiobusio_i2sout_obj_t *self,
     // the outside world is running WS at, or the pitch is wrong. The restart
     // still matters -- it re-execs the program at its offset, so every play()
     // re-syncs to WS.
-    if (!self->clock_follower) {
+    if (!self->external_clock) {
         common_hal_rp2pio_statemachine_set_frequency(&self->state_machine, clocks_per_bit * frequency);
     }
     common_hal_rp2pio_statemachine_restart(&self->state_machine);

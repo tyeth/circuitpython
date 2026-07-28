@@ -25,9 +25,9 @@ void common_hal_audioi2sin_i2sin_construct(audioi2sin_i2sin_obj_t *self,
     const mcu_pin_obj_t *data, const mcu_pin_obj_t *main_clock,
     uint32_t sample_rate, uint8_t bit_depth, uint8_t output_bit_depth,
     bool mono, bool left_justified, bool samples_signed,
-    bool clock_follower, bool invert_bit_clock) {
-    if (clock_follower) {
-        mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_clock_follower);
+    bool external_clock, bool invert_bit_clock) {
+    if (external_clock) {
+        mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_external_clock);
     }
 
     i2s_data_bit_width_t bit_width = (i2s_data_bit_width_t)bit_depth;

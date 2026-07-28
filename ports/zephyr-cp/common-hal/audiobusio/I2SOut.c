@@ -46,9 +46,9 @@ mp_obj_t common_hal_audiobusio_i2sout_construct_from_device(audiobusio_i2sout_ob
 void common_hal_audiobusio_i2sout_construct(audiobusio_i2sout_obj_t *self,
     const mcu_pin_obj_t *bit_clock, const mcu_pin_obj_t *word_select,
     const mcu_pin_obj_t *data, const mcu_pin_obj_t *main_clock, bool left_justified,
-    bool clock_follower) {
-    if (clock_follower) {
-        mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_clock_follower);
+    bool external_clock) {
+    if (external_clock) {
+        mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_external_clock);
     }
     mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("Use device tree to define %q devices"), MP_QSTR_I2S);
 }
