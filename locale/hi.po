@@ -1248,6 +1248,7 @@ msgid "Not connected"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: shared-module/audiofilewriter/AudioFileWriter.c
 msgid "Already in progress"
 msgstr ""
 
@@ -1846,6 +1847,12 @@ msgstr ""
 
 #: ports/raspberrypi/common-hal/audiobusio/I2SOut.c
 #: ports/raspberrypi/common-hal/audioi2sin/I2SIn.c
+#: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
+msgid "Cannot use GPIO0..15 together with GPIO32..47"
+msgstr ""
+
+#: ports/raspberrypi/common-hal/audiobusio/I2SOut.c
+#: ports/raspberrypi/common-hal/audioi2sin/I2SIn.c
 msgid "Bit clock and word select must be sequential GPIO pins"
 msgstr ""
 
@@ -1997,10 +2004,6 @@ msgstr ""
 
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 msgid "Missing first_in_pin. %q[%u] reads pin(s)"
-msgstr ""
-
-#: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
-msgid "Cannot use GPIO0..15 together with GPIO32..47"
 msgstr ""
 
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
@@ -3725,6 +3728,7 @@ msgid "file must be a file opened in byte mode"
 msgstr ""
 
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
+#: shared-bindings/audiodelays/GranularPitchShift.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
 #: shared-bindings/audiodelays/PitchShift.c
 #: shared-bindings/audiofilters/Distortion.c
@@ -3739,6 +3743,10 @@ msgstr ""
 
 #: shared-bindings/audiofreeverb/Freeverb.c
 msgid "bits_per_sample must be 16"
+msgstr ""
+
+#: shared-bindings/audioi2sin/I2SIn.c
+msgid "%q requires %q"
 msgstr ""
 
 #: shared-bindings/audioi2sin/I2SIn.c
@@ -4252,6 +4260,14 @@ msgstr ""
 
 #: shared-module/audiodelays/MultiTapDelay.c
 msgid "%q in %q must be of type %q or %q, not %q"
+msgstr ""
+
+#: shared-module/audiofilewriter/AudioFileWriter.c
+msgid "Only 8/16-bit mono/stereo is supported"
+msgstr ""
+
+#: shared-module/audiofilewriter/AudioFileWriter.c
+msgid "buffer_size too small for source"
 msgstr ""
 
 #: shared-module/audiomp3/MP3Decoder.c
