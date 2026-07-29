@@ -196,8 +196,6 @@ audioio_get_buffer_result_t audiofilters_filter_get_buffer(audiofilters_filter_o
                 // Load another sample buffer to play
                 audioio_get_buffer_result_t result = audiosample_get_buffer(self->sample, false, 0, (uint8_t **)&self->sample_remaining_buffer, &self->sample_buffer_length);
                 if (result == GET_BUFFER_ERROR) {
-                    // The sample cannot be read from any more, it was
-                    // deinited while we were playing it.
                     self->sample = NULL;
                     self->sample_buffer_length = 0;
                     self->more_data = false;
