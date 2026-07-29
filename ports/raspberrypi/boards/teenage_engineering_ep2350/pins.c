@@ -100,10 +100,13 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_GP27), MP_ROM_PTR(&pin_GPIO27) },
     { MP_ROM_QSTR(MP_QSTR_A1), MP_ROM_PTR(&pin_GPIO27) },
 
-    // Rail sense through a resistive divider (VSYS/VBAT / 2).
+    // Handle position potentiometer: how far the handle has been pressed in.
+    // Continuous and monotonic over the travel, but it only swings across a
+    // narrow part of the range, roughly 32370 counts (1.63 V) with the
+    // handle at rest down to 29850 counts
     { MP_ROM_QSTR(MP_QSTR_GP28), MP_ROM_PTR(&pin_GPIO28) },
     { MP_ROM_QSTR(MP_QSTR_A2), MP_ROM_PTR(&pin_GPIO28) },
-    { MP_ROM_QSTR(MP_QSTR_VOLTAGE_MONITOR), MP_ROM_PTR(&pin_GPIO28) },
+    { MP_ROM_QSTR(MP_QSTR_HANDLE_POSITION), MP_ROM_PTR(&pin_GPIO28) },
 
     // Volume potentiometer wiper, full scale 0 - 3.3V.
     { MP_ROM_QSTR(MP_QSTR_GP29), MP_ROM_PTR(&pin_GPIO29) },
