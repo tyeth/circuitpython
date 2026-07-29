@@ -19,7 +19,10 @@
 
 #define DEFAULT_SPI_BUS_SCK (&pin_GPIO36)
 #define DEFAULT_SPI_BUS_MOSI (&pin_GPIO37)
-#define DEFAULT_SPI_BUS_MISO (&pin_GPIO35)
+// GPIO35 is shared between the TF card MISO and the TFT D/C signal. The display
+// claims it as D/C during board_init(), so board.SPI() must not also claim it.
+#define CIRCUITPY_BOARD_SPI     (1)
+#define CIRCUITPY_BOARD_SPI_PIN {{.clock = DEFAULT_SPI_BUS_SCK, .mosi = DEFAULT_SPI_BUS_MOSI, .miso = NULL}}
 
 #define DEFAULT_UART_BUS_RX (&pin_GPIO18)
 #define DEFAULT_UART_BUS_TX (&pin_GPIO17)
