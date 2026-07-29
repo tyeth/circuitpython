@@ -29,6 +29,7 @@
 
 #if CIRCUITPY_SSL
 #include "shared-module/ssl/__init__.h"
+#include "psa/crypto.h"
 #endif
 
 #if CIRCUITPY_WIFI
@@ -500,6 +501,9 @@ void reset_port(void) {
 
     #if CIRCUITPY_SSL
     ssl_reset();
+
+    // Done separately from ssl_reset() because ESP-IDF has its own PSA setup.
+    mbedtls_psa_crypto_free();
     #endif
 
     #if CIRCUITPY_WATCHDOG
