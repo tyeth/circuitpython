@@ -258,7 +258,12 @@ jobs:
         pip install --break-system-packages wheel
         # requirements-dev.txt doesn't install on windows. (with msys2 python)
         # instead, pick a subset for what we want to do
-        pip install --break-system-packages cascadetoml jinja2 typer click intelhex jsonschema
+        # jsonschema is needed by mbedtls' generate_driver_wrappers.py. Pin it below 4.18:
+        # 4.18 and later depend on rpds-py, a Rust extension with no wheel for msys2 python
+        # (SOABI cpython-3xx-x86_64-cygwin), and maturin refuses to build it from source
+        # ("Unsupported platform: x86_64-cygwin"). 4.17.3 uses attrs and pyrsistent instead,
+        # both of which install without a Rust toolchain.
+        pip install --break-system-packages cascadetoml jinja2 typer click intelhex 'jsonschema<4.18'
         # check that installed packages work....?
         which python; python --version; python -c "import cascadetoml"
         which python3; python3 --version; python3 -c "import cascadetoml"
