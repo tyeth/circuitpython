@@ -502,7 +502,12 @@ void reset_port(void) {
     #if CIRCUITPY_SSL
     ssl_reset();
 
-    // Done separately from ssl_reset() because ESP-IDF has its own PSA setup.
+    // For raspberrypi, we must free PSA crypto, because there are GC-heap objects
+    // in the key slots.  We can't put this call in ssl_reset() because that's a
+    // shared-module implementation. Unlike raspberrypi, espressif ESP-IDF inits PSA
+    // once at boot and would never re-init it.
+    // common_hal_ssl_sslcontext_construct() re-inits PSA on demand.
+    // So for raspberrypi, we must call mbedtls_psa_crypto_free() explicitly.
     mbedtls_psa_crypto_free();
     #endif
 
