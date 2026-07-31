@@ -730,7 +730,7 @@ msgstr "Мягкая перезагрузка\n"
 #: ports/analog/common-hal/busio/SPI.c ports/analog/common-hal/busio/UART.c
 #: ports/stm/common-hal/audioio/AudioOut.c
 #: shared-bindings/digitalio/DigitalInOutProtocol.c
-#: shared-module/busdisplay/BusDisplay.c
+#: shared-module/busdisplay/BusDisplay.c shared-module/ssl/SSLContext.c
 msgid "%q init failed"
 msgstr "Инициализация %q не удалась"
 
