@@ -235,7 +235,7 @@ static size_t build_i2sin_ext_clock_program(uint16_t *prog, uint8_t bclk, uint8_
     size_t len = 0;
     prog[len++] = 0x2000 | ws;  // wait 0 gpio W
     prog[len++] = 0x2080 | ws;  // wait 1 gpio W
-    if (left_justified) {
+    if (!left_justified) {
         prog[len++] = wait_1_bclk;  // one more BCLK of skew
     }
     const size_t bitloop = len + 1;
