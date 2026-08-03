@@ -8,6 +8,6 @@ manifest:
       path: modules/bsim_hw_models/nrf_hw_models
     - name: zephyr
       url: https://github.com/adafruit/zephyr
-      revision: e1dc85052bc8928572fdb972997c65eeb96f555b
+      revision: 63f054c88ee158a3d755bd59a26ef874f650efa2
       clone-depth: 100
       import: true
