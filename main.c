@@ -197,7 +197,25 @@ static void start_mp(safe_mode_t safe_mode) {
 
     #if MICROPY_ENABLE_GC
     size_t heap_size = 0;
-    _heap = _allocate_memory(safe_mode, "CIRCUITPY_HEAP_START_SIZE", CIRCUITPY_HEAP_START_SIZE, &heap_size);
+    // If CIRCUITPY_HEAP_SRAM_SIZE is set, try to place the heap's START segment in the
+    // internal (dma-capable) pool. On boards whose default heap lives in external PSRAM
+    // this puts early/hot allocations in fast RAM, while the heap still grows into PSRAM
+    // via MP_PLAT_ALLOC_HEAP. Unset (the default) keeps the current behavior; if the
+    // requested size does not fit the internal pool, we fall back to it as well.
+    #if CIRCUITPY_SETTINGS_TOML
+    if (safe_mode == SAFE_MODE_NONE) {
+        mp_int_t sram_size;
+        if (settings_get_int("CIRCUITPY_HEAP_SRAM_SIZE", &sram_size) == SETTINGS_OK && sram_size > 0) {
+            _heap = port_malloc((size_t)sram_size, true);
+            if (_heap != NULL) {
+                heap_size = (size_t)sram_size;
+            }
+        }
+    }
+    #endif
+    if (_heap == NULL) {
+        _heap = _allocate_memory(safe_mode, "CIRCUITPY_HEAP_START_SIZE", CIRCUITPY_HEAP_START_SIZE, &heap_size);
+    }
     gc_init(_heap, _heap + heap_size);
     #endif
     mp_init();
