@@ -102,24 +102,6 @@ bool common_hal_usb_audio_usbmicrophone_get_paused(usb_audio_usbmicrophone_obj_t
     return self->playing && self->paused;
 }
 
-static inline uint32_t copy16lsb(uint32_t val) {
-    #if (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1))
-    return __PKHBT(val, val, 16);
-    #else
-    val &= 0x0000ffff;
-    return val | (val << 16);
-    #endif
-}
-
-static inline uint32_t copy16msb(uint32_t val) {
-    #if (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1))
-    return __PKHTB(val, val, 16);
-    #else
-    val &= 0xffff0000;
-    return val | (val >> 16);
-    #endif
-}
-
 size_t usb_audio_usbmicrophone_background_fill(uint8_t *out, size_t max_bytes) {
     usb_audio_usbmicrophone_obj_t *self = active_microphone;
     if (self == NULL || !self->playing || self->paused || self->sample == MP_OBJ_NULL) {
@@ -157,23 +139,35 @@ size_t usb_audio_usbmicrophone_background_fill(uint8_t *out, size_t max_bytes) {
             }
         }
 
-        size_t n;
+        // Bytes written to out, and bytes consumed from the sample's chunk. They
+        // differ when a mono sample feeds the always-stereo USB stream.
+        size_t written;
+        size_t consumed;
         if (MP_LIKELY(usb_audio_channel_count == USB_AUDIO_N_CHANNELS)) {
-            n = MIN(self->buffer_length, max_bytes - filled);
-            memcpy(out + filled, self->buffer, n);
+            written = consumed = MIN(self->buffer_length, max_bytes - filled);
+            memcpy(out + filled, self->buffer, written);
         } else {
-            n = MIN(self->buffer_length << 1, max_bytes - filled);
-            uint32_t *word_buffer = (uint32_t *)self->buffer;
-            uint32_t *word_out = (uint32_t *)(out + filled);
-            for (size_t i = 0; i < n / sizeof(uint32_t); i += 2) {
-                uint32_t v = word_buffer[i >> 1];
-                word_out[i] = copy16lsb(v);
-                word_out[i + 1] = copy16msb(v);
+            // Mono source: duplicate each sample into both USB channels. Work in
+            // whole stereo frames so a partial frame can never be emitted, and
+            // cap by both what the chunk holds and what still fits in out.
+            size_t frames = MIN(self->buffer_length / USB_AUDIO_N_BYTES_PER_SAMPLE,
+                (max_bytes - filled) / USB_AUDIO_BYTES_PER_FRAME);
+            const int16_t *in = (const int16_t *)(const void *)self->buffer;
+            int16_t *dest = (int16_t *)(void *)(out + filled);
+            for (size_t i = 0; i < frames; i++) {
+                dest[2 * i] = dest[2 * i + 1] = in[i];
             }
+            written = frames * USB_AUDIO_BYTES_PER_FRAME;
+            consumed = frames * USB_AUDIO_N_BYTES_PER_SAMPLE;
         }
-        self->buffer += n;
-        self->buffer_length -= n;
-        filled += n;
+        if (written == 0) {
+            // Less than one whole frame of room left in out (or nothing to copy):
+            // stop rather than spin. The caller pads the remainder with silence.
+            break;
+        }
+        self->buffer += consumed;
+        self->buffer_length -= consumed;
+        filled += written;
     }
 
     return filled;

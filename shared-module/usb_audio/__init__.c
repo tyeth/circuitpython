@@ -20,8 +20,14 @@
 #include "supervisor/shared/tick.h"
 #include "tusb.h"
 
-int16_t *usb_audio_mic_samples;
-size_t usb_audio_mic_samples_len;
+// Scratch chunk the microphone task hands to TinyUSB. It is written from the USB
+// background task for as long as the device is enabled, which outlives every VM,
+// so it must not live on the MicroPython heap. Statically sized for
+// 1 ms at the highest rate enable() accepts, in the wire format (always
+// USB_AUDIO_N_CHANNELS channels); usb_audio_mic_samples_len is the part of it
+// actually used at the negotiated rate.
+static int16_t usb_audio_mic_samples[USB_AUDIO_MAX_SAMPLE_RATE / 1000 * USB_AUDIO_N_CHANNELS];
+static size_t usb_audio_mic_samples_len;
 
 static bool usb_audio_is_enabled = false;
 
@@ -53,12 +59,7 @@ bool shared_module_usb_audio_enable(mp_int_t sample_rate, mp_int_t channel_count
 
     // One scratch chunk (1 ms at the sample rate); we loop until the FIFO reaches
     // the setpoint.
-    usb_audio_mic_samples_len = sample_rate / 1000 * channel_count * USB_AUDIO_N_BYTES_PER_SAMPLE;
-    usb_audio_mic_samples = (int16_t *)m_malloc_without_collect(usb_audio_mic_samples_len);
-    if (usb_audio_mic_samples == NULL) {
-        m_malloc_fail(usb_audio_mic_samples_len);
-        return false;
-    }
+    usb_audio_mic_samples_len = sample_rate / 1000 * USB_AUDIO_BYTES_PER_FRAME;
     memset(usb_audio_mic_samples, 0, usb_audio_mic_samples_len);
 
     usb_audio_sample_rate = sample_rate;
@@ -179,34 +180,34 @@ void usb_audio_setup_singletons(void) {
 // the streaming alt-setting declares a single IN endpoint (_nEPs = 0x00). Async
 // feedback for true clock matching is a later step.
 #define USB_AUDIO_MIC_DESCRIPTOR(_itfnum, _stridx, _nBytesPerSample, _nBitsUsedPerSample, _epin, _epsize) \
-  /* Standard Interface Association Descriptor (IAD) */ \
-  TUD_AUDIO20_DESC_IAD(/*_firstitf*/ _itfnum, /*_nitfs*/ 0x02, /*_stridx*/ 0x00), \
-  /* Standard AC Interface Descriptor(4.7.1) */ \
-  TUD_AUDIO20_DESC_STD_AC(/*_itfnum*/ _itfnum, /*_nEPs*/ 0x00, /*_stridx*/ _stridx), \
-  /* Class-Specific AC Interface Header Descriptor(4.7.2) */ \
-  TUD_AUDIO20_DESC_CS_AC(/*_bcdADC*/ 0x0200, /*_category*/ AUDIO20_FUNC_MICROPHONE, /*_totallen*/ TUD_AUDIO20_DESC_CLK_SRC_LEN + TUD_AUDIO20_DESC_INPUT_TERM_LEN + TUD_AUDIO20_DESC_OUTPUT_TERM_LEN + TUD_AUDIO20_DESC_FEATURE_UNIT_LEN(2), /*_ctrl*/ AUDIO20_CS_AS_INTERFACE_CTRL_LATENCY_POS), \
-  /* Clock Source Descriptor(4.7.2.1) */ \
-  TUD_AUDIO20_DESC_CLK_SRC(/*_clkid*/ USB_AUDIO_ENTITY_CLOCK_SOURCE, /*_attr*/ AUDIO20_CLOCK_SOURCE_ATT_INT_FIX_CLK, /*_ctrl*/ (AUDIO20_CTRL_R << AUDIO20_CLOCK_SOURCE_CTRL_CLK_FRQ_POS), /*_assocTerm*/ USB_AUDIO_ENTITY_INPUT_TERMINAL,  /*_stridx*/ 0x00), \
-  /* Input Terminal Descriptor(4.7.2.4) -- microphone */ \
-  TUD_AUDIO20_DESC_INPUT_TERM(/*_termid*/ USB_AUDIO_ENTITY_INPUT_TERMINAL, /*_termtype*/ AUDIO_TERM_TYPE_IN_GENERIC_MIC, /*_assocTerm*/ USB_AUDIO_ENTITY_OUTPUT_TERMINAL, /*_clkid*/ USB_AUDIO_ENTITY_CLOCK_SOURCE, /*_nchannelslogical*/ USB_AUDIO_N_CHANNELS, /*_channelcfg*/ AUDIO20_CHANNEL_CONFIG_NON_PREDEFINED, /*_idxchannelnames*/ 0x00, /*_ctrl*/ AUDIO20_CTRL_R << AUDIO20_IN_TERM_CTRL_CONNECTOR_POS, /*_stridx*/ 0x00), \
-  /* Output Terminal Descriptor(4.7.2.5) -- USB streaming */ \
-  TUD_AUDIO20_DESC_OUTPUT_TERM(/*_termid*/ USB_AUDIO_ENTITY_OUTPUT_TERMINAL, /*_termtype*/ AUDIO_TERM_TYPE_USB_STREAMING, /*_assocTerm*/ USB_AUDIO_ENTITY_INPUT_TERMINAL, /*_srcid*/ USB_AUDIO_ENTITY_FEATURE_UNIT, /*_clkid*/ USB_AUDIO_ENTITY_CLOCK_SOURCE, /*_ctrl*/ 0x0000, /*_stridx*/ 0x00), \
-  /* Feature Unit Descriptor(4.7.2.8) */ \
-  TUD_AUDIO20_DESC_FEATURE_UNIT(/*_unitid*/ USB_AUDIO_ENTITY_FEATURE_UNIT, /*_srcid*/ USB_AUDIO_ENTITY_INPUT_TERMINAL, /*_stridx*/ 0x00, /*_ctrlch0master*/ AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_MUTE_POS | AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_VOLUME_POS, /*_ctrlch1*/ AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_MUTE_POS | AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_VOLUME_POS, /*_ctrlch2*/ AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_MUTE_POS | AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_VOLUME_POS), \
-  /* Standard AS Interface Descriptor(4.9.1) */ \
-  /* Interface 1, Alternate 0 - default alternate setting with 0 bandwidth */ \
-  TUD_AUDIO20_DESC_STD_AS_INT(/*_itfnum*/ (uint8_t)((_itfnum) + 1), /*_altset*/ 0x00, /*_nEPs*/ 0x00, /*_stridx*/ 0x00),\
-  /* Standard AS Interface Descriptor(4.9.1) */ \
-  /* Interface 1, Alternate 1 - alternate interface for data streaming */ \
-  TUD_AUDIO20_DESC_STD_AS_INT(/*_itfnum*/ (uint8_t)((_itfnum) + 1), /*_altset*/ 0x01, /*_nEPs*/ 0x01, /*_stridx*/ 0x00),\
-  /* Class-Specific AS Interface Descriptor(4.9.2) */ \
-  TUD_AUDIO20_DESC_CS_AS_INT(/*_termid*/ USB_AUDIO_ENTITY_OUTPUT_TERMINAL, /*_ctrl*/ AUDIO20_CTRL_NONE, /*_formattype*/ AUDIO20_FORMAT_TYPE_I, /*_formats*/ AUDIO20_DATA_FORMAT_TYPE_I_PCM, /*_nchannelsphysical*/ USB_AUDIO_N_CHANNELS, /*_channelcfg*/ AUDIO20_CHANNEL_CONFIG_NON_PREDEFINED, /*_stridx*/ 0x00),\
-  /* Type I Format Type Descriptor(2.3.1.6 - Audio Formats) */ \
-  TUD_AUDIO20_DESC_TYPE_I_FORMAT(_nBytesPerSample, _nBitsUsedPerSample), \
-  /* Standard AS Isochronous Audio Data Endpoint Descriptor(4.10.1.1) */ \
-  TUD_AUDIO20_DESC_STD_AS_ISO_EP(/*_ep*/ _epin, /*_attr*/ (uint8_t) ((uint8_t)TUSB_XFER_ISOCHRONOUS | (uint8_t)TUSB_ISO_EP_ATT_ASYNCHRONOUS | (uint8_t)TUSB_ISO_EP_ATT_DATA), /*_maxEPsize*/ _epsize, /*_interval*/ 0x01), \
-  /* Class-Specific AS Isochronous Audio Data Endpoint Descriptor(4.10.1.2) */ \
-  TUD_AUDIO20_DESC_CS_AS_ISO_EP(/*_attr*/ AUDIO20_CS_AS_ISO_DATA_EP_ATT_NON_MAX_PACKETS_OK, /*_ctrl*/ AUDIO20_CTRL_NONE, /*_lockdelayunit*/ AUDIO20_CS_AS_ISO_DATA_EP_LOCK_DELAY_UNIT_UNDEFINED, /*_lockdelay*/ 0x0000)
+    /* Standard Interface Association Descriptor (IAD) */ \
+    TUD_AUDIO20_DESC_IAD(/*_firstitf*/ _itfnum, /*_nitfs*/ 0x02, /*_stridx*/ 0x00), \
+    /* Standard AC Interface Descriptor(4.7.1) */ \
+    TUD_AUDIO20_DESC_STD_AC(/*_itfnum*/ _itfnum, /*_nEPs*/ 0x00, /*_stridx*/ _stridx), \
+    /* Class-Specific AC Interface Header Descriptor(4.7.2) */ \
+    TUD_AUDIO20_DESC_CS_AC(/*_bcdADC*/ 0x0200, /*_category*/ AUDIO20_FUNC_MICROPHONE, /*_totallen*/ TUD_AUDIO20_DESC_CLK_SRC_LEN + TUD_AUDIO20_DESC_INPUT_TERM_LEN + TUD_AUDIO20_DESC_OUTPUT_TERM_LEN + TUD_AUDIO20_DESC_FEATURE_UNIT_LEN(2), /*_ctrl*/ AUDIO20_CS_AS_INTERFACE_CTRL_LATENCY_POS), \
+    /* Clock Source Descriptor(4.7.2.1) */ \
+    TUD_AUDIO20_DESC_CLK_SRC(/*_clkid*/ USB_AUDIO_ENTITY_CLOCK_SOURCE, /*_attr*/ AUDIO20_CLOCK_SOURCE_ATT_INT_FIX_CLK, /*_ctrl*/ (AUDIO20_CTRL_R << AUDIO20_CLOCK_SOURCE_CTRL_CLK_FRQ_POS), /*_assocTerm*/ USB_AUDIO_ENTITY_INPUT_TERMINAL,  /*_stridx*/ 0x00), \
+    /* Input Terminal Descriptor(4.7.2.4) -- microphone */ \
+    TUD_AUDIO20_DESC_INPUT_TERM(/*_termid*/ USB_AUDIO_ENTITY_INPUT_TERMINAL, /*_termtype*/ AUDIO_TERM_TYPE_IN_GENERIC_MIC, /*_assocTerm*/ USB_AUDIO_ENTITY_OUTPUT_TERMINAL, /*_clkid*/ USB_AUDIO_ENTITY_CLOCK_SOURCE, /*_nchannelslogical*/ USB_AUDIO_N_CHANNELS, /*_channelcfg*/ AUDIO20_CHANNEL_CONFIG_NON_PREDEFINED, /*_idxchannelnames*/ 0x00, /*_ctrl*/ AUDIO20_CTRL_R << AUDIO20_IN_TERM_CTRL_CONNECTOR_POS, /*_stridx*/ 0x00), \
+    /* Output Terminal Descriptor(4.7.2.5) -- USB streaming */ \
+    TUD_AUDIO20_DESC_OUTPUT_TERM(/*_termid*/ USB_AUDIO_ENTITY_OUTPUT_TERMINAL, /*_termtype*/ AUDIO_TERM_TYPE_USB_STREAMING, /*_assocTerm*/ USB_AUDIO_ENTITY_INPUT_TERMINAL, /*_srcid*/ USB_AUDIO_ENTITY_FEATURE_UNIT, /*_clkid*/ USB_AUDIO_ENTITY_CLOCK_SOURCE, /*_ctrl*/ 0x0000, /*_stridx*/ 0x00), \
+    /* Feature Unit Descriptor(4.7.2.8) */ \
+    TUD_AUDIO20_DESC_FEATURE_UNIT(/*_unitid*/ USB_AUDIO_ENTITY_FEATURE_UNIT, /*_srcid*/ USB_AUDIO_ENTITY_INPUT_TERMINAL, /*_stridx*/ 0x00, /*_ctrlch0master*/ AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_MUTE_POS | AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_VOLUME_POS, /*_ctrlch1*/ AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_MUTE_POS | AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_VOLUME_POS, /*_ctrlch2*/ AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_MUTE_POS | AUDIO20_CTRL_RW << AUDIO20_FEATURE_UNIT_CTRL_VOLUME_POS), \
+    /* Standard AS Interface Descriptor(4.9.1) */ \
+    /* Interface 1, Alternate 0 - default alternate setting with 0 bandwidth */ \
+    TUD_AUDIO20_DESC_STD_AS_INT(/*_itfnum*/ (uint8_t)((_itfnum) + 1), /*_altset*/ 0x00, /*_nEPs*/ 0x00, /*_stridx*/ 0x00), \
+    /* Standard AS Interface Descriptor(4.9.1) */ \
+    /* Interface 1, Alternate 1 - alternate interface for data streaming */ \
+    TUD_AUDIO20_DESC_STD_AS_INT(/*_itfnum*/ (uint8_t)((_itfnum) + 1), /*_altset*/ 0x01, /*_nEPs*/ 0x01, /*_stridx*/ 0x00), \
+    /* Class-Specific AS Interface Descriptor(4.9.2) */ \
+    TUD_AUDIO20_DESC_CS_AS_INT(/*_termid*/ USB_AUDIO_ENTITY_OUTPUT_TERMINAL, /*_ctrl*/ AUDIO20_CTRL_NONE, /*_formattype*/ AUDIO20_FORMAT_TYPE_I, /*_formats*/ AUDIO20_DATA_FORMAT_TYPE_I_PCM, /*_nchannelsphysical*/ USB_AUDIO_N_CHANNELS, /*_channelcfg*/ AUDIO20_CHANNEL_CONFIG_NON_PREDEFINED, /*_stridx*/ 0x00), \
+    /* Type I Format Type Descriptor(2.3.1.6 - Audio Formats) */ \
+    TUD_AUDIO20_DESC_TYPE_I_FORMAT(_nBytesPerSample, _nBitsUsedPerSample), \
+    /* Standard AS Isochronous Audio Data Endpoint Descriptor(4.10.1.1) */ \
+    TUD_AUDIO20_DESC_STD_AS_ISO_EP(/*_ep*/ _epin, /*_attr*/ (uint8_t)((uint8_t)TUSB_XFER_ISOCHRONOUS | (uint8_t)TUSB_ISO_EP_ATT_ASYNCHRONOUS | (uint8_t)TUSB_ISO_EP_ATT_DATA), /*_maxEPsize*/ _epsize, /*_interval*/ 0x01), \
+    /* Class-Specific AS Isochronous Audio Data Endpoint Descriptor(4.10.1.2) */ \
+    TUD_AUDIO20_DESC_CS_AS_ISO_EP(/*_attr*/ AUDIO20_CS_AS_ISO_DATA_EP_ATT_NON_MAX_PACKETS_OK, /*_ctrl*/ AUDIO20_CTRL_NONE, /*_lockdelayunit*/ AUDIO20_CS_AS_ISO_DATA_EP_LOCK_DELAY_UNIT_UNDEFINED, /*_lockdelay*/ 0x0000)
 
 // Hand-rolled UAC2 headset (microphone + speaker both enabled): one audio function
 // presenting both a speaker (host -> board OUT) and a microphone (board -> host
@@ -314,7 +315,7 @@ size_t usb_audio_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *de
         const uint8_t ep_in = descriptor_counts->current_endpoint + 1;
 
         usb_add_interface_string(*current_interface_string, "CircuitPython Headset");
-        
+
         const uint8_t usb_audio_descriptor[] = {
             USB_AUDIO_HEADSET_DESCRIPTOR(
                 /*_itfnum*/ descriptor_counts->current_interface,
@@ -331,12 +332,14 @@ size_t usb_audio_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *de
         usb_audio_mic_as_itf = descriptor_counts->current_interface + 2;
 
         (*current_interface_string)++;
-        // One IAD wrapping an AudioControl + two AudioStreaming interfaces, plus
-        // two OUT and two IN endpoints.
+        // One IAD wrapping an AudioControl + two AudioStreaming interfaces, plus a
+        // single isochronous endpoint in each direction. The two directions take
+        // separate endpoint numbers (ep_out and ep_in above), so this consumes two
+        // of the port's endpoint pairs.
         descriptor_counts->current_interface += 3;
-        descriptor_counts->num_out_endpoints += USB_AUDIO_N_CHANNELS;
-        descriptor_counts->num_in_endpoints += USB_AUDIO_N_CHANNELS;
-        descriptor_counts->current_endpoint += USB_AUDIO_N_CHANNELS * 2;
+        descriptor_counts->num_out_endpoints += 1;
+        descriptor_counts->num_in_endpoints += 1;
+        descriptor_counts->current_endpoint += 2;
 
         memcpy(descriptor_buf, usb_audio_descriptor, sizeof(usb_audio_descriptor));
 
@@ -360,11 +363,12 @@ size_t usb_audio_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *de
         };
 
         (*current_interface_string)++;
-        // One IAD wrapping an AudioControl + an AudioStreaming interface, plus two OUT endpoints.
+        // One IAD wrapping an AudioControl + an AudioStreaming interface, plus a
+        // single isochronous OUT endpoint.
         descriptor_counts->current_interface += 2;
         if (!forced_iso_ep) {
-            descriptor_counts->num_out_endpoints += USB_AUDIO_N_CHANNELS;
-            descriptor_counts->current_endpoint += USB_AUDIO_N_CHANNELS;
+            descriptor_counts->num_out_endpoints += 1;
+            descriptor_counts->current_endpoint += 1;
         }
 
         memcpy(descriptor_buf, usb_audio_descriptor, sizeof(usb_audio_descriptor));
@@ -388,11 +392,12 @@ size_t usb_audio_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *de
     };
 
     (*current_interface_string)++;
-    // One IAD wrapping an AudioControl + an AudioStreaming interface, plus two IN endpoints.
+    // One IAD wrapping an AudioControl + an AudioStreaming interface, plus a
+    // single isochronous IN endpoint.
     descriptor_counts->current_interface += 2;
     if (!forced_iso_ep) {
-        descriptor_counts->num_in_endpoints += USB_AUDIO_N_CHANNELS;
-        descriptor_counts->current_endpoint += USB_AUDIO_N_CHANNELS;
+        descriptor_counts->num_in_endpoints += 1;
+        descriptor_counts->current_endpoint += 1;
     }
 
     memcpy(descriptor_buf, usb_audio_descriptor, sizeof(usb_audio_descriptor));

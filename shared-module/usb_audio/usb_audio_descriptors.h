@@ -32,6 +32,11 @@ size_t usb_audio_descriptor_length(void);
 #define USB_AUDIO_N_BYTES_PER_SAMPLE (2)
 #define USB_AUDIO_BITS_PER_SAMPLE (USB_AUDIO_N_BYTES_PER_SAMPLE * 8)
 
+// Bytes per audio frame on the wire. The descriptors always declare
+// USB_AUDIO_N_CHANNELS channels, whatever channel_count the sample has, so this
+// is the granularity every buffer handed to/from TinyUSB must be a multiple of.
+#define USB_AUDIO_BYTES_PER_FRAME (USB_AUDIO_N_BYTES_PER_SAMPLE * USB_AUDIO_N_CHANNELS)
+
 // Endpoint number for the single isochronous audio data endpoint. Most device
 // controllers accept an ISO endpoint on any number, so the descriptor builder
 // just takes the next sequential one (signalled by 0 here). The nRF52 USBD,
