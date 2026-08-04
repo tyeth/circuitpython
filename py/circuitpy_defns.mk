@@ -712,6 +712,7 @@ SRC_SHARED_MODULE_ALL = \
 	audiospeed/__init__.c \
 	audiodelays/Echo.c \
 	audiodelays/Chorus.c \
+	audiodelays/Flanger.c \
 	audiodelays/PitchShift.c \
 	audiodelays/GranularPitchShift.c \
 	audiodelays/MultiTapDelay.c \
