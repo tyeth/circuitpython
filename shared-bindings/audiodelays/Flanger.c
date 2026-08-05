@@ -23,7 +23,7 @@
 //|     def __init__(
 //|         self,
 //|         max_delay_ms: int = 10,
-//|         delay_ms: synthio.BlockInput = 1.0,
+//|         min_delay_ms: synthio.BlockInput = 1.0,
 //|         rate: synthio.BlockInput = 0.5,
 //|         depth: synthio.BlockInput = 0.5,
 //|         feedback: synthio.BlockInput = 0.5,
@@ -41,20 +41,20 @@
 //|            spectrum, and the ``feedback`` path routes the delayed signal back into the delay line
 //|            to sharpen those notches into resonant peaks.
 //|
-//|            The delay is swept upwards from ``delay_ms`` towards ``max_delay_ms``::
+//|            The delay is swept upwards from ``min_delay_ms`` towards ``max_delay_ms``::
 //|
-//|              sweep_top = delay_ms + depth * (max_delay_ms - delay_ms)
-//|              current_delay = delay_ms + triangle_lfo() * (sweep_top - delay_ms)
+//|              sweep_top = min_delay_ms + depth * (max_delay_ms - min_delay_ms)
+//|              current_delay = min_delay_ms + triangle_lfo() * (sweep_top - min_delay_ms)
 //|
 //|            where ``triangle_lfo()`` ranges from 0.0 to 1.0 at ``rate`` Hz. Because the sweep runs
-//|            upwards from a floor rather than around a centre, no combination of ``delay_ms`` and
+//|            upwards from a floor rather than around a centre, no combination of ``min_delay_ms`` and
 //|            ``depth`` can push the delay outside of the buffer.
 //|
 //|
 //|         :param int max_delay_ms: The maximum delay the flanger can sweep to in milliseconds, valid range is 1-100.
-//|         :param synthio.BlockInput delay_ms: The shortest delay of the sweep in milliseconds. Clamped between the length of one sample and max_delay_ms.
+//|         :param synthio.BlockInput min_delay_ms: The shortest delay of the sweep in milliseconds. Clamped between the length of one sample and max_delay_ms.
 //|         :param synthio.BlockInput rate: The frequency of the sweep in hertz. Clamped between 0.0 and 20.0. A rate of 0.0 holds the delay still.
-//|         :param synthio.BlockInput depth: How much of the range above delay_ms is swept, from 0.0 to 1.0.
+//|         :param synthio.BlockInput depth: How much of the range above min_delay_ms is swept, from 0.0 to 1.0.
 //|         :param synthio.BlockInput feedback: How much of the delayed signal is fed back into the delay line, from -0.95 to 0.95. Negative values invert the polarity of the feedback.
 //|         :param synthio.BlockInput mix: How much of the wet audio to include along with the original signal, from 0.0 to 1.0.
 //|         :param bool invert: Subtract the wet signal from the dry signal instead of adding it, which flips which frequencies cancel.
@@ -74,7 +74,7 @@
 //|
 //|           audio = audiobusio.I2SOut(board.I2S_BIT_CLOCK, board.I2S_WS, board.I2S_DOUT)
 //|           synth = synthio.Synthesizer(channel_count=1, sample_rate=44100)
-//|           flanger = audiodelays.Flanger(max_delay_ms=10, delay_ms=1.0, rate=0.3, depth=0.8,
+//|           flanger = audiodelays.Flanger(max_delay_ms=10, min_delay_ms=1.0, rate=0.3, depth=0.8,
 //|                                         feedback=0.7, mix=1.0, buffer_size=1024,
 //|                                         channel_count=1, sample_rate=44100)
 //|           audio.play(flanger.play(synth))
@@ -88,10 +88,10 @@
 //|         ...
 //|
 static mp_obj_t audiodelays_flanger_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    enum { ARG_max_delay_ms, ARG_delay_ms, ARG_rate, ARG_depth, ARG_feedback, ARG_mix, ARG_invert, ARG_buffer_size, ARG_sample_rate, ARG_bits_per_sample, ARG_samples_signed, ARG_channel_count, };
+    enum { ARG_max_delay_ms, ARG_min_delay_ms, ARG_rate, ARG_depth, ARG_feedback, ARG_mix, ARG_invert, ARG_buffer_size, ARG_sample_rate, ARG_bits_per_sample, ARG_samples_signed, ARG_channel_count, };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_max_delay_ms, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 10 } },
-        { MP_QSTR_delay_ms, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_min_delay_ms, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_rate, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_depth, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_feedback, MP_ARG_OBJ | MP_ARG_KW_ONLY, {.u_obj = MP_OBJ_NULL} },
@@ -117,7 +117,7 @@ static mp_obj_t audiodelays_flanger_make_new(const mp_obj_type_t *type, size_t n
     }
 
     audiodelays_flanger_obj_t *self = mp_obj_malloc(audiodelays_flanger_obj_t, &audiodelays_flanger_type);
-    common_hal_audiodelays_flanger_construct(self, max_delay_ms, args[ARG_delay_ms].u_obj, args[ARG_rate].u_obj, args[ARG_depth].u_obj, args[ARG_feedback].u_obj, args[ARG_mix].u_obj, args[ARG_invert].u_bool, args[ARG_buffer_size].u_int, bits_per_sample, args[ARG_samples_signed].u_bool, channel_count, sample_rate);
+    common_hal_audiodelays_flanger_construct(self, max_delay_ms, args[ARG_min_delay_ms].u_obj, args[ARG_rate].u_obj, args[ARG_depth].u_obj, args[ARG_feedback].u_obj, args[ARG_mix].u_obj, args[ARG_invert].u_bool, args[ARG_buffer_size].u_int, bits_per_sample, args[ARG_samples_signed].u_bool, channel_count, sample_rate);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -156,27 +156,27 @@ static mp_obj_t audiodelays_flanger_obj___exit__(size_t n_args, const mp_obj_t *
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(audiodelays_flanger___exit___obj, 4, 4, audiodelays_flanger_obj___exit__);
 
 
-//|     delay_ms: synthio.BlockInput
+//|     min_delay_ms: synthio.BlockInput
 //|     """The shortest delay of the sweep in milliseconds. This is the floor that the sweep runs
 //|     upwards from. Clamped between the length of a single sample and ``max_delay_ms``."""
 //|
-static mp_obj_t audiodelays_flanger_obj_get_delay_ms(mp_obj_t self_in) {
+static mp_obj_t audiodelays_flanger_obj_get_min_delay_ms(mp_obj_t self_in) {
     audiodelays_flanger_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    return common_hal_audiodelays_flanger_get_delay_ms(self);
+    return common_hal_audiodelays_flanger_get_min_delay_ms(self);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(audiodelays_flanger_get_delay_ms_obj, audiodelays_flanger_obj_get_delay_ms);
+MP_DEFINE_CONST_FUN_OBJ_1(audiodelays_flanger_get_min_delay_ms_obj, audiodelays_flanger_obj_get_min_delay_ms);
 
-static mp_obj_t audiodelays_flanger_obj_set_delay_ms(mp_obj_t self_in, mp_obj_t delay_ms_in) {
+static mp_obj_t audiodelays_flanger_obj_set_min_delay_ms(mp_obj_t self_in, mp_obj_t min_delay_ms_in) {
     audiodelays_flanger_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    common_hal_audiodelays_flanger_set_delay_ms(self, delay_ms_in);
+    common_hal_audiodelays_flanger_set_min_delay_ms(self, min_delay_ms_in);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_2(audiodelays_flanger_set_delay_ms_obj, audiodelays_flanger_obj_set_delay_ms);
+MP_DEFINE_CONST_FUN_OBJ_2(audiodelays_flanger_set_min_delay_ms_obj, audiodelays_flanger_obj_set_min_delay_ms);
 
-MP_PROPERTY_GETSET(audiodelays_flanger_delay_ms_obj,
-    (mp_obj_t)&audiodelays_flanger_get_delay_ms_obj,
-    (mp_obj_t)&audiodelays_flanger_set_delay_ms_obj);
+MP_PROPERTY_GETSET(audiodelays_flanger_min_delay_ms_obj,
+    (mp_obj_t)&audiodelays_flanger_get_min_delay_ms_obj,
+    (mp_obj_t)&audiodelays_flanger_set_min_delay_ms_obj);
 
 //|     rate: synthio.BlockInput
 //|     """The frequency of the delay sweep in hertz. Clamped between 0.0 and 20.0. A rate of 0.0
@@ -199,7 +199,7 @@ MP_PROPERTY_GETSET(audiodelays_flanger_rate_obj,
     (mp_obj_t)&audiodelays_flanger_set_rate_obj);
 
 //|     depth: synthio.BlockInput
-//|     """How much of the range between ``delay_ms`` and ``max_delay_ms`` the sweep covers, from
+//|     """How much of the range between ``min_delay_ms`` and ``max_delay_ms`` the sweep covers, from
 //|     0.0 to 1.0. A depth of 0.0 leaves a static short delay."""
 //|
 static mp_obj_t audiodelays_flanger_obj_get_depth(mp_obj_t self_in) {
@@ -347,7 +347,7 @@ static const mp_rom_map_elem_t audiodelays_flanger_locals_dict_table[] = {
 
     // Properties
     { MP_ROM_QSTR(MP_QSTR_playing), MP_ROM_PTR(&audiodelays_flanger_playing_obj) },
-    { MP_ROM_QSTR(MP_QSTR_delay_ms), MP_ROM_PTR(&audiodelays_flanger_delay_ms_obj) },
+    { MP_ROM_QSTR(MP_QSTR_min_delay_ms), MP_ROM_PTR(&audiodelays_flanger_min_delay_ms_obj) },
     { MP_ROM_QSTR(MP_QSTR_rate), MP_ROM_PTR(&audiodelays_flanger_rate_obj) },
     { MP_ROM_QSTR(MP_QSTR_depth), MP_ROM_PTR(&audiodelays_flanger_depth_obj) },
     { MP_ROM_QSTR(MP_QSTR_feedback), MP_ROM_PTR(&audiodelays_flanger_feedback_obj) },

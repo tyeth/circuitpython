@@ -16,7 +16,7 @@ typedef struct {
     audiosample_base_t base;
 
     // Effect parameters.
-    synthio_block_slot_t delay_ms; // floor of the sweep
+    synthio_block_slot_t min_delay_ms; // floor of the sweep
     synthio_block_slot_t rate; // LFO frequency in Hz
     synthio_block_slot_t depth; // 0 to 1, portion of the available range swept
     synthio_block_slot_t feedback; // -0.95 to 0.95, regeneration

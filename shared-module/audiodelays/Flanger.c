@@ -25,7 +25,7 @@ static uint32_t flanger_ms_to_frames_q16(audiodelays_flanger_obj_t *self, mp_flo
 }
 
 void common_hal_audiodelays_flanger_construct(audiodelays_flanger_obj_t *self, uint32_t max_delay_ms,
-    mp_obj_t delay_ms, mp_obj_t rate, mp_obj_t depth, mp_obj_t feedback, mp_obj_t mix, bool invert,
+    mp_obj_t min_delay_ms, mp_obj_t rate, mp_obj_t depth, mp_obj_t feedback, mp_obj_t mix, bool invert,
     uint32_t buffer_size, uint8_t bits_per_sample,
     bool samples_signed, uint8_t channel_count, uint32_t sample_rate) {
 
@@ -70,10 +70,10 @@ void common_hal_audiodelays_flanger_construct(audiodelays_flanger_obj_t *self, u
     // The below section sets up the flanger effect's starting values.
 
     // If we did not receive a BlockInput we need to create a default float value
-    if (delay_ms == MP_OBJ_NULL) {
-        delay_ms = mp_obj_new_float(MICROPY_FLOAT_CONST(1.0));
+    if (min_delay_ms == MP_OBJ_NULL) {
+        min_delay_ms = mp_obj_new_float(MICROPY_FLOAT_CONST(1.0));
     }
-    synthio_block_assign_slot(delay_ms, &self->delay_ms, MP_QSTR_delay_ms);
+    synthio_block_assign_slot(min_delay_ms, &self->min_delay_ms, MP_QSTR_min_delay_ms);
 
     if (rate == MP_OBJ_NULL) {
         rate = mp_obj_new_float(MICROPY_FLOAT_CONST(0.5));
@@ -133,12 +133,12 @@ void common_hal_audiodelays_flanger_deinit(audiodelays_flanger_obj_t *self) {
     self->buffer[1] = NULL;
 }
 
-mp_obj_t common_hal_audiodelays_flanger_get_delay_ms(audiodelays_flanger_obj_t *self) {
-    return self->delay_ms.obj;
+mp_obj_t common_hal_audiodelays_flanger_get_min_delay_ms(audiodelays_flanger_obj_t *self) {
+    return self->min_delay_ms.obj;
 }
 
-void common_hal_audiodelays_flanger_set_delay_ms(audiodelays_flanger_obj_t *self, mp_obj_t delay_ms) {
-    synthio_block_assign_slot(delay_ms, &self->delay_ms, MP_QSTR_delay_ms);
+void common_hal_audiodelays_flanger_set_min_delay_ms(audiodelays_flanger_obj_t *self, mp_obj_t min_delay_ms) {
+    synthio_block_assign_slot(min_delay_ms, &self->min_delay_ms, MP_QSTR_min_delay_ms);
 }
 
 mp_obj_t common_hal_audiodelays_flanger_get_rate(audiodelays_flanger_obj_t *self) {
@@ -209,13 +209,10 @@ void common_hal_audiodelays_flanger_play(audiodelays_flanger_obj_t *self, mp_obj
     self->sample_buffer_length /= (self->base.bits_per_sample / 8);
     // Store if we have more data in the sample to retrieve
     self->more_data = result == GET_BUFFER_MORE_DATA;
-
-    return;
 }
 
 void common_hal_audiodelays_flanger_stop(audiodelays_flanger_obj_t *self) {
     self->sample = NULL;
-    return;
 }
 
 audioio_get_buffer_result_t audiodelays_flanger_get_buffer(audiodelays_flanger_obj_t *self, bool single_channel_output, uint8_t channel,
@@ -263,7 +260,7 @@ audioio_get_buffer_result_t audiodelays_flanger_get_buffer(audiodelays_flanger_o
         if (self->sample == NULL) {
             // tick all block inputs so that anything attached to them stays in sync
             shared_bindings_synthio_lfo_tick(self->base.sample_rate, length / channel_count);
-            (void)synthio_block_slot_get(&self->delay_ms);
+            (void)synthio_block_slot_get(&self->min_delay_ms);
             (void)synthio_block_slot_get(&self->rate);
             (void)synthio_block_slot_get(&self->depth);
             (void)synthio_block_slot_get(&self->feedback);
@@ -294,16 +291,16 @@ audioio_get_buffer_result_t audiodelays_flanger_get_buffer(audiodelays_flanger_o
 
             // get the effect values we need from the BlockInput
             shared_bindings_synthio_lfo_tick(self->base.sample_rate, num_bytes / channel_count);
-            mp_float_t f_delay_ms = synthio_block_slot_get_limited(&self->delay_ms, self->sample_ms, (mp_float_t)self->max_delay_ms);
+            mp_float_t f_min_delay_ms = synthio_block_slot_get_limited(&self->min_delay_ms, self->sample_ms, (mp_float_t)self->max_delay_ms);
             mp_float_t f_rate = synthio_block_slot_get_limited(&self->rate, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(20.0));
             mp_float_t f_depth = synthio_block_slot_get_limited(&self->depth, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0));
             int32_t feedback = (int32_t)(synthio_block_slot_get_limited(&self->feedback, MICROPY_FLOAT_CONST(-0.95), MICROPY_FLOAT_CONST(0.95)) * 32767);
             int32_t mix = (int32_t)(synthio_block_slot_get_limited(&self->mix, MICROPY_FLOAT_CONST(0.0), MICROPY_FLOAT_CONST(1.0)) * 32767);
 
-            // The sweep runs upward from delay_ms towards max_delay_ms rather than around a
-            // centre, so no combination of delay_ms and depth can push it out of the delay line.
-            mp_float_t sweep_top_ms = f_delay_ms + f_depth * ((mp_float_t)self->max_delay_ms - f_delay_ms);
-            uint32_t delay_min_q16 = flanger_ms_to_frames_q16(self, f_delay_ms);
+            // The sweep runs upward from min_delay_ms towards max_delay_ms rather than around a
+            // centre, so no combination of min_delay_ms and depth can push it out of the delay line.
+            mp_float_t sweep_top_ms = f_min_delay_ms + f_depth * ((mp_float_t)self->max_delay_ms - f_min_delay_ms);
+            uint32_t delay_min_q16 = flanger_ms_to_frames_q16(self, f_min_delay_ms);
             uint32_t delay_span_q16 = flanger_ms_to_frames_q16(self, sweep_top_ms) - delay_min_q16;
 
             // How far the LFO advances each frame. A rate at or above half the sample rate is
