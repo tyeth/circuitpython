@@ -1,6 +1,7 @@
 &flash0 {
     partitions{
         circuitpy_partition: partition@118000 {
+			compatible = "zephyr,mapped-partition";
 			label = "circuitpy";
 			reg = <0x118000 (DT_SIZE_M(4) - DT_SIZE_K(1120))>;
 		};
