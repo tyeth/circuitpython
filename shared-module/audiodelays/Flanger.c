@@ -173,6 +173,19 @@ void common_hal_audiodelays_flanger_set_mix(audiodelays_flanger_obj_t *self, mp_
     synthio_block_assign_slot(arg, &self->mix, MP_QSTR_mix);
 }
 
+// Fold the sawtooth phase accumulator into a triangle in the range 0 to 65535
+static uint32_t flanger_phase_to_triangle(uint32_t phase) {
+    uint32_t tri = phase >> 15;
+    if (tri > 65535) {
+        tri = 131071 - tri;
+    }
+    return tri;
+}
+
+mp_float_t common_hal_audiodelays_flanger_get_lfo_value(audiodelays_flanger_obj_t *self) {
+    return (mp_float_t)flanger_phase_to_triangle(self->lfo_phase[0]) / MICROPY_FLOAT_CONST(65535.0);
+}
+
 bool common_hal_audiodelays_flanger_get_invert(audiodelays_flanger_obj_t *self) {
     return self->invert;
 }
@@ -328,11 +341,7 @@ audioio_get_buffer_result_t audiodelays_flanger_get_buffer(audiodelays_flanger_o
                 // accumulators step once per frame) or one channel per call.
                 self->lfo_phase[right_channel] += self->lfo_phase_inc;
 
-                // Fold the sawtooth phase into a triangle in the range 0 to 65535
-                uint32_t tri = self->lfo_phase[right_channel] >> 15;
-                if (tri > 65535) {
-                    tri = 131071 - tri;
-                }
+                uint32_t tri = flanger_phase_to_triangle(self->lfo_phase[right_channel]);
 
                 // The delay for this frame, in Q16.16 frames
                 uint32_t delay_q16 = delay_min_q16 + (uint32_t)(((uint64_t)delay_span_q16 * tri) >> 16);

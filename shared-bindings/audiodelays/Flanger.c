@@ -281,6 +281,21 @@ MP_PROPERTY_GETSET(audiodelays_flanger_invert_obj,
     (mp_obj_t)&audiodelays_flanger_get_invert_obj,
     (mp_obj_t)&audiodelays_flanger_set_invert_obj);
 
+//|     lfo_value: float
+//|     """The current value of the internal LFO that sweeps the delay time, from 0.0 at
+//|     `min_delay_ms` to 1.0 at the top of the sweep. The LFO only advances while audio is being
+//|     played. (read-only)"""
+//|
+static mp_obj_t audiodelays_flanger_obj_get_lfo_value(mp_obj_t self_in) {
+    audiodelays_flanger_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    check_for_deinit(self);
+    return mp_obj_new_float(common_hal_audiodelays_flanger_get_lfo_value(self));
+}
+MP_DEFINE_CONST_FUN_OBJ_1(audiodelays_flanger_get_lfo_value_obj, audiodelays_flanger_obj_get_lfo_value);
+
+MP_PROPERTY_GETTER(audiodelays_flanger_lfo_value_obj,
+    (mp_obj_t)&audiodelays_flanger_get_lfo_value_obj);
+
 //|     playing: bool
 //|     """True when the effect is playing a sample. (read-only)"""
 //|
@@ -353,6 +368,7 @@ static const mp_rom_map_elem_t audiodelays_flanger_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_feedback), MP_ROM_PTR(&audiodelays_flanger_feedback_obj) },
     { MP_ROM_QSTR(MP_QSTR_mix), MP_ROM_PTR(&audiodelays_flanger_mix_obj) },
     { MP_ROM_QSTR(MP_QSTR_invert), MP_ROM_PTR(&audiodelays_flanger_invert_obj) },
+    { MP_ROM_QSTR(MP_QSTR_lfo_value), MP_ROM_PTR(&audiodelays_flanger_lfo_value_obj) },
     AUDIOSAMPLE_FIELDS,
 };
 static MP_DEFINE_CONST_DICT(audiodelays_flanger_locals_dict, audiodelays_flanger_locals_dict_table);

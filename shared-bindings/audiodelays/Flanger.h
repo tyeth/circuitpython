@@ -33,6 +33,8 @@ void common_hal_audiodelays_flanger_set_feedback(audiodelays_flanger_obj_t *self
 mp_obj_t common_hal_audiodelays_flanger_get_mix(audiodelays_flanger_obj_t *self);
 void common_hal_audiodelays_flanger_set_mix(audiodelays_flanger_obj_t *self, mp_obj_t arg);
 
+mp_float_t common_hal_audiodelays_flanger_get_lfo_value(audiodelays_flanger_obj_t *self);
+
 bool common_hal_audiodelays_flanger_get_invert(audiodelays_flanger_obj_t *self);
 void common_hal_audiodelays_flanger_set_invert(audiodelays_flanger_obj_t *self, bool invert);
 
