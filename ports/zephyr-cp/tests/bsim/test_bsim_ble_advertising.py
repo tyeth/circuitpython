@@ -142,9 +142,7 @@ def test_bsim_tx_power_default_rssi(board, bsim_phy, circuitpython, zephyr_sampl
     # Observer: "Device found: <addr> (RSSI <n>), type <t>, AD data len <l>"
     # Advertisement is 12 bytes: flags (3) + name (9).
     # With 40 dB channel attenuation and 0 dBm TX → RSSI ~ -39.
-    # nRF54l bsim model has a TXPOWER register mapping discrepancy that
-    # reads 0 dBm as 2 dBm, giving RSSI ~ -37 instead.
-    expected_rssi = -37 if "nrf54" in board else -39
+    expected_rssi = -39
     rssi_pattern = re.compile(r"RSSI (-?\d+)\), type \d+, AD data len 12")
     all_rssi = [int(m.group(1)) for m in rssi_pattern.finditer(obs_output)]
     logger.info("RSSI values: %s", all_rssi)

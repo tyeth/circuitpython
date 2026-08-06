@@ -11,6 +11,7 @@
 #include "common-hal/_bleio/Adapter.h"
 #include "common-hal/_bleio/__init__.h"
 #include "bindings/zephyr_kernel/__init__.h"
+#include "common-hal/_bleio/Connection.h"
 #include "supervisor/shared/bluetooth/bluetooth.h"
 #include "supervisor/shared/tick.h"
 
@@ -20,6 +21,7 @@ bleio_adapter_obj_t common_hal_bleio_adapter_obj;
 void common_hal_bleio_init(void) {
     common_hal_bleio_adapter_obj.base.type = &bleio_adapter_type;
     bleio_adapter_reset(&common_hal_bleio_adapter_obj);
+    bleio_connection_register_auth_callbacks();
 }
 
 void bleio_user_reset(void) {
