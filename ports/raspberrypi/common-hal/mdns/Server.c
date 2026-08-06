@@ -309,34 +309,44 @@ static void srv_txt_cb(struct mdns_service *service, void *ptr) {
 // mdns_server_obj_t, or port_malloc -- or the records will dangle after the
 // first VM reset.
 static void assign_txt_records(mdns_server_obj_t *self, const char *txt_records[], size_t num_txt_records) {
-    // Stop the callback from reading the old records while we swap them out.
-    self->num_txt_records = 0;
-    self->txt_storage = NULL;
-
     size_t total = 0;
     for (size_t i = 0; i < num_txt_records; i++) {
         total += strlen(txt_records[i]) + 1;
     }
-    if (total == 0) {
-        return;
+
+    // Build the replacement before touching self, so that the allocation, and
+    // any MemoryError it raises, happens outside the lwip lock below.
+    char *storage = NULL;
+    const char *records[MDNS_MAX_TXT_RECORDS];
+    if (total > 0) {
+        storage = m_malloc_maybe(total);
+        if (storage == NULL) {
+            m_malloc_fail(total);
+        }
+        char *next = storage;
+        for (size_t i = 0; i < num_txt_records; i++) {
+            size_t size = strlen(txt_records[i]) + 1;
+            memcpy(next, txt_records[i], size);
+            records[i] = next;
+            next += size;
+        }
     }
 
-    // Dropping the old storage is enough; the GC reclaims it. Freeing it here
-    // could pull it out from under an in-flight srv_txt_cb.
-    char *storage = m_malloc_maybe(total);
-    if (storage == NULL) {
-        m_malloc_fail(total);
-    }
-    char *next = storage;
+    // srv_txt_cb reads these from the lwip IRQ, so hold lwip off while they
+    // change. Otherwise a callback already part way through the old records
+    // keeps pointers into storage we are about to release.
+    MICROPY_PY_LWIP_ENTER
+    char *old_storage = self->txt_storage;
     for (size_t i = 0; i < num_txt_records; i++) {
-        size_t size = strlen(txt_records[i]) + 1;
-        memcpy(next, txt_records[i], size);
-        self->txt_records[i] = next;
-        next += size;
+        self->txt_records[i] = records[i];
     }
-
     self->txt_storage = storage;
     self->num_txt_records = num_txt_records;
+    MICROPY_PY_LWIP_EXIT
+
+    // Nothing can be holding pointers into it now, so release it here rather
+    // than leaving the GC to do it at an unpredictable time.
+    m_free(old_storage);
 }
 
 void common_hal_mdns_server_advertise_service(mdns_server_obj_t *self, const char *service_type, const char *protocol, mp_int_t port, const char *txt_records[], size_t num_txt_records) {
