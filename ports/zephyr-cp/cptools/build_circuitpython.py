@@ -490,6 +490,11 @@ async def build_circuitpython():  # noqa: C901
 
     if usb_ok:
         enabled_modules.add("usb_cdc")
+        enabled_modules.add("usb_hid")
+
+        usb_num_endpoint_pairs = board_info.get("usb_num_endpoint_pairs", 4)
+        circuitpython_flags.append(f"-DUSB_NUM_ENDPOINT_PAIRS={usb_num_endpoint_pairs}")
+        circuitpython_flags.append("-DCIRCUITPY_USB_HID_ENABLED_DEFAULT=1")
 
         for macro in ("USB_PID", "USB_VID"):
             print(f"Setting {macro} to {mpconfigboard.get(macro)}")
@@ -594,6 +599,10 @@ async def build_circuitpython():  # noqa: C901
             # Only include shared-module/*.c if no common-hal/*.c files were found
             if len(hal_source) == len_before or module.name in SHARED_MODULE_AND_COMMON_HAL:
                 hal_source.extend(top.glob(f"shared-module/{module.name}/**/*.c"))
+            # The USB HID report descriptors are shared with the TinyUSB ports and
+            # have no common-hal override, so always compile them.
+            if module.name == "usb_hid":
+                hal_source.append(top / "shared-module/usb_hid/report_descriptors.c")
             hal_source.extend(top.glob(f"shared-bindings/{module.name}/**/*.c"))
             if module.name in LIBRARY_SOURCE:
                 for library_source in LIBRARY_SOURCE[module.name]:
