@@ -93,24 +93,6 @@ Larger values will reserve more RAM for python use and prevent the supervisor an
 from large allocations of their own.
 Smaller values will likely grow sooner than large start sizes.
 
-CIRCUITPY_HEAP_SRAM_SIZE (integer)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-On boards where the python heap is normally placed in external PSRAM, allocate the heap's
-*initial* segment (of this many bytes) from internal RAM instead. Later heap growth still
-comes from PSRAM, so allocations made early in a program run at internal-RAM speed while
-the total capacity is unchanged. If the requested size does not fit, the setting is
-ignored and the heap starts in PSRAM as usual. Unset by default.
-
-When this setting is satisfied it fully defines the initial segment and
-``CIRCUITPY_HEAP_START_SIZE`` is not consulted; ``CIRCUITPY_HEAP_START_SIZE`` applies
-only when this setting is unset or its internal-RAM allocation fails.
-
-The internal pool is shared with DMA buffers (displays, audio). Buffers allocated at boot
-coexist with this setting, but *re-allocating* a large buffer later (for example switching
-a framebuffer display to a higher resolution at runtime) may fail, because the freed space
-cannot merge across the live heap segment. With this setting, choose such sizes at boot
-(e.g. via ``CIRCUITPY_DISPLAY_WIDTH``/``HEIGHT``) rather than switching at runtime.
-
 CIRCUITPY_PYSTACK_SIZE (integer)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Sets the size of the python stack. Must be a multiple of 4. The default value is currently 1536.
