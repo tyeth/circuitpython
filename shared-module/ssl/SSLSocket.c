@@ -13,7 +13,7 @@
 #include "shared/netutils/netutils.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
-#include "py/objstr.h"
+#include "py/objarray.h"
 #include "py/runtime.h"
 #include "py/stream.h"
 #include "supervisor/shared/tick.h"
@@ -40,7 +40,9 @@ static void mbedtls_debug(void *ctx, int level, const char *file, int line, cons
 #define DEBUG_PRINT(...) do {} while (0)
 #endif
 
-static MP_NORETURN void mbedtls_raise_error(int err) {
+// Raise an OSError for an mbedtls error code.
+// `flags` is a bitmask from mbedtls_ssl_get_verify_result(), or 0 if not a verify error.
+static MP_NORETURN void mbedtls_raise_error_flags(int err, uint32_t flags) {
     // _mbedtls_ssl_send and _mbedtls_ssl_recv (below) turn positive error codes from the
     // underlying socket into negative codes to pass them through mbedtls. Here we turn them
     // positive again so they get interpreted as the OSError they really are. The
@@ -53,35 +55,76 @@ static MP_NORETURN void mbedtls_raise_error(int err) {
         mp_raise_OSError(MP_EWOULDBLOCK);
     }
 
+    // All ones means mbedtls says it has nothing to report: it set to all ones
+    // when a verify callback fails, and mbedtls_ssl_get_verify_result() returns
+    // this when there is no session at all.
+    if (flags == UINT32_MAX) {
+        flags = 0;
+    }
+
     #if defined(MBEDTLS_ERROR_C)
     // Including mbedtls_strerror takes about 1.5KB due to the error strings.
     // MBEDTLS_ERROR_C is the define used by mbedtls to conditionally include mbedtls_strerror.
     // It is set/unset in the MBEDTLS_CONFIG_FILE which is defined in the Makefile.
 
-    // Try to allocate memory for the message
-    #define ERR_STR_MAX 80  // mbedtls_strerror truncates if it doesn't fit
-    mp_obj_str_t *o_str = m_new_obj_maybe(mp_obj_str_t);
-    byte *o_str_buf = m_malloc_without_collect(ERR_STR_MAX);
-    if (o_str == NULL || o_str_buf == NULL) {
+    // Large enough for the longest mbedtls_strerror() output, which is about 100
+    // characters when it joins a high-level and a low-level name with '+', and for
+    // the longest certificate verification failure name, which is 81 characters.
+    #define ERR_STR_MAX 128  // mbedtls_strerror truncates if it doesn't fit
+    // One byte larger than the bound passed to mbedtls_strerror(), so that the
+    // strncpy() inside it has a bound smaller than the size of buf. Truncation
+    // there is safe and deliberate, but an equal bound trips -Wstringop-truncation.
+    char buf[ERR_STR_MAX + 1];
+
+    // Assemble the error message in a vstr.
+    // If we run out of heap, catch the MemoryError and fall back to just the error number.
+    mp_obj_t exc;
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        vstr_t vstr;
+        vstr_init(&vstr, ERR_STR_MAX);
+
+        mbedtls_strerror(err, buf, ERR_STR_MAX);
+        vstr_add_str(&vstr, buf);
+
+        #if !defined(MBEDTLS_X509_REMOVE_INFO)
+        // Call mbedtls_x509_crt_verify_info() to get the error string
+        // for each individual verify error bit.
+        // This allows for easier string management.
+        // Several verify errorbits are often set at once:
+        // mbedtls or's together the error flags of every certificate in the chain.
+        // For instance, a cert served under the wrong name and signed by an
+        // unknown CA reports CN_MISMATCH and NOT_TRUSTED together.
+        for (uint32_t bit = 1; bit != 0; bit <<= 1) {
+            if ((flags & bit) == 0) {
+                continue;
+            }
+            // The prefix is added to the beginning of the message.
+            // We drop the supplied trailing newline.
+            int info_len = mbedtls_x509_crt_verify_info(buf, ERR_STR_MAX, "; ", bit);
+            if (info_len > 1) {
+                // -1 to drop the newline.
+                vstr_add_strn(&vstr, buf, info_len - 1);
+            }
+        }
+        #endif
+
+        mp_obj_t args[2] = { MP_OBJ_NEW_SMALL_INT(err), mp_obj_new_str_from_utf8_vstr(&vstr) };
+        exc = mp_obj_exception_make_new(&mp_type_OSError, 2, 0, args);
+        nlr_pop();
+    } else {
+        // Could not build the message, so report the number by itself.
         mp_raise_OSError(err);
     }
-
-    // print the error message into the allocated buffer
-    mbedtls_strerror(err, (char *)o_str_buf, ERR_STR_MAX);
-    size_t len = strlen((char *)o_str_buf);
-
-    // Put the exception object together
-    o_str->base.type = &mp_type_str;
-    o_str->data = o_str_buf;
-    o_str->len = len;
-    o_str->hash = qstr_compute_hash(o_str->data, o_str->len);
-    // raise
-    mp_obj_t args[2] = { MP_OBJ_NEW_SMALL_INT(err), MP_OBJ_FROM_PTR(o_str)};
-    nlr_raise(mp_obj_exception_make_new(&mp_type_OSError, 2, 0, args));
+    nlr_raise(exc);
     #else
-    // mbedtls is compiled without error strings so we simply return the err number
+    // mbedtls is compiled without error strings, so just return the err number
     mp_raise_OSError(err); // err is typically a large negative number
     #endif
+}
+
+static MP_NORETURN void mbedtls_raise_error(int err) {
+    mbedtls_raise_error_flags(err, 0);
 }
 
 // Because ssl_socket_send and ssl_socket_recv_into are callbacks from mbedtls code,
@@ -372,6 +415,15 @@ static void do_handshake(ssl_sslsocket_obj_t *self) {
 
 cleanup:
     self->closed = true;
+
+    // Verification flags are only valid for CERT_VERIFY_FAILED.
+    // Read them before mbedtls_ssl_free() below: they live in the ssl context's
+    // session_negotiate and are gone once it is freed.
+    uint32_t verify_flags = 0;
+    if (ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
+        verify_flags = mbedtls_ssl_get_verify_result(&self->ssl);
+    }
+
     mbedtls_pk_free(&self->pkey);
     mbedtls_x509_crt_free(&self->cert);
     mbedtls_x509_crt_free(&self->cacert);
@@ -385,7 +437,7 @@ cleanup:
     } else if (ret == MBEDTLS_ERR_X509_BAD_INPUT_DATA) {
         mp_raise_ValueError(MP_ERROR_TEXT("invalid cert"));
     } else {
-        mbedtls_raise_error(ret);
+        mbedtls_raise_error_flags(ret, verify_flags);
     }
 }
 
