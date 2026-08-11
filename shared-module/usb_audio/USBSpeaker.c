@@ -37,7 +37,7 @@ void common_hal_usb_audio_usbspeaker_construct(usb_audio_usbspeaker_obj_t *self)
     self->base.samples_signed = true;
     self->base.single_buffer = false;
     self->base.max_buffer_length = USB_AUDIO_SPEAKER_OUTPUT_BUFFER_SIZE;
-    
+
     self->ring_head = 0;
     self->ring_tail = 0;
     self->ring_count = 0;
@@ -148,25 +148,43 @@ uint32_t common_hal_usb_audio_usbspeaker_read(usb_audio_usbspeaker_obj_t *self,
     // guard) this runs in VM/task context and can be preempted by the USB
     // producer, so it brackets its read-modify-write with interrupts disabled,
     // mirroring usb_audio_usbspeaker_background_drain().
-    size_t bytes_per_frame = (self->base.bits_per_sample / 8) * self->base.channel_count;
-    size_t want = (size_t)length * bytes_per_frame;
+    // The ring holds wire-format frames (always USB_AUDIO_N_CHANNELS channels).
+    // `length` and the return value count entries in `buffer`, i.e. 16-bit
+    // samples: a stereo speaker writes one per channel of each frame, a mono one
+    // keeps only each frame's left channel.
+    bool mono = usb_audio_channel_count != USB_AUDIO_N_CHANNELS;
+    size_t samples_per_frame = mono ? 1 : USB_AUDIO_N_CHANNELS;
+    size_t want = (size_t)(length / samples_per_frame) * USB_AUDIO_BYTES_PER_FRAME;
 
     common_hal_mcu_disable_interrupts();
     size_t to_copy = MIN(self->ring_count, want);
     // Never split a frame across calls (the ring always holds whole UAC2 frames,
     // but stay defensive so the returned count is always a whole number).
-    to_copy -= to_copy % bytes_per_frame;
+    to_copy -= to_copy % USB_AUDIO_BYTES_PER_FRAME;
 
     size_t first = MIN(to_copy, USB_AUDIO_SPEAKER_RING_SIZE - self->ring_tail);
-    memcpy(buffer, &self->ring[self->ring_tail], first);
-    if (to_copy > first) {
-        memcpy((uint8_t *)buffer + first, &self->ring[0], to_copy - first);
+    if (MP_LIKELY(!mono)) {
+        memcpy(buffer, &self->ring[self->ring_tail], first);
+        if (to_copy > first) {
+            memcpy((uint8_t *)buffer + first, &self->ring[0], to_copy - first);
+        }
+    } else {
+        int16_t *word_out = (int16_t *)buffer;
+        const int16_t *word_ring = (const int16_t *)(const void *)self->ring;
+        size_t base = self->ring_tail / USB_AUDIO_N_BYTES_PER_SAMPLE;
+        size_t written = 0;
+        for (size_t i = 0; i < first / USB_AUDIO_N_BYTES_PER_SAMPLE; i += USB_AUDIO_N_CHANNELS) {
+            word_out[written++] = word_ring[base + i];
+        }
+        for (size_t i = 0; i < (to_copy - first) / USB_AUDIO_N_BYTES_PER_SAMPLE; i += USB_AUDIO_N_CHANNELS) {
+            word_out[written++] = word_ring[i];
+        }
     }
     self->ring_tail = (self->ring_tail + to_copy) % USB_AUDIO_SPEAKER_RING_SIZE;
     self->ring_count -= to_copy;
     common_hal_mcu_enable_interrupts();
 
-    return to_copy / bytes_per_frame;
+    return to_copy / USB_AUDIO_BYTES_PER_FRAME * samples_per_frame;
 }
 
 // --------------------------------------------------------------------+
@@ -193,42 +211,47 @@ audioio_get_buffer_result_t usb_audio_usbspeaker_get_buffer(usb_audio_usbspeaker
 
     uint32_t half = self->base.max_buffer_length / 2;
     uint8_t *out = self->output_buffer + half * self->output_index;
-    int16_t *word_out = (int16_t *)out;
-    int16_t *word_ring = (int16_t *)self->ring;
     self->output_index = 1 - self->output_index;
 
     // Consumer side of the SPSC ring (runs in the output backend's refill ISR).
     // It is never preempted by the producer, so no interrupt guard is required.
     size_t to_copy = MIN(self->ring_count, (size_t)half);
 
+    // Bytes produced in out. The ring always holds wire-format (stereo) frames;
+    // a mono sample keeps only the left channel of each, so it produces half.
+    bool mono = usb_audio_channel_count != USB_AUDIO_N_CHANNELS;
+    size_t produced = mono ? to_copy / 2 : to_copy;
+
     size_t first = MIN(to_copy, USB_AUDIO_SPEAKER_RING_SIZE - self->ring_tail);
-    if (MP_LIKELY(usb_audio_channel_count == USB_AUDIO_N_CHANNELS)) {
+    if (MP_LIKELY(!mono)) {
         memcpy(out, &self->ring[self->ring_tail], first);
         if (to_copy > first) {
             memcpy(out + first, &self->ring[0], to_copy - first);
         }
     } else {
-        for (size_t i = self->ring_tail / USB_AUDIO_N_BYTES_PER_SAMPLE; i < first / USB_AUDIO_N_BYTES_PER_SAMPLE; i += 2) {
-            word_out[i >> 1] = word_ring[i];
+        // Take the left sample of each stereo frame, across up to two ring
+        // segments. Indices are in int16 units, counted from the segment start.
+        int16_t *word_out = (int16_t *)(void *)out;
+        const int16_t *word_ring = (const int16_t *)(const void *)self->ring;
+        size_t base = self->ring_tail / USB_AUDIO_N_BYTES_PER_SAMPLE;
+        size_t written = 0;
+        for (size_t i = 0; i < first / USB_AUDIO_N_BYTES_PER_SAMPLE; i += USB_AUDIO_N_CHANNELS) {
+            word_out[written++] = word_ring[base + i];
         }
-        if (to_copy > first) {
-            for (size_t i = 0; i < (to_copy - first) / USB_AUDIO_N_BYTES_PER_SAMPLE; i += 2) {
-                word_out[(first / USB_AUDIO_N_BYTES_PER_SAMPLE) + (i >> 1)] = word_ring[i];
-            }
+        for (size_t i = 0; i < (to_copy - first) / USB_AUDIO_N_BYTES_PER_SAMPLE; i += USB_AUDIO_N_CHANNELS) {
+            word_out[written++] = word_ring[i];
         }
     }
     self->ring_tail = (self->ring_tail + to_copy) % USB_AUDIO_SPEAKER_RING_SIZE;
     self->ring_count -= to_copy;
 
-    if (to_copy < half) {
+    // Bytes the caller will be handed, which is all a mono sample can fill.
+    uint32_t out_length = mono ? half / 2 : half;
+    if (produced < out_length) {
         // Underrun: pad the remainder with silence. Samples are signed, so
         // silence is 0. This is the consume-side of the pacing failure mode
         // tracked in the usb-audio-artifact-pacing memory: we never spin.
-        if (MP_LIKELY(usb_audio_channel_count == USB_AUDIO_N_CHANNELS)) {
-            memset(out + to_copy, 0, half - to_copy);
-        } else {
-            memset(out + (to_copy >> 1), 0, (half - to_copy) >> 1);
-        }
+        memset(out + produced, 0, out_length - produced);
     }
 
     // Computed the same way as audiocore.RawSample so stereo (interleaved ring)
@@ -238,11 +261,7 @@ audioio_get_buffer_result_t usb_audio_usbspeaker_get_buffer(usb_audio_usbspeaker
     }
 
     *buffer = out;
-    if (MP_LIKELY(usb_audio_channel_count == USB_AUDIO_N_CHANNELS)) {
-        *buffer_length = half;
-    } else {
-        *buffer_length = half >> 1;
-    }
+    *buffer_length = out_length;
     // A live USB stream is infinite; never report DONE or the backend would stop.
     return GET_BUFFER_MORE_DATA;
 }
