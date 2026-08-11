@@ -34,6 +34,10 @@
 
 #define DELAY 0x80
 
+// Max dirty rectangles held while merging overlapping ones before a refresh. More than this (rare)
+// falls back to refreshing the raw list unmerged.
+#define MAX_MERGE_AREAS 16
+
 void common_hal_busdisplay_busdisplay_construct(busdisplay_busdisplay_obj_t *self,
     mp_obj_t bus, uint16_t width, uint16_t height, int16_t colstart, int16_t rowstart,
     uint16_t rotation, uint16_t color_depth, bool grayscale, bool pixels_in_byte_share_row,
@@ -327,9 +331,59 @@ static void _refresh_display(busdisplay_busdisplay_obj_t *self) {
     }
 
     const displayio_area_t *current_area = _get_refresh_areas(self);
-    while (current_area != NULL) {
-        _refresh_area(self, current_area);
-        current_area = current_area->next;
+
+    // Merge overlapping dirty rectangles so shared pixels are computed and sent once. displayio does
+    // not merge them, so overlapping/nested areas get their common pixels recomputed and retransmitted
+    // per rectangle (and drawn as separate, visibly sequential passes). A changing text label is the
+    // common case: it dirties the whole label area AND each glyph, so the glyph rectangles sit inside
+    // the label rectangle and nearly double the work. Copy the clipped areas into a scratch array and
+    // greedily fuse any pair whose bounding-box area is smaller than the two areas summed - i.e. they
+    // overlap enough that one rectangle sends fewer pixels than two. Distant / non-overlapping
+    // rectangles are left separate (their bounding box would be larger). The result is never more
+    // pixels than the unmerged list. If there are more areas than the scratch holds, fall back to
+    // refreshing the raw list unmerged.
+    displayio_area_t merged[MAX_MERGE_AREAS];
+    size_t count = 0;
+    bool overflow = false;
+    for (const displayio_area_t *a = current_area; a != NULL; a = a->next) {
+        displayio_area_t clipped;
+        if (!displayio_display_core_clip_area(&self->core, a, &clipped)) {
+            continue;
+        }
+        if (count >= MAX_MERGE_AREAS) {
+            overflow = true;
+            break;
+        }
+        merged[count] = clipped;
+        count++;
+    }
+    if (overflow) {
+        while (current_area != NULL) {
+            _refresh_area(self, current_area);
+            current_area = current_area->next;
+        }
+        displayio_display_core_finish_refresh(&self->core);
+        return;
+    }
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (size_t i = 0; i < count && !changed; i++) {
+            for (size_t j = i + 1; j < count; j++) {
+                displayio_area_t u;
+                displayio_area_union(&merged[i], &merged[j], &u);
+                if (displayio_area_size(&u) < displayio_area_size(&merged[i]) + displayio_area_size(&merged[j])) {
+                    merged[i] = u;                   // fuse j into i
+                    merged[j] = merged[count - 1];   // swap-remove j
+                    count--;
+                    changed = true;
+                    break;
+                }
+            }
+        }
+    }
+    for (size_t i = 0; i < count; i++) {
+        _refresh_area(self, &merged[i]);
     }
     displayio_display_core_finish_refresh(&self->core);
 }
