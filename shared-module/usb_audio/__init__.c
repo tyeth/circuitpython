@@ -303,16 +303,20 @@ size_t usb_audio_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *de
 
     if (usb_audio_direction_is_input_output()) {
         // Combined headset: a speaker AudioStreaming interface (OUT) and a mic
-        // AudioStreaming interface (IN) under one AudioControl interface. This
-        // needs two isochronous endpoints, so it cannot be served by ports that
-        // pin ISO to a single dedicated endpoint number (forced_iso_ep, e.g.
-        // nRF52, which has only one ISO-capable endpoint). On those ports the
-        // sequential numbers below will not match the hardware's required ISO
-        // endpoint and the stream will not open; INPUT_OUTPUT is effectively
-        // unsupported there. The sequential-allocation ports (e.g. RP2) take a
-        // distinct number for each direction.
-        const uint8_t ep_out = descriptor_counts->current_endpoint;
-        const uint8_t ep_in = descriptor_counts->current_endpoint + 1;
+        // AudioStreaming interface (IN) under one AudioControl interface, so one
+        // isochronous endpoint in each direction.
+        //
+        // Sequential-allocation ports (e.g. RP2) take a distinct number for each
+        // direction. Ports that pin ISO to a dedicated endpoint number
+        // (forced_iso_ep, e.g. nRF52) use that one number for BOTH directions:
+        // the constraint there is the endpoint *number*, not the direction. The
+        // nRF52 USBD has a separate ISOIN and ISOOUT on endpoint 8, and TinyUSB
+        // splits the ISO buffer (ISOSPLIT = HalfIN) when both are open, so 0x08
+        // and 0x88 can run at the same time. As in the single-direction branches
+        // below, the dedicated ISO endpoint is separate hardware and must not
+        // consume the sequential endpoint numbers the other interfaces draw from.
+        const uint8_t ep_out = forced_iso_ep ? iso_ep_num : descriptor_counts->current_endpoint;
+        const uint8_t ep_in = forced_iso_ep ? iso_ep_num : (descriptor_counts->current_endpoint + 1);
 
         usb_add_interface_string(*current_interface_string, "CircuitPython Headset");
 
@@ -333,13 +337,16 @@ size_t usb_audio_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *de
 
         (*current_interface_string)++;
         // One IAD wrapping an AudioControl + two AudioStreaming interfaces, plus a
-        // single isochronous endpoint in each direction. The two directions take
-        // separate endpoint numbers (ep_out and ep_in above), so this consumes two
-        // of the port's endpoint pairs.
+        // single isochronous endpoint in each direction. On sequential-allocation
+        // ports the two directions take separate endpoint numbers, consuming two of
+        // the port's endpoint pairs. On forced_iso_ep ports both directions share
+        // the dedicated ISO endpoint, which is separate hardware and consumes none.
         descriptor_counts->current_interface += 3;
-        descriptor_counts->num_out_endpoints += 1;
-        descriptor_counts->num_in_endpoints += 1;
-        descriptor_counts->current_endpoint += 2;
+        if (!forced_iso_ep) {
+            descriptor_counts->num_out_endpoints += 1;
+            descriptor_counts->num_in_endpoints += 1;
+            descriptor_counts->current_endpoint += 2;
+        }
 
         memcpy(descriptor_buf, usb_audio_descriptor, sizeof(usb_audio_descriptor));
 
