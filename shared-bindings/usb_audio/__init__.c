@@ -32,7 +32,7 @@
 //|
 //|     # boot.py
 //|     import usb_audio
-//|     usb_audio.enable(sample_rate=16000, bits_per_sample=16)
+//|     usb_audio.enable(sample_rate=16000)
 //|
 //| .. code-block:: py
 //|
@@ -92,7 +92,6 @@
 //|
 //|     :param int sample_rate: Samples per second of the streamed audio.
 //|     :param int channel_count: Number of channels. Either mono (1) or stereo (2) is supported.
-//|     :param int bits_per_sample: Bits per signed PCM sample. Only 16 is supported initially.
 //|     :param bool microphone: Present a microphone (audio flows board -> host). Enabled by default.
 //|     :param bool speaker: Present a speaker (audio flows host -> board).
 //|
