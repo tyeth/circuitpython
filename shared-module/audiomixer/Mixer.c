@@ -412,8 +412,8 @@ static void mix_down_one_voice(audiomixer_mixer_obj_t *self,
             voice->buffer_length -= n >> 1;
         }
 
-        voice->lo_level = voice_lo_level;
-        voice->hi_level = voice_hi_level;
+        voice->lo_level = lo_level;
+        voice->hi_level = hi_level;
     }
 
     if (length && !voices_active) {

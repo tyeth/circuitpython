@@ -318,6 +318,8 @@ static void sum_with_loudness(int32_t *out_buffer32, int32_t *tmp_buffer32, int1
             tmp_buffer32++;
         }
     }
+    note_loudness[0] = loudness[0];
+    note_loudness[1] = loudness[1];
 }
 
 void synthio_synth_synthesize(synthio_synth_t *synth, uint8_t **bufptr, uint32_t *buffer_length, uint8_t channel) {
