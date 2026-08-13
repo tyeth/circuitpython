@@ -289,14 +289,27 @@ static mp_obj_t synthio_synth_get_note_filter(mp_obj_t note_obj) {
     return mp_const_none;
 }
 
+// Rather than immediately changing the loudness of audio playback, we keep a separate buffer of
+// the "active" loudness and wait until we meet the conditions of a "zero crossing". A zero crossing
+// occurs when either the current value is 0 or the value changes from negative to positive or
+// vice-versa. This is detected by keeping a copy of the previous frame of audio data and checking
+// to see if the sign of the value has changed. By only changing loudness during zero crossings, we
+// avoid audible pops/clicks which can be unpleasant.
 static void assign_loudness(int32_t word, int32_t *last_word, int16_t active_loudness[2], int16_t pending_loudness[2]) {
+    // If the active loudness already matches the pending loudness, exit early.
     if (MP_LIKELY(active_loudness[0] == pending_loudness[0]) && MP_LIKELY(active_loudness[1] == pending_loudness[1])) {
         return;
     }
+
+    // Check for a zero crossing: current value is 0 or has changed sign from the previous value.
     if (word == 0 || (*last_word != 0 && ((*last_word > 0) == (word < 0) || (*last_word < 0) == (word > 0)))) {
+        // Copy over our pending loudness. Will cause future calls to `assign_loudness` to exit
+        // early.
         active_loudness[0] = pending_loudness[0];
         active_loudness[1] = pending_loudness[1];
     } else {
+        // Update our copy of the previous word for future comparisons (an initial value of 0 is
+        // ignored).
         *last_word = word;
     }
 }
@@ -318,6 +331,10 @@ static void sum_with_loudness(int32_t *out_buffer32, int32_t *tmp_buffer32, int1
             tmp_buffer32++;
         }
     }
+
+    // Force the active loudness to match the pending loudness just in case the conditions of a
+    // zero crossing weren't met within the last `SYNTHIO_MAX_DUR` frames. Will ensure minimal
+    // delay in amplitude or panning changes at the potential expensive of an audible pop.
     active_loudness[0] = pending_loudness[0];
     active_loudness[1] = pending_loudness[1];
 }

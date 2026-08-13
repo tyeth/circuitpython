@@ -173,14 +173,29 @@ static inline uint32_t copy16msb(uint32_t val) {
     #endif
 }
 
+// Rather than immediately changing the loudness of audio playback, we keep a separate buffer of
+// the "active" loudness and wait until we meet the conditions of a "zero crossing". A zero crossing
+// occurs when either the current value is 0 or the value changes from negative to positive or
+// vice-versa. This is detected by keeping a copy of the previous frame of audio data and checking
+// to see if the sign of the value has changed. By only changing loudness during zero crossings, we
+// avoid audible pops/clicks which can be unpleasant.
 static void assignmul(uint32_t word, uint32_t *last_word, int32_t *active_lomul, int32_t *active_himul, int32_t pending_lomul, int32_t pending_himul) {
+    // If the active loudness already matches the pending loudness, exit early.
     if (MP_LIKELY(*active_lomul == pending_lomul) && MP_LIKELY(*active_himul == pending_himul)) {
         return;
     }
+
+    // Check for a zero crossing: current value is 0 or has changed sign from the previous value.
+    // We check for the sign change by bitmasking only the top bits of each 16-bit signed value
+    // packed into the 32-bit word (two's complement). If either bit doesn't match the previous
+    // value, a sign change has occurred on either the left or right channel.
     if (word == 0 || (*last_word != 0 && ((*last_word) & 0x80008000) != (word & 0x80008000))) {
+        // Copy over our pending loudness. Will cause future calls to `assignmul` to exit early.
         *active_lomul = pending_lomul;
         *active_himul = pending_himul;
     } else {
+        // Update our copy of the previous word for future comparisons (an initial value of 0 is
+        // ignored).
         *last_word = word;
     }
 }
@@ -412,6 +427,9 @@ static void mix_down_one_voice(audiomixer_mixer_obj_t *self,
             voice->buffer_length -= n >> 1;
         }
 
+        // Force the active level to match the pending level in the case that the conditions of a
+        // zero crossing weren't met within the last `SYNTHIO_MAX_DUR` frames. Will ensure minimal
+        // delay in level or panning changes at the potential expensive of an audible pop.
         voice->active_lo_level = pending_lo_level;
         voice->active_hi_level = pending_hi_level;
     }
