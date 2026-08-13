@@ -189,7 +189,7 @@ static void assignmul(uint32_t word, uint32_t *last_word, int32_t *active_lomul,
     // We check for the sign change by bitmasking only the top bits of each 16-bit signed value
     // packed into the 32-bit word (two's complement). If either bit doesn't match the previous
     // value, a sign change has occurred on either the left or right channel.
-    if (word == 0 || (*last_word != 0 && ((*last_word) & 0x80008000) != (word & 0x80008000))) {
+    if ((word & 0xffff0000) == 0 || (word & 0x0000ffff) == 0 || (*last_word != 0 && ((*last_word) & 0x80008000) != (word & 0x80008000))) {
         // Copy over our pending loudness. Will cause future calls to `assignmul` to exit early.
         *active_lomul = pending_lomul;
         *active_himul = pending_himul;
