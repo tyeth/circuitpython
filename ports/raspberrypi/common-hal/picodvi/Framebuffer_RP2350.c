@@ -640,10 +640,10 @@ void common_hal_picodvi_framebuffer_wait_for_vblank(picodvi_framebuffer_obj_t *s
         return;
     }
     uint32_t start = framebuffer_frame_count;
-    uint64_t deadline = common_hal_time_monotonic_ms() + 30;    // ~2 frames @ 60 Hz
+    uint64_t timeout = common_hal_time_monotonic_ms() + 30;    // ~2 frames @ 60 Hz
     while (framebuffer_frame_count == start) {
         RUN_BACKGROUND_TASKS;      // don't starve USB host / other tasks during the ~<16 ms wait
-        if (common_hal_time_monotonic_ms() >= deadline) {
+        if (common_hal_time_monotonic_ms() >= timeout) {
             break;
         }
     }
