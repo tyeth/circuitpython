@@ -289,37 +289,37 @@ static mp_obj_t synthio_synth_get_note_filter(mp_obj_t note_obj) {
     return mp_const_none;
 }
 
-static void assign_loudness(int32_t word, int32_t *last_word, int16_t note_loudness[2], int16_t loudness[2]) {
-    if (MP_LIKELY(note_loudness[0] == loudness[0]) && MP_LIKELY(note_loudness[1] == loudness[1])) {
+static void assign_loudness(int32_t word, int32_t *last_word, int16_t active_loudness[2], int16_t pending_loudness[2]) {
+    if (MP_LIKELY(active_loudness[0] == pending_loudness[0]) && MP_LIKELY(active_loudness[1] == pending_loudness[1])) {
         return;
     }
     if (word == 0 || (*last_word != 0 && ((*last_word > 0) == (word < 0) || (*last_word < 0) == (word > 0)))) {
-        note_loudness[0] = loudness[0];
-        note_loudness[1] = loudness[1];
+        active_loudness[0] = pending_loudness[0];
+        active_loudness[1] = pending_loudness[1];
     } else {
         *last_word = word;
     }
 }
 
-static void sum_with_loudness(int32_t *out_buffer32, int32_t *tmp_buffer32, int16_t note_loudness[2], int16_t loudness[2], size_t dur, int synth_chan) {
+static void sum_with_loudness(int32_t *out_buffer32, int32_t *tmp_buffer32, int16_t active_loudness[2], int16_t pending_loudness[2], size_t dur, int synth_chan) {
     int32_t word, last_word = 0;
     if (synth_chan == 1) {
         for (size_t i = 0; i < dur; i++) {
             word = *tmp_buffer32++;
-            assign_loudness(word, &last_word, note_loudness, loudness);
-            *out_buffer32++ += synthio_sat16((word * note_loudness[0]), 16);
+            assign_loudness(word, &last_word, active_loudness, pending_loudness);
+            *out_buffer32++ += synthio_sat16((word * active_loudness[0]), 16);
         }
     } else {
         for (size_t i = 0; i < dur; i++) {
             word = *tmp_buffer32;
-            assign_loudness(word, &last_word, note_loudness, loudness);
-            *out_buffer32++ += synthio_sat16((word * note_loudness[0]), 16);
-            *out_buffer32++ += synthio_sat16((word * note_loudness[1]), 16);
+            assign_loudness(word, &last_word, active_loudness, pending_loudness);
+            *out_buffer32++ += synthio_sat16((word * active_loudness[0]), 16);
+            *out_buffer32++ += synthio_sat16((word * active_loudness[1]), 16);
             tmp_buffer32++;
         }
     }
-    note_loudness[0] = loudness[0];
-    note_loudness[1] = loudness[1];
+    active_loudness[0] = pending_loudness[0];
+    active_loudness[1] = pending_loudness[1];
 }
 
 void synthio_synth_synthesize(synthio_synth_t *synth, uint8_t **bufptr, uint32_t *buffer_length, uint8_t channel) {
@@ -371,7 +371,7 @@ void synthio_synth_synthesize(synthio_synth_t *synth, uint8_t **bufptr, uint32_t
         }
 
         // adjust loudness by envelope
-        sum_with_loudness(out_buffer32, tmp_buffer32, synth->loudness[chan], loudness, dur, synth->base.channel_count);
+        sum_with_loudness(out_buffer32, tmp_buffer32, synth->active_loudness[chan], loudness, dur, synth->base.channel_count);
     }
 
     int16_t *out_buffer16 = (int16_t *)(void *)synth->buffers[synth->buffer_index];
