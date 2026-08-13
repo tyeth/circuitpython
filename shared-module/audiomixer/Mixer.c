@@ -173,7 +173,7 @@ static inline uint32_t copy16msb(uint32_t val) {
     #endif
 }
 
-static inline void assignmul(uint32_t word, uint32_t *last_word, int32_t *voice_lomul, int32_t *voice_himul, int32_t lomul, int32_t himul) {
+static void assignmul(uint32_t word, uint32_t *last_word, int32_t *voice_lomul, int32_t *voice_himul, int32_t lomul, int32_t himul) {
     if (MP_LIKELY(*voice_lomul == lomul) && MP_LIKELY(*voice_himul == himul)) {
         return;
     }

@@ -289,7 +289,7 @@ static mp_obj_t synthio_synth_get_note_filter(mp_obj_t note_obj) {
     return mp_const_none;
 }
 
-static inline void assign_loudness(int32_t word, int32_t *last_word, int16_t note_loudness[2], int16_t loudness[2]) {
+static void assign_loudness(int32_t word, int32_t *last_word, int16_t note_loudness[2], int16_t loudness[2]) {
     if (MP_LIKELY(note_loudness[0] == loudness[0]) && MP_LIKELY(note_loudness[1] == loudness[1])) {
         return;
     }
