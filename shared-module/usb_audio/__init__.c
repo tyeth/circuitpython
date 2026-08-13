@@ -17,16 +17,17 @@
 #include "py/misc.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include "supervisor/port.h"
 #include "supervisor/shared/tick.h"
 #include "tusb.h"
 
 // Scratch chunk the microphone task hands to TinyUSB. It is written from the USB
 // background task for as long as the device is enabled, which outlives every VM,
-// so it must not live on the MicroPython heap. Statically sized for
-// 1 ms at the highest rate enable() accepts, in the wire format (always
-// USB_AUDIO_N_CHANNELS channels); usb_audio_mic_samples_len is the part of it
-// actually used at the negotiated rate.
-static int16_t usb_audio_mic_samples[USB_AUDIO_MAX_SAMPLE_RATE / 1000 * USB_AUDIO_N_CHANNELS];
+// so it comes from the port heap rather than the MicroPython heap. Sized by
+// enable() for 1 ms at the negotiated rate, in the wire format (always
+// USB_AUDIO_N_CHANNELS channels), so a board that never calls enable() pays
+// nothing for it.
+static int16_t *usb_audio_mic_samples;
 static size_t usb_audio_mic_samples_len;
 
 static bool usb_audio_is_enabled = false;
@@ -58,9 +59,15 @@ bool shared_module_usb_audio_enable(mp_int_t sample_rate, mp_int_t channel_count
     }
 
     // One scratch chunk (1 ms at the sample rate); we loop until the FIFO reaches
-    // the setpoint.
+    // the setpoint. enable() may be called more than once, so release any chunk
+    // sized for a previous rate before taking a new one.
+    port_free(usb_audio_mic_samples);
     usb_audio_mic_samples_len = sample_rate / 1000 * USB_AUDIO_BYTES_PER_FRAME;
-    memset(usb_audio_mic_samples, 0, usb_audio_mic_samples_len);
+    usb_audio_mic_samples = port_malloc_zero(usb_audio_mic_samples_len, false);
+    if (usb_audio_mic_samples == NULL) {
+        usb_audio_mic_samples_len = 0;
+        return false;
+    }
 
     usb_audio_sample_rate = sample_rate;
     usb_audio_channel_count = channel_count;
@@ -76,6 +83,9 @@ bool shared_module_usb_audio_disable(void) {
         return false;
     }
     usb_audio_is_enabled = false;
+    port_free(usb_audio_mic_samples);
+    usb_audio_mic_samples = NULL;
+    usb_audio_mic_samples_len = 0;
     return true;
 }
 
