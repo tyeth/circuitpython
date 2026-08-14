@@ -585,6 +585,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     board_names = {}
     status_led = None
     status_led_inverted = False
+    boot_button = None
     path2chosen = {}
     chosen2path = {}
 
@@ -730,7 +731,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
         if "gpio-keys" in compatible:
             for key in node.nodes:
-                props = node.nodes[key].props
+                key_node = node.nodes[key]
+                props = key_node.props
                 ioport = props["gpios"]._markers[1][2]
                 num = int.from_bytes(props["gpios"].value[4:8], "big")
 
@@ -745,10 +747,18 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                     key_code = props["zephyr,code"].to_num()
                     if key_code in INPUT_KEY_NAMES:
                         board_names[(ioport, num)].append(INPUT_KEY_NAMES[key_code])
-                if key in node2alias:
-                    if "sw0" in node2alias[key]:
+                if key_node in node2alias:
+                    aliases = node2alias[key_node]
+                    if "sw0" in aliases:
                         board_names[(ioport, num)].append("BUTTON")
-                    board_names[(ioport, num)].extend(node2alias[key])
+                        # The sw0 alias designates the conventional first user
+                        # button, so prefer it as the boot button.
+                        boot_button = (ioport, num)
+                    board_names[(ioport, num)].extend(aliases)
+                # Default to the first button in device tree order when no sw0
+                # alias has designated one yet.
+                if boot_button is None:
+                    boot_button = (ioport, num)
 
     if len(all_ioports) > 1:
         a, b = all_ioports[:2]
@@ -775,6 +785,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             pin_object_name = f"P{ioport[len(shared_prefix) :].upper()}_{num:02d}"
             if status_led and (ioport, num) == status_led:
                 status_led = pin_object_name
+            if boot_button and (ioport, num) == boot_button:
+                boot_button = pin_object_name
             pin_defs.append(
                 f"const mcu_pin_obj_t pin_{pin_object_name} = {{ .base.type = &mcu_pin_type, .port = DEVICE_DT_GET(DT_NODELABEL({ioport})), .number = {num}}};"
             )
@@ -937,6 +949,10 @@ void board_init(void) {
     else:
         status_led = ""
         status_led_inverted = ""
+    if boot_button:
+        boot_button = f"#define CIRCUITPY_BOOT_BUTTON (&pin_{boot_button})\n"
+    else:
+        boot_button = ""
     ram_list = []
     ram_externs = []
     max_size = 0
@@ -966,6 +982,7 @@ void board_init(void) {
 #define CIRCUITPY_RAM_DEVICE_COUNT  {len(rams)}
 {status_led}
 {status_led_inverted}
+{boot_button}
         """
     if not header.exists() or header.read_text() != new_header_content:
         header.write_text(new_header_content)

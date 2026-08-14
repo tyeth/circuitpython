@@ -73,7 +73,9 @@ print("disconnected", connection.connected, adapter.connected, len(adapter.conne
 
 @pytest.mark.zephyr_sample("bluetooth/central")
 @pytest.mark.duration(14)
-@pytest.mark.circuitpy_drive({"code.py": BSIM_PERIPHERAL_CODE})
+@pytest.mark.circuitpy_drive(
+    {"code.py": BSIM_PERIPHERAL_CODE, "settings.toml": "CIRCUITPY_BLE_WORKFLOW = false\n"}
+)
 def test_bsim_peripheral_zephyr_central(bsim_phy, circuitpython, zephyr_sample):
     """Advertise as connectable from CP; Zephyr central connects and disconnects."""
     central = zephyr_sample

@@ -84,7 +84,12 @@ print("done")
 @pytest.mark.zephyr_sample("tests/bsim/samples/central_battery_client")
 @pytest.mark.duration(14)
 @pytest.mark.circuitpy_drive(
-    {"code.py": BSIM_SERVICE_CODE, "battery_service.py": BATTERY_LIB, **_ADAFRUIT_BLE}
+    {
+        "code.py": BSIM_SERVICE_CODE,
+        "settings.toml": "CIRCUITPY_BLE_WORKFLOW = false\n",
+        "battery_service.py": BATTERY_LIB,
+        **_ADAFRUIT_BLE,
+    }
 )
 def test_bsim_service_battery(bsim_phy, circuitpython, zephyr_sample):
     """CP hosts BatteryService; Zephyr central reads battery level."""
