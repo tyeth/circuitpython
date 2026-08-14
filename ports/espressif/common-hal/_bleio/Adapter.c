@@ -44,10 +44,6 @@
 #include "esp_nimble_hci.h"
 #include "nvs_flash.h"
 
-#if CIRCUITPY_SETTINGS_TOML
-#include "supervisor/shared/settings.h"
-#endif
-
 // Status variables used while busy-waiting for events.
 static volatile bool _nimble_sync;
 static volatile int _connection_status;
@@ -69,8 +65,6 @@ static void _on_sync(void) {
 
 // All examples have this. It'd make sense in a header.
 void ble_store_config_init(void);
-
-char default_ble_name[] = { 'C', 'I', 'R', 'C', 'U', 'I', 'T', 'P', 'Y', 0, 0, 0, 0, 0, 0, 0};
 
 void common_hal_bleio_adapter_set_enabled(bleio_adapter_obj_t *self, bool enabled) {
     const bool is_enabled = common_hal_bleio_adapter_get_enabled(self);
@@ -105,27 +99,6 @@ void common_hal_bleio_adapter_set_enabled(bleio_adapter_obj_t *self, bool enable
         ble_svc_gatt_init();
         ble_svc_ans_init();
 
-        #if CIRCUITPY_SETTINGS_TOML
-        char ble_name[1 + MYNEWT_VAL_BLE_SVC_GAP_DEVICE_NAME_MAX_LENGTH];
-        settings_err_t result = settings_get_str("CIRCUITPY_BLE_NAME", ble_name, sizeof(ble_name));
-        if (result == SETTINGS_OK) {
-            ble_svc_gap_device_name_set(ble_name);
-        } else
-        #endif
-        {
-            uint8_t mac[6];
-            esp_read_mac(mac, ESP_MAC_BT);
-            mp_int_t len = sizeof(default_ble_name) - 1;
-            default_ble_name[len - 6] = nibble_to_hex_lower[mac[3] >> 4 & 0xf];
-            default_ble_name[len - 5] = nibble_to_hex_lower[mac[3] & 0xf];
-            default_ble_name[len - 4] = nibble_to_hex_lower[mac[4] >> 4 & 0xf];
-            default_ble_name[len - 3] = nibble_to_hex_lower[mac[4] & 0xf];
-            default_ble_name[len - 2] = nibble_to_hex_lower[mac[5] >> 4 & 0xf];
-            default_ble_name[len - 1] = nibble_to_hex_lower[mac[5] & 0xf];
-            default_ble_name[len] = '\0'; // for now we add null for compatibility with C ASCIIZ strings
-            ble_svc_gap_device_name_set(default_ble_name);
-        }
-
         // Clear all of the internal connection objects.
         for (size_t i = 0; i < BLEIO_TOTAL_CONNECTION_COUNT; i++) {
             bleio_connection_internal_t *connection = &bleio_connections[i];
@@ -150,6 +123,8 @@ void common_hal_bleio_adapter_set_enabled(bleio_adapter_obj_t *self, bool enable
         if (!_nimble_sync) {
             mp_raise_RuntimeError(MP_ERROR_TEXT("Update failed"));
         }
+
+        bleio_adapter_reset_name(self);
     } else {
         int ret = nimble_port_stop();
         while (xTaskGetHandle("nimble_host") != NULL && !mp_hal_is_interrupted()) {
@@ -175,20 +150,17 @@ bleio_address_obj_t *common_hal_bleio_adapter_get_address(bleio_adapter_obj_t *s
         return NULL;
     }
 
-    bleio_address_obj_t *address = mp_obj_malloc(bleio_address_obj_t, &bleio_address_type);
-    common_hal_bleio_address_construct(address, address_bytes, BLEIO_ADDRESS_TYPE_RANDOM_STATIC);
-    return address;
+    // The cached address is refreshed on every call.
+    common_hal_bleio_address_construct(&self->address, address_bytes, BLEIO_ADDRESS_TYPE_RANDOM_STATIC);
+    self->address.base.type = &bleio_address_type;
+    return &self->address;
 }
 
 bool common_hal_bleio_adapter_set_address(bleio_adapter_obj_t *self, bleio_address_obj_t *address) {
     if (address->type != BLEIO_ADDRESS_TYPE_RANDOM_STATIC) {
         return false;
     }
-    mp_buffer_info_t bufinfo;
-    if (!mp_get_buffer(address->bytes, &bufinfo, MP_BUFFER_READ)) {
-        return false;
-    }
-    int result = ble_hs_id_set_rnd(bufinfo.buf);
+    int result = ble_hs_id_set_rnd(address->bytes);
     return result == 0;
 }
 
@@ -318,9 +290,7 @@ void common_hal_bleio_adapter_stop_scan(bleio_adapter_obj_t *self) {
 
 static void _convert_address(const bleio_address_obj_t *address, ble_addr_t *nimble_address) {
     nimble_address->type = address->type;
-    mp_buffer_info_t address_buf_info;
-    mp_get_buffer_raise(address->bytes, &address_buf_info, MP_BUFFER_READ);
-    memcpy(nimble_address->val, (uint8_t *)address_buf_info.buf, NUM_BLEIO_ADDRESS_BYTES);
+    memcpy(nimble_address->val, address->bytes, NUM_BLEIO_ADDRESS_BYTES);
 }
 
 static int _mtu_reply(uint16_t conn_handle,
