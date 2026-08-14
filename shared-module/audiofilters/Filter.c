@@ -5,8 +5,9 @@
 // SPDX-License-Identifier: MIT
 #include "shared-bindings/audiofilters/Filter.h"
 #include "shared-bindings/audiocore/__init__.h"
-
+#include "shared-module/audiofilters/__init__.h"
 #include "shared-module/synthio/Biquad.h"
+
 #include <stdint.h>
 #include "py/runtime.h"
 
@@ -67,48 +68,7 @@ void common_hal_audiofilters_filter_deinit(audiofilters_filter_obj_t *self) {
 }
 
 void common_hal_audiofilters_filter_set_filter(audiofilters_filter_obj_t *self, mp_obj_t filter_in) {
-    size_t n_items;
-    mp_obj_t *items;
-    mp_obj_t *filter_objs;
-
-    if (filter_in == mp_const_none) {
-        n_items = 0;
-        filter_objs = NULL;
-    } else if (MP_OBJ_TYPE_HAS_SLOT(mp_obj_get_type(filter_in), iter)) {
-        // convert object to tuple if it wasn't before
-        filter_in = MP_OBJ_TYPE_GET_SLOT(&mp_type_tuple, make_new)(
-            &mp_type_tuple, 1, 0, &filter_in);
-        mp_obj_tuple_get(filter_in, &n_items, &items);
-        for (size_t i = 0; i < n_items; i++) {
-            if (!mp_obj_is_type(items[i], &synthio_biquad_type_obj)) {
-                mp_raise_TypeError_varg(
-                    MP_ERROR_TEXT("%q in %q must be of type %q, not %q"),
-                    MP_QSTR_object,
-                    MP_QSTR_filter,
-                    MP_QSTR_Biquad,
-                    mp_obj_get_type(items[i])->name);
-            }
-        }
-        filter_objs = items;
-    } else {
-        n_items = 1;
-        if (!mp_obj_is_type(filter_in, &synthio_biquad_type_obj)) {
-            mp_raise_TypeError_varg(
-                MP_ERROR_TEXT("%q must be of type %q or %q, not %q"),
-                MP_QSTR_filter, MP_QSTR_Biquad, MP_QSTR_iterable, mp_obj_get_type(filter_in)->name);
-        }
-        filter_objs = &self->filter;
-    }
-
-    // everything has been checked, so we can do the following without fear
-
-    self->filter = filter_in;
-    self->filter_objs = filter_objs;
-    self->filter_states = m_renew(biquad_filter_state,
-        self->filter_states,
-        self->filter_objs_len * self->base.channel_count,
-        n_items * self->base.channel_count);
-    self->filter_objs_len = n_items;
+    audiofilters_assign_filters(filter_in, &self->filter, &self->filter_objs, &self->filter_objs_len, &self->filter_states, self->base.channel_count);
 }
 
 mp_obj_t common_hal_audiofilters_filter_get_filter(audiofilters_filter_obj_t *self) {
@@ -131,11 +91,7 @@ void audiofilters_filter_reset_buffer(audiofilters_filter_obj_t *self,
     memset(self->buffer[1], 0, self->buffer_len);
     memset(self->filter_buffer, 0, SYNTHIO_MAX_DUR * self->base.channel_count * sizeof(int32_t));
 
-    if (self->filter_states) {
-        for (uint8_t i = 0; i < self->filter_objs_len * self->base.channel_count; i++) {
-            synthio_biquad_filter_reset(&self->filter_states[i]);
-        }
-    }
+    audiofilters_reset_filters(self->filter_states, self->filter_objs_len, self->base.channel_count);
 }
 
 bool common_hal_audiofilters_filter_get_playing(audiofilters_filter_obj_t *self) {
@@ -213,9 +169,8 @@ audioio_get_buffer_result_t audiofilters_filter_get_buffer(audiofilters_filter_o
             (void)synthio_block_slot_get(&self->mix);
 
             // Tick biquad filters
-            for (uint8_t j = 0; j < self->filter_objs_len; j++) {
-                common_hal_synthio_biquad_tick(self->filter_objs[j]);
-            }
+            audiofilters_tick_filters(self->filter_objs, self->filter_objs_len);
+            
             if (self->base.samples_signed) {
                 memset(word_buffer, 0, length * (self->base.bits_per_sample / 8));
             } else {
