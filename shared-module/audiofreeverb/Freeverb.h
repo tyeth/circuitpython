@@ -10,6 +10,7 @@
 #include "shared-module/audiocore/__init__.h"
 #include "shared-module/synthio/__init__.h"
 #include "shared-module/synthio/block.h"
+#include "shared-module/synthio/Biquad.h"
 
 extern const mp_obj_type_t audiofreeverb_freeverb_type;
 
@@ -17,7 +18,17 @@ typedef struct {
     audiosample_base_t base;
     synthio_block_slot_t roomsize;
     synthio_block_slot_t damp;
+    mp_obj_t pre_filter;
+    mp_obj_t post_filter;
     synthio_block_slot_t mix;
+
+    mp_obj_t *pre_filter_objs;
+    size_t pre_filter_objs_len;
+    biquad_filter_state *pre_filter_states;
+
+    mp_obj_t *post_filter_objs;
+    size_t post_filter_objs_len;
+    biquad_filter_state *post_filter_states;
 
     int8_t *buffer[2];
     uint8_t last_buf_idx;
