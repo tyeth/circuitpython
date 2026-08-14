@@ -482,7 +482,7 @@ void common_hal_bleio_connection_pair(bleio_connection_internal_t *self, bool bo
     // string.
     uint8_t sec_err_code = self->sec_err;
     if (sec_err_code == BT_SECURITY_ERR_UNSPECIFIED || sec_err_code == 0) {
-        mp_raise_bleio_SecurityError(MP_ERROR_TEXT("Unspecified issue. Can be that the pairing prompt on the other device was declined or ignored."));
+        mp_raise_bleio_SecurityError(MP_ERROR_TEXT("Unspecified issue. The pairing request on the other device may have been declined or ignored."));
     } else {
         mp_raise_bleio_SecurityError(MP_ERROR_TEXT("Unknown security error: 0x%04x"), sec_err_code);
     }

@@ -1741,7 +1741,7 @@ msgstr ""
 #: ports/nordic/common-hal/_bleio/__init__.c
 #: ports/zephyr-cp/common-hal/_bleio/Connection.c
 msgid ""
-"Unspecified issue. Can be that the pairing prompt on the other device was "
+"Unspecified issue. The pairing request on the other device may have been "
 "declined or ignored."
 msgstr ""
 
