@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -50,6 +51,7 @@ bool displayio_area_compute_overlap(const displayio_area_t *a,
 uint16_t displayio_area_width(const displayio_area_t *area);
 uint16_t displayio_area_height(const displayio_area_t *area);
 uint32_t displayio_area_size(const displayio_area_t *area);
+size_t displayio_area_array_merge_overlapping(displayio_area_t *areas, size_t count);
 bool displayio_area_equal(const displayio_area_t *a, const displayio_area_t *b);
 void displayio_area_transform_within(bool mirror_x, bool mirror_y, bool transpose_xy,
     const displayio_area_t *original,

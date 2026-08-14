@@ -458,9 +458,20 @@ bool common_hal_epaperdisplay_epaperdisplay_refresh(epaperdisplay_epaperdisplay_
     }
 
     epaperdisplay_epaperdisplay_start_refresh(self);
-    while (current_area != NULL) {
-        epaperdisplay_epaperdisplay_refresh_area(self, current_area);
-        current_area = current_area->next;
+    // Merge overlapping dirty rectangles so shared pixels are only written once
+    // (see displayio_display_core_merge_refresh_areas).
+    displayio_area_t merged[DISPLAYIO_MAX_MERGE_AREAS];
+    size_t merged_count;
+    if (displayio_display_core_merge_refresh_areas(&self->core, current_area, merged,
+        DISPLAYIO_MAX_MERGE_AREAS, &merged_count)) {
+        for (size_t i = 0; i < merged_count; i++) {
+            epaperdisplay_epaperdisplay_refresh_area(self, &merged[i]);
+        }
+    } else {
+        while (current_area != NULL) {
+            epaperdisplay_epaperdisplay_refresh_area(self, current_area);
+            current_area = current_area->next;
+        }
     }
     epaperdisplay_epaperdisplay_finish_refresh(self);
     return true;

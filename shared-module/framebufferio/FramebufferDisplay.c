@@ -228,9 +228,20 @@ static void _refresh_display(framebufferio_framebufferdisplay_obj_t *self) {
         uint8_t dirty_row_bitmask[(row_count + 7) / 8];
         memset(dirty_row_bitmask, 0, sizeof(dirty_row_bitmask));
         self->framebuffer_protocol->get_bufinfo(self->framebuffer, &self->bufinfo);
-        while (current_area != NULL) {
-            _refresh_area(self, current_area, dirty_row_bitmask);
-            current_area = current_area->next;
+        // Merge overlapping dirty rectangles so shared pixels are only rendered once
+        // (see displayio_display_core_merge_refresh_areas).
+        displayio_area_t merged[DISPLAYIO_MAX_MERGE_AREAS];
+        size_t merged_count;
+        if (displayio_display_core_merge_refresh_areas(&self->core, current_area, merged,
+            DISPLAYIO_MAX_MERGE_AREAS, &merged_count)) {
+            for (size_t i = 0; i < merged_count; i++) {
+                _refresh_area(self, &merged[i], dirty_row_bitmask);
+            }
+        } else {
+            while (current_area != NULL) {
+                _refresh_area(self, current_area, dirty_row_bitmask);
+                current_area = current_area->next;
+            }
         }
         self->framebuffer_protocol->swapbuffers(self->framebuffer, dirty_row_bitmask);
     }
