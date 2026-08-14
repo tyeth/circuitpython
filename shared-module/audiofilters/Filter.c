@@ -170,7 +170,7 @@ audioio_get_buffer_result_t audiofilters_filter_get_buffer(audiofilters_filter_o
 
             // Tick biquad filters
             audiofilters_tick_filters(self->filter_objs, self->filter_objs_len);
-            
+
             if (self->base.samples_signed) {
                 memset(word_buffer, 0, length * (self->base.bits_per_sample / 8));
             } else {

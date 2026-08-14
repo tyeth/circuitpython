@@ -319,7 +319,7 @@ audioio_get_buffer_result_t audiofreeverb_freeverb_get_buffer(audiofreeverb_free
 
             // Apply filters as Pre-EQ
             input = (int16_t)audiofilters_process_filters(self->pre_filter_objs, self->pre_filter_objs_len, self->pre_filter_states, self->base.channel_count, n % self->base.channel_count, sample_word);
-            
+
             input = synthio_sat16((int32_t)input * 8738, 17); // Initial input scaled down so we can add reverb
             sum = 0;
 
