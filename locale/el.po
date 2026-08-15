@@ -2256,6 +2256,10 @@ msgstr ""
 msgid "SocketPool can only be used with wifi.radio or hostnetwork.HostNetwork"
 msgstr ""
 
+#: ports/zephyr-cp/common-hal/usb_hid/Device.c shared-module/usb_hid/Device.c
+msgid "USB error"
+msgstr ""
+
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "Failed to set hostname"
 msgstr ""
@@ -3769,10 +3773,6 @@ msgid "bits_per_sample must be 16"
 msgstr ""
 
 #: shared-bindings/audioi2sin/I2SIn.c
-msgid "%q requires %q"
-msgstr ""
-
-#: shared-bindings/audioi2sin/I2SIn.c
 #, c-format
 msgid "invalid destination buffer, must be an array of type: %c"
 msgstr ""
@@ -4533,10 +4533,6 @@ msgstr ""
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
-msgstr ""
-
-#: shared-module/usb_hid/Device.c
-msgid "USB error"
 msgstr ""
 
 #: shared-module/vectorio/Circle.c shared-module/vectorio/Polygon.c
