@@ -104,31 +104,6 @@ uint32_t displayio_area_size(const displayio_area_t *area) {
     return displayio_area_width(area) * displayio_area_height(area);
 }
 
-// Greedily fuse any pair of areas whose bounding box is smaller than the two areas summed -
-// i.e. they overlap enough that one rectangle covers fewer pixels than two. Distant and
-// merely touching rectangles are left separate (their bounding box would not be smaller), so
-// the result never covers more pixels than the input. Runs in place; returns the new count.
-size_t displayio_area_array_merge_overlapping(displayio_area_t *areas, size_t count) {
-    bool changed = true;
-    while (changed) {
-        changed = false;
-        for (size_t i = 0; i < count && !changed; i++) {
-            for (size_t j = i + 1; j < count; j++) {
-                displayio_area_t u;
-                displayio_area_union(&areas[i], &areas[j], &u);
-                if (displayio_area_size(&u) < displayio_area_size(&areas[i]) + displayio_area_size(&areas[j])) {
-                    areas[i] = u;                   // fuse j into i
-                    areas[j] = areas[count - 1];    // swap-remove j
-                    count--;
-                    changed = true;
-                    break;
-                }
-            }
-        }
-    }
-    return count;
-}
-
 bool displayio_area_equal(const displayio_area_t *a, const displayio_area_t *b) {
     return a->x1 == b->x1 &&
            a->y1 == b->y1 &&

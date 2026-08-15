@@ -327,21 +327,9 @@ static void _refresh_display(busdisplay_busdisplay_obj_t *self) {
     }
 
     const displayio_area_t *current_area = _get_refresh_areas(self);
-
-    // Merge overlapping dirty rectangles so shared pixels are computed and sent once
-    // (see displayio_display_core_merge_refresh_areas).
-    displayio_area_t merged[DISPLAYIO_MAX_MERGE_AREAS];
-    size_t merged_count;
-    if (displayio_display_core_merge_refresh_areas(&self->core, current_area, merged,
-        DISPLAYIO_MAX_MERGE_AREAS, &merged_count)) {
-        for (size_t i = 0; i < merged_count; i++) {
-            _refresh_area(self, &merged[i]);
-        }
-    } else {
-        while (current_area != NULL) {
-            _refresh_area(self, current_area);
-            current_area = current_area->next;
-        }
+    while (current_area != NULL) {
+        _refresh_area(self, current_area);
+        current_area = current_area->next;
     }
     displayio_display_core_finish_refresh(&self->core);
 }

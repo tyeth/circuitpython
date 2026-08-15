@@ -203,30 +203,3 @@ bool displayio_display_core_clip_area(displayio_display_core_t *self, const disp
     }
     return true;
 }
-
-// Clip the collected refresh areas and merge the overlapping ones so shared pixels are
-// computed and sent once. displayio does not merge areas as it collects them, so
-// overlapping/nested ones get their common pixels reprocessed per rectangle (and drawn as
-// separate, visibly sequential passes). A changing text label is the common case: it
-// dirties the whole label area AND each glyph, so the glyph rectangles sit inside the
-// label rectangle and nearly double the work. Only pairs whose bounding box is smaller
-// than the two areas summed are fused, so the result never covers more pixels than the
-// unmerged list. Returns false when there are more areas than `max_areas` (rare) - the
-// caller should then refresh the raw list unmerged.
-bool displayio_display_core_merge_refresh_areas(displayio_display_core_t *self,
-    const displayio_area_t *areas, displayio_area_t *merged, size_t max_areas, size_t *count_out) {
-    size_t count = 0;
-    for (const displayio_area_t *a = areas; a != NULL; a = a->next) {
-        displayio_area_t clipped;
-        if (!displayio_display_core_clip_area(self, a, &clipped)) {
-            continue;
-        }
-        if (count >= max_areas) {
-            return false;
-        }
-        merged[count] = clipped;
-        count++;
-    }
-    *count_out = displayio_area_array_merge_overlapping(merged, count);
-    return true;
-}

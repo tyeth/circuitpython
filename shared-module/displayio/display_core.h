@@ -51,8 +51,3 @@ void displayio_display_core_collect_ptrs(displayio_display_core_t *self);
 bool displayio_display_core_fill_area(displayio_display_core_t *self, displayio_area_t *area, uint32_t *mask, uint32_t *buffer);
 
 bool displayio_display_core_clip_area(displayio_display_core_t *self, const displayio_area_t *area, displayio_area_t *clipped);
-
-// Scratch size for displayio_display_core_merge_refresh_areas().
-#define DISPLAYIO_MAX_MERGE_AREAS 16
-bool displayio_display_core_merge_refresh_areas(displayio_display_core_t *self,
-    const displayio_area_t *areas, displayio_area_t *merged, size_t max_areas, size_t *count_out);
