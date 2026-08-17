@@ -8,5 +8,4 @@
 
 #include "py/obj.h"
 
-
-uint8_t picogame_kind_of(mp_obj_t o);
+extern const mp_obj_type_t picogame_triangles_type;
