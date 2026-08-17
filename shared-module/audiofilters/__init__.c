@@ -13,10 +13,7 @@ void audiofilters_assign_filters(mp_obj_t filter_in, mp_obj_t *filter_out, mp_ob
     if (filter_in == mp_const_none) {
         n_items = 0;
         *filter_objs = NULL;
-    } else if (MP_OBJ_TYPE_HAS_SLOT(mp_obj_get_type(filter_in), iter)) {
-        // convert object to tuple if it wasn't before
-        filter_in = MP_OBJ_TYPE_GET_SLOT(&mp_type_tuple, make_new)(
-            &mp_type_tuple, 1, 0, &filter_in);
+    } else if (mp_obj_is_type(filter_in, &mp_type_tuple)) {
         mp_obj_tuple_get(filter_in, &n_items, &items);
         for (size_t i = 0; i < n_items; i++) {
             if (!mp_obj_is_type(items[i], &synthio_biquad_type_obj)) {
