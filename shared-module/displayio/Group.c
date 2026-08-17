@@ -470,7 +470,7 @@ static displayio_area_t *group_get_refresh_areas_impl(displayio_group_t *self, d
     return tail;
 }
 
-// Merge the dirty-rect list by containment: unlink every area that is fully contained
+// Filter the dirty-rect list by containment: unlink every area that is fully contained
 // in another area in the list (a changing text label is the common case - the group
 // dirties the whole label region via item_removed plus one area per glyph, and the
 // glyph areas all sit inside the label region). Dropping a covered area is lossless:
@@ -490,7 +490,7 @@ static displayio_area_t *group_get_refresh_areas_impl(displayio_group_t *self, d
 // areas satisfy the containment test in both directions; testing b-inside-a FIRST
 // keeps the earlier node and drops the later one - the two tests must stay an else-if
 // chain or equal areas would drop BOTH nodes and lose the area entirely.
-static displayio_area_t *group_relink_refresh_areas(displayio_area_t *head,
+static displayio_area_t *filter_out_redundant_areas(displayio_area_t *head,
     const displayio_area_t *tail) {
     displayio_area_t *a_prev = NULL;
     displayio_area_t *a = head;
@@ -530,7 +530,8 @@ static displayio_area_t *group_relink_refresh_areas(displayio_area_t *head,
 }
 
 // Public entry point: displays call this once on their root group, so the whole tree's
-// list is merged in one place and no display type needs its own copy of the logic.
+// list is filtered in one place and no display type needs its own copy of the logic.
 displayio_area_t *displayio_group_get_refresh_areas(displayio_group_t *self, displayio_area_t *tail) {
-    return group_relink_refresh_areas(group_get_refresh_areas_impl(self, tail), tail);
+    displayio_area_t *areas = group_get_refresh_areas_impl(self, tail);
+    return filter_out_redundant_areas(areas, tail);
 }
