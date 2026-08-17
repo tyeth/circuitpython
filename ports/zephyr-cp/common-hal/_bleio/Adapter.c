@@ -305,6 +305,7 @@ bool common_hal_bleio_adapter_get_enabled(bleio_adapter_obj_t *self) {
 }
 
 mp_int_t common_hal_bleio_adapter_get_tx_power(bleio_adapter_obj_t *self) {
+    #if defined(CONFIG_BT_CTLR_TX_PWR_DYNAMIC_CONTROL)
     struct bt_hci_cp_vs_read_tx_power_level *cp;
     struct bt_hci_rp_vs_read_tx_power_level *rp;
     struct net_buf *buf, *rsp = NULL;
@@ -326,9 +327,15 @@ mp_int_t common_hal_bleio_adapter_get_tx_power(bleio_adapter_obj_t *self) {
     int8_t power = rp->tx_power_level;
     net_buf_unref(rsp);
     return power;
+    #else
+    // Controller doesn't support dynamic TX power control; return default.
+    (void)self;
+    return 0;
+    #endif
 }
 
 void common_hal_bleio_adapter_set_tx_power(bleio_adapter_obj_t *self, mp_int_t tx_power) {
+    #if defined(CONFIG_BT_CTLR_TX_PWR_DYNAMIC_CONTROL)
     struct bt_hci_cp_vs_write_tx_power_level *cp;
     struct net_buf *buf, *rsp = NULL;
 
@@ -347,6 +354,11 @@ void common_hal_bleio_adapter_set_tx_power(bleio_adapter_obj_t *self, mp_int_t t
     }
 
     net_buf_unref(rsp);
+    #else
+    // Controller doesn't support dynamic TX power control; silently ignore.
+    (void)self;
+    (void)tx_power;
+    #endif
 }
 
 bleio_address_obj_t *common_hal_bleio_adapter_get_address(bleio_adapter_obj_t *self) {
