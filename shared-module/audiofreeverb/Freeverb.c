@@ -9,7 +9,6 @@
 //
 #include "shared-bindings/audiofreeverb/Freeverb.h"
 #include "shared-bindings/audiocore/__init__.h"
-#include "shared-module/audiofilters/__init__.h"
 #include "shared-module/synthio/__init__.h"
 
 #include <stdint.h>
@@ -130,12 +129,10 @@ bool common_hal_audiofreeverb_freeverb_deinited(audiofreeverb_freeverb_obj_t *se
 
 void common_hal_audiofreeverb_freeverb_deinit(audiofreeverb_freeverb_obj_t *self) {
     audiosample_mark_deinit(&self->base);
+    audiofilters_deinit_filter_chain(&self->pre_filter);
+    audiofilters_deinit_filter_chain(&self->post_filter);
     self->buffer[0] = NULL;
     self->buffer[1] = NULL;
-    self->pre_filter = mp_const_none;
-    self->pre_filter_states = NULL;
-    self->post_filter = mp_const_none;
-    self->post_filter_states = NULL;
 }
 
 mp_obj_t common_hal_audiofreeverb_freeverb_get_roomsize(audiofreeverb_freeverb_obj_t *self) {
@@ -176,19 +173,19 @@ void audiofreeverb_freeverb_get_damp_fixedpoint(mp_float_t n, int16_t *damp1, in
 }
 
 mp_obj_t common_hal_audiofreeverb_freeverb_get_pre_filter(audiofreeverb_freeverb_obj_t *self) {
-    return self->pre_filter;
+    return self->pre_filter.obj;
 }
 
 void common_hal_audiofreeverb_freeverb_set_pre_filter(audiofreeverb_freeverb_obj_t *self, mp_obj_t filter_in) {
-    audiofilters_assign_filters(filter_in, &self->pre_filter, &self->pre_filter_objs, &self->pre_filter_objs_len, &self->pre_filter_states, self->base.channel_count);
+    audiofilters_assign_filter_chain(&self->pre_filter, filter_in, self->base.channel_count);
 }
 
 mp_obj_t common_hal_audiofreeverb_freeverb_get_post_filter(audiofreeverb_freeverb_obj_t *self) {
-    return self->post_filter;
+    return self->post_filter.obj;
 }
 
 void common_hal_audiofreeverb_freeverb_set_post_filter(audiofreeverb_freeverb_obj_t *self, mp_obj_t filter_in) {
-    audiofilters_assign_filters(filter_in, &self->post_filter, &self->post_filter_objs, &self->post_filter_objs_len, &self->post_filter_states, self->base.channel_count);
+    audiofilters_assign_filter_chain(&self->post_filter, filter_in, self->base.channel_count);
 }
 
 mp_obj_t common_hal_audiofreeverb_freeverb_get_mix(audiofreeverb_freeverb_obj_t *self) {
@@ -212,8 +209,8 @@ void audiofreeverb_freeverb_reset_buffer(audiofreeverb_freeverb_obj_t *self,
     memset(self->buffer[0], 0, self->buffer_len);
     memset(self->buffer[1], 0, self->buffer_len);
 
-    audiofilters_reset_filters(self->pre_filter_states, self->pre_filter_objs_len, self->base.channel_count);
-    audiofilters_reset_filters(self->post_filter_states, self->post_filter_objs_len, self->base.channel_count);
+    audiofilters_reset_filter_chain(&self->pre_filter, self->base.channel_count);
+    audiofilters_reset_filter_chain(&self->post_filter, self->base.channel_count);
 }
 
 bool common_hal_audiofreeverb_freeverb_get_playing(audiofreeverb_freeverb_obj_t *self) {
@@ -302,8 +299,8 @@ audioio_get_buffer_result_t audiofreeverb_freeverb_get_buffer(audiofreeverb_free
         int16_t feedback = audiofreeverb_freeverb_get_roomsize_fixedpoint(roomsize);
 
         // Tick biquad filters
-        audiofilters_tick_filters(self->pre_filter_objs, self->pre_filter_objs_len);
-        audiofilters_tick_filters(self->post_filter_objs, self->post_filter_objs_len);
+        audiofilters_tick_filter_chain(&self->pre_filter);
+        audiofilters_tick_filter_chain(&self->post_filter);
 
         int16_t *sample_src = (int16_t *)self->sample_remaining_buffer;
 
@@ -318,7 +315,7 @@ audioio_get_buffer_result_t audiofreeverb_freeverb_get_buffer(audiofreeverb_free
             uint32_t channel_comb_offset = 0, channel_allpass_offset = 0;
 
             // Apply filters as Pre-EQ
-            input = (int16_t)audiofilters_process_filters(self->pre_filter_objs, self->pre_filter_objs_len, self->pre_filter_states, self->base.channel_count, n % self->base.channel_count, sample_word);
+            input = (int16_t)audiofilters_process_filter_chain(&self->pre_filter, self->base.channel_count, n % self->base.channel_count, sample_word);
 
             input = synthio_sat16((int32_t)input * 8738, 17); // Initial input scaled down so we can add reverb
             sum = 0;
@@ -347,7 +344,7 @@ audioio_get_buffer_result_t audiofreeverb_freeverb_get_buffer(audiofreeverb_free
             }
 
             // Apply filters as Post-EQ
-            output = (int16_t)audiofilters_process_filters(self->post_filter_objs, self->post_filter_objs_len, self->post_filter_states, self->base.channel_count, n % self->base.channel_count, (int32_t)output);
+            output = (int16_t)audiofilters_process_filter_chain(&self->post_filter, self->base.channel_count, n % self->base.channel_count, (int32_t)output);
 
             word = output * 30; // Add some volume back don't have to saturate as next step will
 

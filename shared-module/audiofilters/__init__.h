@@ -9,7 +9,15 @@
 #include "py/obj.h"
 #include "shared-module/synthio/Biquad.h"
 
-void audiofilters_assign_filters(mp_obj_t filter_in, mp_obj_t *filter_out, mp_obj_t **filter_objs, size_t *filter_objs_len, biquad_filter_state **filter_states, uint8_t channel_count);
-void audiofilters_reset_filters(biquad_filter_state *filter_states, size_t filter_objs_len, uint8_t channel_count);
-void audiofilters_tick_filters(mp_obj_t *filter_objs, size_t filter_objs_len);
-int32_t audiofilters_process_filters(mp_obj_t *filter_objs, size_t filter_objs_len, biquad_filter_state *filter_states, uint8_t channel_count, uint8_t channel, int32_t word);
+typedef struct audiofilters_filter_chain {
+    mp_obj_t obj;
+    mp_obj_t *objs;
+    size_t objs_len;
+    biquad_filter_state *states;
+} audiofilters_filter_chain_t;
+
+void audiofilters_assign_filter_chain(audiofilters_filter_chain_t *filter_chain, mp_obj_t filter_in, uint8_t channel_count);
+void audiofilters_reset_filter_chain(audiofilters_filter_chain_t *filter_chain, uint8_t channel_count);
+void audiofilters_tick_filter_chain(audiofilters_filter_chain_t *filter_chain);
+int32_t audiofilters_process_filter_chain(audiofilters_filter_chain_t *filter_chain, uint8_t channel_count, uint8_t channel, int32_t word);
+void audiofilters_deinit_filter_chain(audiofilters_filter_chain_t *self);

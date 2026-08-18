@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: MIT
 #include "shared-bindings/audiodelays/Echo.h"
 #include "shared-bindings/audiocore/__init__.h"
-#include "shared-module/audiofilters/__init__.h"
 
 #include <stdint.h>
 #include "py/runtime.h"
@@ -109,11 +108,10 @@ void common_hal_audiodelays_echo_construct(audiodelays_echo_obj_t *self, uint32_
 
 void common_hal_audiodelays_echo_deinit(audiodelays_echo_obj_t *self) {
     audiosample_mark_deinit(&self->base);
+    audiofilters_deinit_filter_chain(&self->filter);
     self->echo_buffer = NULL;
     self->buffer[0] = NULL;
     self->buffer[1] = NULL;
-    self->filter = mp_const_none;
-    self->filter_states = NULL;
 }
 
 mp_obj_t common_hal_audiodelays_echo_get_delay_ms(audiodelays_echo_obj_t *self) {
@@ -172,11 +170,11 @@ void common_hal_audiodelays_echo_set_decay(audiodelays_echo_obj_t *self, mp_obj_
 }
 
 mp_obj_t common_hal_audiodelays_echo_get_filter(audiodelays_echo_obj_t *self) {
-    return self->filter;
+    return self->filter.obj;
 }
 
 void common_hal_audiodelays_echo_set_filter(audiodelays_echo_obj_t *self, mp_obj_t filter_in) {
-    audiofilters_assign_filters(filter_in, &self->filter, &self->filter_objs, &self->filter_objs_len, &self->filter_states, self->base.channel_count);
+    audiofilters_assign_filter_chain(&self->filter, filter_in, self->base.channel_count);
 }
 
 mp_obj_t common_hal_audiodelays_echo_get_mix(audiodelays_echo_obj_t *self) {
@@ -211,7 +209,7 @@ void audiodelays_echo_reset_buffer(audiodelays_echo_obj_t *self,
     memset(self->buffer[1], 0, self->buffer_len);
     memset(self->echo_buffer, 0, self->max_echo_buffer_len);
 
-    audiofilters_reset_filters(self->filter_states, self->filter_objs_len, self->base.channel_count);
+    audiofilters_reset_filter_chain(&self->filter, self->base.channel_count);
 }
 
 bool common_hal_audiodelays_echo_get_playing(audiodelays_echo_obj_t *self) {
@@ -305,7 +303,7 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
         }
 
         // Tick biquad filters
-        audiofilters_tick_filters(self->filter_objs, self->filter_objs_len);
+        audiofilters_tick_filter_chain(&self->filter);
 
         uint32_t echo_buf_len = self->echo_buffer_len / sizeof(uint16_t);
         uint32_t max_echo_buf_len = (self->max_echo_buffer_len >> (self->base.channel_count - 1)) / sizeof(uint16_t);
@@ -342,12 +340,12 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
 
                         for (uint32_t j = echo_buffer_pos >> 8; j < next_buffer_pos >> 8; j++) {
                             word = (int16_t)(echo_buffer[(j % echo_buf_len) + echo_buffer_offset] * decay);
-                            echo_buffer[(j % echo_buf_len) + echo_buffer_offset] = (int16_t)audiofilters_process_filters(self->filter_objs, self->filter_objs_len, self->filter_states, self->base.channel_count, !!echo_buffer_offset, word);
+                            echo_buffer[(j % echo_buf_len) + echo_buffer_offset] = (int16_t)audiofilters_process_filter_chain(&self->filter, self->base.channel_count, !!echo_buffer_offset, word);
                         }
                     } else {
                         echo = echo_buffer[echo_buffer_pos + echo_buffer_offset];
                         word = (int16_t)(echo * decay);
-                        echo_buffer[echo_buffer_pos++ + echo_buffer_offset] = (int16_t)audiofilters_process_filters(self->filter_objs, self->filter_objs_len, self->filter_states, self->base.channel_count, !!echo_buffer_offset, word);
+                        echo_buffer[echo_buffer_pos++ + echo_buffer_offset] = (int16_t)audiofilters_process_filter_chain(&self->filter, self->base.channel_count, !!echo_buffer_offset, word);
                     }
 
                     word = (int16_t)(echo * MIN(mix, MICROPY_FLOAT_CONST(1.0)));
@@ -427,11 +425,11 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
                             for (uint32_t j = echo_buffer_pos >> 8; j < next_buffer_pos >> 8; j++) {
                                 word = (int32_t)(echo_buffer[(j % echo_buf_len) + echo_buffer_offset] * decay + sample_word);
                                 word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
-                                echo_buffer[(j % echo_buf_len) + echo_buffer_offset] = (int16_t)audiofilters_process_filters(self->filter_objs, self->filter_objs_len, self->filter_states, self->base.channel_count, !!echo_buffer_offset, word);
+                                echo_buffer[(j % echo_buf_len) + echo_buffer_offset] = (int16_t)audiofilters_process_filter_chain(&self->filter, self->base.channel_count, !!echo_buffer_offset, word);
                             }
                         } else {
                             word = synthio_mix_down_sample(word, SYNTHIO_MIX_DOWN_SCALE(2));
-                            echo_buffer[echo_buffer_pos++ + echo_buffer_offset] = (int16_t)audiofilters_process_filters(self->filter_objs, self->filter_objs_len, self->filter_states, self->base.channel_count, !!echo_buffer_offset, word);
+                            echo_buffer[echo_buffer_pos++ + echo_buffer_offset] = (int16_t)audiofilters_process_filter_chain(&self->filter, self->base.channel_count, !!echo_buffer_offset, word);
                         }
                     } else {
                         if (self->freq_shift) {
@@ -439,12 +437,12 @@ audioio_get_buffer_result_t audiodelays_echo_get_buffer(audiodelays_echo_obj_t *
                                 word = (int32_t)(echo_buffer[(j % echo_buf_len) + echo_buffer_offset] * decay + sample_word);
                                 // Do not have mix_down for 8 bit so just hard cap samples into 1 byte
                                 word = MIN(MAX(word, -128), 127);
-                                echo_buffer[(j % echo_buf_len) + echo_buffer_offset] = (int8_t)audiofilters_process_filters(self->filter_objs, self->filter_objs_len, self->filter_states, self->base.channel_count, !!echo_buffer_offset, word);
+                                echo_buffer[(j % echo_buf_len) + echo_buffer_offset] = (int8_t)audiofilters_process_filter_chain(&self->filter, self->base.channel_count, !!echo_buffer_offset, word);
                             }
                         } else {
                             // Do not have mix_down for 8 bit so just hard cap samples into 1 byte
                             word = MIN(MAX(word, -128), 127);
-                            echo_buffer[echo_buffer_pos++ + echo_buffer_offset] = (int8_t)audiofilters_process_filters(self->filter_objs, self->filter_objs_len, self->filter_states, self->base.channel_count, !!echo_buffer_offset, word);
+                            echo_buffer[echo_buffer_pos++ + echo_buffer_offset] = (int8_t)audiofilters_process_filter_chain(&self->filter, self->base.channel_count, !!echo_buffer_offset, word);
                         }
                     }
 
