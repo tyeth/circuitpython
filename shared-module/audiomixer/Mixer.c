@@ -66,7 +66,7 @@ void audiomixer_mixer_reset_buffer(audiomixer_mixer_obj_t *self,
     bool single_channel_output,
     uint8_t channel) {
     for (uint8_t i = 0; i < self->voice_count; i++) {
-        common_hal_audiomixer_mixervoice_stop(self->voice[i]);
+        common_hal_audiomixer_mixervoice_reset_buffer(self->voice[i]);
     }
 }
 
