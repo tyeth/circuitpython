@@ -125,8 +125,6 @@ static int32_t obj_to_fp(mp_obj_t o) {
 }
 
 //|
-//|     bitmap: Bitmap
-//|     """The Bitmap drawn (swap it at runtime to change the art; the frame index is kept)."""
 //|     frame: int
 //|     """Which frame of the bitmap's atlas to draw (0-based) - animation = stepping this."""
 //|     visible: bool
