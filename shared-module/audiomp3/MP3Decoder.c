@@ -120,10 +120,13 @@ static void stream_set_blocking(audiomp3_mp3file_obj_t *self, bool block_ok) {
  * Sets self->eof if any read of the file returns 0 bytes
  */
 static bool mp3file_update_inbuf_always(audiomp3_mp3file_obj_t *self, bool block_ok) {
+    // Every return from this function must be preceded by background_callback_allow();
     background_callback_prevent();
 
     if (self->eof || INPUT_BUFFER_SPACE(self->inbuf) == 0) {
-        return INPUT_BUFFER_AVAILABLE(self->inbuf) > 0;
+        bool result = INPUT_BUFFER_AVAILABLE(self->inbuf) > 0;
+        background_callback_allow();
+        return result;
     }
 
     stream_set_blocking(self, block_ok);
@@ -148,6 +151,7 @@ static bool mp3file_update_inbuf_always(audiomp3_mp3file_obj_t *self, bool block
                 break;
             }
             self->eof = true;
+            background_callback_allow();
             mp_raise_OSError(errcode);
         }
 
