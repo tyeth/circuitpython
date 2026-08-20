@@ -517,7 +517,15 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     else:
         board_yaml = board_yaml["board"]
     board_info["vendor_id"] = board_yaml["vendor"]
-    vendor_index = zephyr_board_dir.parent / "index.rst"
+    # Most vendors put boards directly in boards/<vendor>/<board>, but some group
+    # them further, like boards/silabs/dev_kits/<board>. Walk up to the directory
+    # named for the vendor so we read the vendor's index.rst and not a category's.
+    vendor_dir = zephyr_board_dir.parent
+    for parent in zephyr_board_dir.parents:
+        if parent.name == board_info["vendor_id"]:
+            vendor_dir = parent
+            break
+    vendor_index = vendor_dir / "index.rst"
     if vendor_index.exists():
         vendor_index = vendor_index.read_text()
         vendor_index = vendor_index.split("\n")
