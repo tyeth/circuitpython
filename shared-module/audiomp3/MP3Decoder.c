@@ -109,8 +109,6 @@ static void stream_set_blocking(audiomp3_mp3file_obj_t *self, bool block_ok) {
     mp_call_method_n_kw(1, 0, self->settimeout_args);
 }
 
-static bool mp3file_update_inbuf_always_impl(audiomp3_mp3file_obj_t *self, bool block_ok);
-
 /** Fill the input buffer unconditionally.
  *
  * Returns true if the input buffer contains any useful data,
@@ -123,12 +121,7 @@ static bool mp3file_update_inbuf_always_impl(audiomp3_mp3file_obj_t *self, bool 
  */
 static bool mp3file_update_inbuf_always(audiomp3_mp3file_obj_t *self, bool block_ok) {
     background_callback_prevent();
-    bool result = mp3file_update_inbuf_always_impl(self, block_ok);
-    background_callback_allow();
-    return result;
-}
 
-static bool mp3file_update_inbuf_always_impl(audiomp3_mp3file_obj_t *self, bool block_ok) {
     if (self->eof || INPUT_BUFFER_SPACE(self->inbuf) == 0) {
         return INPUT_BUFFER_AVAILABLE(self->inbuf) > 0;
     }
@@ -170,7 +163,10 @@ static bool mp3file_update_inbuf_always_impl(audiomp3_mp3file_obj_t *self, bool 
     }
 
     // Return true iff there are at least some useful bytes in the buffer
-    return INPUT_BUFFER_AVAILABLE(self->inbuf) > 0;
+    bool result = INPUT_BUFFER_AVAILABLE(self->inbuf) > 0;
+
+    background_callback_allow();
+    return result;
 }
 
 /** Update the inbuf from a background callback.
