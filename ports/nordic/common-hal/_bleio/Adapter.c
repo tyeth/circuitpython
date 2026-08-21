@@ -794,7 +794,13 @@ uint32_t _common_hal_bleio_adapter_start_advertising(bleio_adapter_obj_t *self,
             // advertising. This prevents a potential race condition where we
             // fire off a beacon with the same advertising data but a new MAC
             // address just as we tear down the connection.
-            .private_addr_cycle_s = timeout + 1,
+            //
+            // For unlimited advertising, timeout + 1 would rotate the address
+            // every second, too fast for a central to resolve it and connect.
+            // Zero selects the SoftDevice default cycle of 15 minutes
+            // (BLE_GAP_DEFAULT_PRIVATE_ADDR_CYCLE_INTERVAL_S).
+            .private_addr_cycle_s =
+                timeout == BLE_GAP_ADV_TIMEOUT_GENERAL_UNLIMITED ? 0 : timeout + 1,
             .p_device_irk = NULL,
         };
         err_code = sd_ble_gap_privacy_set(&privacy);
