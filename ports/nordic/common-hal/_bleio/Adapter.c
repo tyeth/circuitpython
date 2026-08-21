@@ -248,6 +248,15 @@ static bool adapter_on_ble_evt(ble_evt_t *ble_evt, void *self_in) {
             connection->connection_obj = mp_const_none;
             connection->pair_status = PAIR_NOT_PAIRED;
             connection->mtu = 0;
+            // Clear leftover bond state; connection slots are recycled. The
+            // SoftDevice fills in only the keys the new peer distributes, so a
+            // stale keyset could mix the previous peer's keys into this peer's
+            // stored bond, and a stale ediv or pending-save flag could file
+            // this connection's bond data under the previous peer's key.
+            connection->ediv = EDIV_INVALID;
+            connection->do_bond_cccds = false;
+            connection->do_bond_keys = false;
+            bonding_clear_keys(&connection->bonding_keys);
 
             ble_drv_add_event_handler_entry(&connection->handler_entry, connection_on_ble_evt, connection);
             self->connection_objs = NULL;
