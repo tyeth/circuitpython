@@ -30,8 +30,10 @@
 // dns_resolve_get_default() for radio.ipv4_dns.
 #include <zephyr/net/dns_resolve.h>
 #include <zephyr/net/hostname.h>
+#if defined(CONFIG_CIRCUITPY_WIFI_PING)
 // net_icmp_* for radio.ping().
 #include <zephyr/net/icmp.h>
+#endif
 #include <zephyr/net/wifi.h>
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/random/random.h>
@@ -898,6 +900,7 @@ void common_hal_wifi_radio_set_ipv4_address_ap(wifi_radio_obj_t *self, mp_obj_t 
     // common_hal_wifi_radio_start_dhcp_server(self); // restart access point DHCP
 }
 
+#if defined(CONFIG_CIRCUITPY_WIFI_PING)
 // Zephyr delivers the echo reply on the network RX thread, not the caller's, so
 // the two halves share this state through the ICMP context's user_data. It lives
 // on the calling thread's stack, hence the cleanup discipline in ping() below.
@@ -1072,6 +1075,12 @@ mp_int_t common_hal_wifi_radio_ping(wifi_radio_obj_t *self, mp_obj_t ip_address,
     // 1000, so every failure path must return -1, not 0.
     return (mp_int_t)session.elapsed_ms;
 }
+#else
+mp_int_t common_hal_wifi_radio_ping(wifi_radio_obj_t *self, mp_obj_t ip_address, mp_float_t timeout) {
+    // Boards that turn ping off to save flash report no reply.
+    return -1;
+}
+#endif
 
 void common_hal_wifi_radio_gc_collect(wifi_radio_obj_t *self) {
     // Only bother to scan the actual object references.
