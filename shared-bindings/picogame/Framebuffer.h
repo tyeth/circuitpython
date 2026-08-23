@@ -8,6 +8,4 @@
 
 #include "shared-module/picogame/__init__.h"   // picogame_framebuffer_obj_t
 
-#if CIRCUITPY_PICOGAME_FRAMEBUFFER
 extern const mp_obj_type_t picogame_framebuffer_type;
-#endif
