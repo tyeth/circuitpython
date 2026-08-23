@@ -299,6 +299,13 @@ void picogame_canvas_line(picogame_canvas_obj_t *cv, int x0, int y0, int x1, int
 
 // Clamp a row span to the surface and word-fill it (the span-pass idiom shared by the filled
 // shapes; the per-pixel put() loops it replaced clipped and indexed every pixel).
+static inline int64_t edge_slope(int32_t dx, int32_t dy) {
+    if (dx >= -32768 && dx <= 32767) {
+        return (int32_t)(dx << 16) / dy;
+    }
+    return ((int64_t)dx << 16) / dy;
+}
+
 static void span565(picogame_canvas_obj_t *cv, int y, int xs, int xe, uint16_t color) {
     if (y < 0 || y >= cv->h) {
         return;
@@ -399,9 +406,9 @@ void picogame_canvas_fill_triangle(picogame_canvas_obj_t *cv,
     // triangles), and convex quads - the box faces the 3D demos draw - stay seam-hole-free.
     int w = cv->w, h = cv->h;
     if (Y[0] < h && Y[2] >= 0) {
-        int64_t sAC = (Y[2] != Y[0]) ? (((int64_t)(X[2] - X[0]) << 16) / (Y[2] - Y[0])) : 0;
-        int64_t sAB = (Y[1] != Y[0]) ? (((int64_t)(X[1] - X[0]) << 16) / (Y[1] - Y[0])) : 0;
-        int64_t sBC = (Y[2] != Y[1]) ? (((int64_t)(X[2] - X[1]) << 16) / (Y[2] - Y[1])) : 0;
+        int64_t sAC = (Y[2] != Y[0]) ? edge_slope(X[2] - X[0], Y[2] - Y[0]) : 0;
+        int64_t sAB = (Y[1] != Y[0]) ? edge_slope(X[1] - X[0], Y[1] - Y[0]) : 0;
+        int64_t sBC = (Y[2] != Y[1]) ? edge_slope(X[2] - X[1], Y[2] - Y[1]) : 0;
         uint16_t *data = cv->data;
         // top half: rows [Y0, Y1) walk edges A->C and A->B
         int ys = Y[0] < 0 ? 0 : Y[0];
