@@ -87,3 +87,18 @@ config BT_GATT_DYNAMIC_DB
 
 config BT_GATT_CLIENT
 	default y
+
+config BT_SMP
+	default y
+
+config BT_BONDABLE
+	default y
+
+config SETTINGS
+	default y
+
+config BT_SETTINGS
+	default y
+
+config BT_KEYS_OVERWRITE_OLDEST
+	default y

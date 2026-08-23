@@ -21,8 +21,15 @@
 		#size-cells = <1>;
 
 		circuitpy_partition: partition@0 {
+			compatible = "zephyr,mapped-partition";
 			label = "circuitpy";
-			reg = <0x00000000 DT_SIZE_K(512)>;
+			reg = <0x00000000 (DT_SIZE_K(2036) - DT_SIZE_K(32))>;
+		};
+
+		storage_partition: partition@1f5000 {
+			compatible = "zephyr,mapped-partition";
+			label = "storage";
+			reg = <0x001f5000 DT_SIZE_K(32)>;
 		};
 	};
 };

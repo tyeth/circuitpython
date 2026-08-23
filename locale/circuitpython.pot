@@ -1740,12 +1740,14 @@ msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
 msgid ""
-"Unspecified issue. Can be that the pairing prompt on the other device was "
+"Unspecified issue. The pairing request on the other device may have been "
 "declined or ignored."
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
 #, c-format
 msgid "Unknown security error: 0x%04x"
 msgstr ""
@@ -2262,6 +2264,10 @@ msgstr ""
 
 #: ports/zephyr-cp/common-hal/socketpool/SocketPool.c
 msgid "SocketPool can only be used with wifi.radio or hostnetwork.HostNetwork"
+msgstr ""
+
+#: ports/zephyr-cp/common-hal/usb_hid/Device.c shared-module/usb_hid/Device.c
+msgid "USB error"
 msgstr ""
 
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
@@ -4193,6 +4199,10 @@ msgid "timestamp out of range for platform time_t"
 msgstr ""
 
 #: shared-bindings/traceback/__init__.c
+msgid "Supply both or neither of %q and %q"
+msgstr ""
+
+#: shared-bindings/traceback/__init__.c
 msgid "file write is not available"
 msgstr ""
 
@@ -4517,10 +4527,6 @@ msgstr ""
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
-msgstr ""
-
-#: shared-module/usb_hid/Device.c
-msgid "USB error"
 msgstr ""
 
 #: shared-module/vectorio/Circle.c shared-module/vectorio/Polygon.c
