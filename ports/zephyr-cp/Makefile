@@ -15,10 +15,27 @@ endif
 
 WEST_CMAKE_ARGS := -DZEPHYR_BOARD_ALIASES=$(CURDIR)/boards/board_aliases.cmake -Dzephyr-cp_TRANSLATION=$(TRANSLATION)
 
+# Board files named after the CircuitPython board. Zephyr resolves boards/<name>.overlay and
+# boards/<name>.conf by the ALIASED board name, so a board declared through cp_board_alias() never
+# picks up files named after itself - the build silently produces a different firmware instead of
+# warning. Pass them explicitly when they exist.
+CP_BOARD_OVERLAY := $(wildcard $(CURDIR)/boards/$(BOARD).overlay)
+ifneq ($(CP_BOARD_OVERLAY),)
+WEST_CMAKE_ARGS += -Dzephyr-cp_EXTRA_DTC_OVERLAY_FILE=$(CP_BOARD_OVERLAY)
+endif
+CP_BOARD_CONF := $(wildcard $(CURDIR)/boards/$(BOARD).conf)
+
 # When DEBUG=1, apply additional Kconfig fragments for debug-friendly settings.
 DEBUG_CONF_FILE ?= $(CURDIR)/debug.conf
 ifeq ($(DEBUG),1)
-WEST_CMAKE_ARGS += -Dzephyr-cp_EXTRA_CONF_FILE=$(DEBUG_CONF_FILE)
+ifneq ($(CP_BOARD_CONF),)
+CP_BOARD_CONF := $(CP_BOARD_CONF);$(DEBUG_CONF_FILE)
+else
+CP_BOARD_CONF := $(DEBUG_CONF_FILE)
+endif
+endif
+ifneq ($(CP_BOARD_CONF),)
+WEST_CMAKE_ARGS += -Dzephyr-cp_EXTRA_CONF_FILE=$(CP_BOARD_CONF)
 endif
 
 .PHONY: $(BUILD)/zephyr-cp/zephyr/zephyr.elf flash recover debug debug-jlink debugserver attach run run-sim clean menuconfig all clean-all sim clean-sim test fetch-port-submodules
