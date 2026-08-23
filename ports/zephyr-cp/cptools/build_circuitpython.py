@@ -369,6 +369,12 @@ async def build_circuitpython():  # noqa: C901
     lto = cmake_args.get("LTO", "n") == "y"
     circuitpython_flags.append(f"-DCIRCUITPY_ENABLE_MPY_NATIVE={1 if enable_mpy_native else 0}")
     circuitpython_flags.append(f"-DCIRCUITPY_FULL_BUILD={1 if full_build else 0}")
+    # These two are set by py/circuitpy_mpconfig.mk on the make-based ports (LOAD_ATTR_FAST_PATH
+    # defaults to 1, MAP_LOOKUP_CACHE to CIRCUITPY_FULL_BUILD). This port does not include that
+    # makefile, so they were never defined - and py/vm.c and py/map.c test them with #if, where an
+    # undefined identifier is 0. Both interpreter optimisations were therefore off here.
+    circuitpython_flags.append("-DCIRCUITPY_OPT_LOAD_ATTR_FAST_PATH=1")
+    circuitpython_flags.append(f"-DCIRCUITPY_OPT_MAP_LOOKUP_CACHE={1 if full_build else 0}")
     circuitpython_flags.append(f"-DCIRCUITPY_SETTINGS_TOML={1 if full_build else 0}")
     circuitpython_flags.append(f"-DMICROPY_PY_ASYNC_AWAIT={1 if full_build else 0}")
     circuitpython_flags.append(f"-DMICROPY_PY_ASYNCIO={1 if full_build else 0}")
