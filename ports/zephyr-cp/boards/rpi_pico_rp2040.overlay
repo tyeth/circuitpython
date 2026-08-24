@@ -2,12 +2,6 @@
 	/delete-node/ partitions;
 
 	partitions {
-		/*
-		 * Without `ranges;` the addresses below stay flash-relative: the code partition resolves
-		 * to 0x100 instead of 0x10000100, so RP2_REQUIRES_SECOND_STAGE_BOOT is not selected (its
-		 * Kconfig tests for 0x10000100) and the image ships without a second-stage bootloader,
-		 * while the generated UF2 targets 0x00000100. Neither is loadable by the RP2040 boot ROM.
-		 */
 		ranges;
 		#address-cells = <1>;
 		#size-cells = <1>;
