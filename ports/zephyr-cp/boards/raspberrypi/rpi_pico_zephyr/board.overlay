@@ -2,6 +2,7 @@
 	/delete-node/ partitions;
 
 	partitions {
+		ranges;
 		#address-cells = <1>;
 		#size-cells = <1>;
 
@@ -35,9 +36,9 @@
 		circuitpy_partition: partition@181000 {
 			compatible = "zephyr,mapped-partition";
 			label = "circuitpy";
-			reg = <0x181000 (DT_SIZE_M(8) - 0x181000)>;
+			reg = <0x181000 (DT_SIZE_M(2) - 0x181000)>;
 		};
 	};
 };
 
-#include "../app.overlay"
+#include "../../../app.overlay"

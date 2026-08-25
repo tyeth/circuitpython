@@ -52,4 +52,4 @@
 
 /delete-node/ &slot1_partition;
 
-#include "../app.overlay"
+#include "../../../app.overlay"

@@ -29,4 +29,4 @@ i2s_rxtx: &i2s0 {
 
 /delete-node/ &slot1_partition;
 
-#include "../app.overlay"
+#include "../../../app.overlay"
