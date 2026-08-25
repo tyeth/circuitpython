@@ -629,11 +629,8 @@ uint32_t _common_hal_bleio_adapter_start_advertising(bleio_adapter_obj_t *self,
 
     // Copy peer address, if supplied.
     if (directed_to) {
-        mp_buffer_info_t bufinfo;
-        if (mp_get_buffer(directed_to->bytes, &bufinfo, MP_BUFFER_READ)) {
-            peer_addr.type = directed_to->type;
-            memcpy(&peer_addr.a.val, bufinfo.buf, sizeof(peer_addr.a.val));
-        }
+        peer_addr.type = directed_to->type;
+        memcpy(&peer_addr.a.val, directed_to->bytes, sizeof(peer_addr.a.val));
     }
 
     bool extended =
