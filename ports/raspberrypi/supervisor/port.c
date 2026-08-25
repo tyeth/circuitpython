@@ -47,6 +47,7 @@
 #include "supervisor/shared/stack.h"
 #include "supervisor/shared/tick.h"
 
+#include "hardware/clocks.h"
 #include "hardware/structs/scb.h"
 #include "hardware/structs/watchdog.h"
 #include "hardware/gpio.h"
@@ -152,6 +153,9 @@ static size_t _psram_size = 0;
 #include "hardware/structs/xip_ctrl.h"
 
 static void __no_inline_not_in_flash_func(setup_psram)(void) {
+    // Read the system clock before QMI goes into direct mode; clock_get_hz() is
+    // in flash and XIP is reconfigured below.
+    uint32_t sys_clk_mhz = clock_get_hz(clk_sys) / 1000000;
     gpio_set_function(CIRCUITPY_PSRAM_CHIP_SELECT->number, GPIO_FUNC_XIP_CS1);
     _psram_size = 0;
     common_hal_mcu_disable_interrupts();
@@ -237,13 +241,20 @@ static void __no_inline_not_in_flash_func(setup_psram)(void) {
     // Disable direct csr.
     qmi_hw->direct_csr &= ~(QMI_DIRECT_CSR_ASSERT_CS1N_BITS | QMI_DIRECT_CSR_EN_BITS);
 
+    // MAX_SELECT is in units of 64 system clock cycles; PSRAM allows 8us max CS
+    // assertion. Use 7.5us so there is margin at any clk_sys.
+    uint32_t max_select = (75 * sys_clk_mhz) / 10 / 64;
+    // MIN_DESELECT is in system clock cycles; PSRAM needs 50ns min CS
+    // deassertion. Round up so we are never under.
+    uint32_t min_deselect = (50 * sys_clk_mhz + 999) / 1000;
+
     qmi_hw->m[1].timing =
         QMI_M0_TIMING_PAGEBREAK_VALUE_1024 << QMI_M0_TIMING_PAGEBREAK_LSB | // Break between pages.
             3 << QMI_M0_TIMING_SELECT_HOLD_LSB | // Delay releasing CS for 3 extra system cycles.
             1 << QMI_M0_TIMING_COOLDOWN_LSB |
             1 << QMI_M0_TIMING_RXDELAY_LSB |
-            16 << QMI_M0_TIMING_MAX_SELECT_LSB | // In units of 64 system clock cycles. PSRAM says 8us max. 8 / 0.00752 / 64 = 16.62
-            7 << QMI_M0_TIMING_MIN_DESELECT_LSB | // In units of system clock cycles. PSRAM says 50ns.50 / 7.52 = 6.64
+            max_select << QMI_M0_TIMING_MAX_SELECT_LSB |
+            min_deselect << QMI_M0_TIMING_MIN_DESELECT_LSB |
             2 << QMI_M0_TIMING_CLKDIV_LSB;
     qmi_hw->m[1].rfmt = (QMI_M0_RFMT_PREFIX_WIDTH_VALUE_Q << QMI_M0_RFMT_PREFIX_WIDTH_LSB |
             QMI_M0_RFMT_ADDR_WIDTH_VALUE_Q << QMI_M0_RFMT_ADDR_WIDTH_LSB |
