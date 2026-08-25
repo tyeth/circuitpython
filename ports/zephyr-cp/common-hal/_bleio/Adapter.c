@@ -350,6 +350,18 @@ void common_hal_bleio_adapter_set_enabled(bleio_adapter_obj_t *self, bool enable
             // bt_finalize_init() which sets BT_DEV_READY.
             settings_load();
         }
+        // Ensure a local identity exists so advertising/connections work and the
+        // name is stable across reboots. bt_id_create persists the identity when
+        // CONFIG_BT_SETTINGS is enabled. bleio_adapter_reset_name() reads the
+        // identity address back via common_hal_bleio_adapter_get_address().
+        bt_addr_le_t id_addrs[CONFIG_BT_ID_MAX];
+        size_t id_count = CONFIG_BT_ID_MAX;
+        bt_id_get(id_addrs, &id_count);
+        if (id_count == 0 || bt_addr_le_eq(&id_addrs[BT_ID_DEFAULT], BT_ADDR_LE_ANY)) {
+            (void)bt_id_create(NULL, NULL);
+            bt_id_get(id_addrs, &id_count);
+        }
+        bleio_adapter_reset_name(self);
         ble_adapter_enabled = true;
         return;
     }
@@ -422,7 +434,25 @@ void common_hal_bleio_adapter_set_tx_power(bleio_adapter_obj_t *self, mp_int_t t
 }
 
 bleio_address_obj_t *common_hal_bleio_adapter_get_address(bleio_adapter_obj_t *self) {
-    mp_raise_NotImplementedError(NULL);
+    // Report the local identity address, which is the same address used to
+    // derive the default adapter name in common_hal_bleio_adapter_set_enabled.
+    bt_addr_le_t id_addrs[CONFIG_BT_ID_MAX];
+    size_t id_count = CONFIG_BT_ID_MAX;
+    bt_id_get(id_addrs, &id_count);
+    if (id_count == 0 || bt_addr_le_eq(&id_addrs[BT_ID_DEFAULT], BT_ADDR_LE_ANY)) {
+        (void)bt_id_create(NULL, NULL);
+        bt_id_get(id_addrs, &id_count);
+    }
+
+    const bt_addr_le_t *addr = &id_addrs[BT_ID_DEFAULT];
+    // Cache the address on the adapter so this can be called before the heap
+    // is available (e.g. from bleio_adapter_reset_name). The shared
+    // common_hal_bleio_address_construct() converts the raw address bytes
+    // into the Address object.
+    common_hal_bleio_address_construct(&self->address, addr->a.val,
+        bleio_address_type_from_zephyr(addr));
+    self->address.base.type = &bleio_address_type;
+    return &self->address;
 }
 
 bool common_hal_bleio_adapter_set_address(bleio_adapter_obj_t *self, bleio_address_obj_t *address) {
@@ -734,13 +764,10 @@ mp_obj_t common_hal_bleio_adapter_connect(bleio_adapter_obj_t *self, bleio_addre
 
     const uint16_t timeout_units = bleio_validate_and_convert_timeout(timeout);
 
-    mp_buffer_info_t address_bufinfo;
-    mp_get_buffer_raise(address->bytes, &address_bufinfo, MP_BUFFER_READ);
-
     bt_addr_le_t peer = {
         .type = bleio_address_type_to_zephyr(address->type),
     };
-    memcpy(peer.a.val, address_bufinfo.buf, NUM_BLEIO_ADDRESS_BYTES);
+    memcpy(peer.a.val, address->bytes, NUM_BLEIO_ADDRESS_BYTES);
 
     struct bt_conn_le_create_param create_params = BT_CONN_LE_CREATE_PARAM_INIT(
         BT_CONN_LE_OPT_NONE,

@@ -32,10 +32,6 @@
 #include "supervisor/usb.h"
 #endif
 
-#if CIRCUITPY_SETTINGS_TOML
-#include "supervisor/shared/settings.h"
-#endif
-
 #define BLE_MIN_CONN_INTERVAL        MSEC_TO_UNITS(15, UNIT_0_625_MS)
 #define BLE_MAX_CONN_INTERVAL        MSEC_TO_UNITS(15, UNIT_0_625_MS)
 #define BLE_SLAVE_LATENCY            0
@@ -319,31 +315,6 @@ static void get_address(bleio_adapter_obj_t *self, ble_gap_addr_t *address) {
     check_nrf_error(sd_ble_gap_addr_get(address));
 }
 
-char default_ble_name[] = { 'C', 'I', 'R', 'C', 'U', 'I', 'T', 'P', 'Y', 0, 0, 0, 0, 0};
-
-static void bleio_adapter_reset_name(bleio_adapter_obj_t *self) {
-    // setup the default name
-    ble_gap_addr_t addr; // local_address
-    get_address(self, &addr);
-    mp_int_t len = sizeof(default_ble_name) - 1;
-    default_ble_name[len - 4] = nibble_to_hex_lower[addr.addr[1] >> 4 & 0xf];
-    default_ble_name[len - 3] = nibble_to_hex_lower[addr.addr[1] & 0xf];
-    default_ble_name[len - 2] = nibble_to_hex_lower[addr.addr[0] >> 4 & 0xf];
-    default_ble_name[len - 1] = nibble_to_hex_lower[addr.addr[0] & 0xf];
-    default_ble_name[len] = '\0'; // for now we add null for compatibility with C ASCIIZ strings
-
-    #if CIRCUITPY_SETTINGS_TOML
-    char ble_name[32];
-
-    settings_err_t result = settings_get_str("CIRCUITPY_BLE_NAME", ble_name, sizeof(ble_name));
-    if (result == SETTINGS_OK) {
-        common_hal_bleio_adapter_set_name(self, ble_name);
-        return;
-    }
-    #endif
-
-    common_hal_bleio_adapter_set_name(self, (char *)default_ble_name);
-}
 
 static void bluetooth_adapter_background(void *data) {
     supervisor_bluetooth_background();
@@ -417,20 +388,19 @@ bleio_address_obj_t *common_hal_bleio_adapter_get_address(bleio_adapter_obj_t *s
     ble_gap_addr_t local_address;
     get_address(self, &local_address);
 
-    bleio_address_obj_t *address = mp_obj_malloc(bleio_address_obj_t, &bleio_address_type);
-
-    common_hal_bleio_address_construct(address, local_address.addr, local_address.addr_type);
-    return address;
+    // Return the address cached on the adapter so this can be called before
+    // the heap is available (e.g. from bleio_adapter_reset_name). The shared
+    // common_hal_bleio_address_construct() converts the raw address bytes
+    // into the Address object. The cached address is refreshed on every call.
+    common_hal_bleio_address_construct(&self->address, local_address.addr, local_address.addr_type);
+    self->address.base.type = &bleio_address_type;
+    return &self->address;
 }
 
 bool common_hal_bleio_adapter_set_address(bleio_adapter_obj_t *self, bleio_address_obj_t *address) {
     ble_gap_addr_t local_address;
-    mp_buffer_info_t bufinfo;
-    if (!mp_get_buffer(address->bytes, &bufinfo, MP_BUFFER_READ)) {
-        return false;
-    }
     local_address.addr_type = address->type;
-    memcpy(local_address.addr, bufinfo.buf, NUM_BLEIO_ADDRESS_BYTES);
+    memcpy(local_address.addr, address->bytes, NUM_BLEIO_ADDRESS_BYTES);
     return sd_ble_gap_addr_set(&local_address) == NRF_SUCCESS;
 }
 
@@ -619,9 +589,7 @@ static bool connect_on_ble_evt(ble_evt_t *ble_evt, void *info_in) {
 
 static void _convert_address(const bleio_address_obj_t *address, ble_gap_addr_t *sd_address) {
     sd_address->addr_type = address->type;
-    mp_buffer_info_t address_buf_info;
-    mp_get_buffer_raise(address->bytes, &address_buf_info, MP_BUFFER_READ);
-    memcpy(sd_address->addr, (uint8_t *)address_buf_info.buf, NUM_BLEIO_ADDRESS_BYTES);
+    memcpy(sd_address->addr, address->bytes, NUM_BLEIO_ADDRESS_BYTES);
 }
 
 mp_obj_t common_hal_bleio_adapter_connect(bleio_adapter_obj_t *self, bleio_address_obj_t *address, mp_float_t timeout) {
