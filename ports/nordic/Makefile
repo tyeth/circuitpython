@@ -6,8 +6,15 @@
 
 include ../../py/circuitpy_mkenv.mk
 
+# The SoftDevice paths are built from MCU_VARIANT and SOFTDEV_VERSION, which
+# only exist once boards/$(BOARD)/mpconfigboard.mk has set MCU_CHIP. Skip when
+# the rule requested is not board-specific (e.g. fetch-port-submodules), or the
+# stack-missing check looks for an unexpanded path and fails on a tree where
+# nothing is actually missing.
+ifneq ($(VALID_BOARD),)
 ifneq ($(SD), )
 	include bluetooth/bluetooth_common.mk
+endif
 endif
 
 CROSS_COMPILE = arm-none-eabi-
@@ -115,10 +122,15 @@ SRC_C += \
 	boards/$(BOARD)/board.c \
 	boards/$(BOARD)/pins.c \
 	device/$(MCU_VARIANT)/startup_$(MCU_SUB_VARIANT).c \
+	nrfx/mdk/system_$(MCU_SUB_VARIANT).c \
+
+ifneq ($(SD), )
+SRC_C += \
 	bluetooth/ble_drv.c \
 	common-hal/_bleio/bonding.c \
-	nrfx/mdk/system_$(MCU_SUB_VARIANT).c \
 	sd_mutex.c \
+
+endif
 
 SRC_PERIPHERALS := \
 	peripherals/nrf/cache.c \
@@ -177,7 +189,13 @@ UF2_FAMILY_ID_nrf52840 = 0xADA52840
 UF2_FAMILY_ID_nrf52833 = 0x621E937A
 
 
+ifneq ($(SD), )
 all: $(BUILD)/firmware.bin $(BUILD)/firmware.uf2 $(BUILD)/firmware.combined.hex
+else
+# firmware.combined.hex merges in the SoftDevice hex; without one there is
+# nothing to combine.
+all: $(BUILD)/firmware.bin $(BUILD)/firmware.uf2 $(BUILD)/firmware.hex
+endif
 
 ifeq ($(VALID_BOARD),)
 $(BUILD)/firmware.elf: invalid-board

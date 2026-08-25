@@ -7,10 +7,18 @@
 
 #pragma once
 
+#ifdef BLUETOOTH_SD
 #include "ble_drv.h"
 
 #include "nrf_mbr.h"  // for MBR_SIZE
 #include "nrf_sdm.h"  // for SD_FLASH_SIZE
+#else
+// No SoftDevice: its headers are not on the include path at all, and neither the
+// MBR nor the SoftDevice occupy any flash.
+#define MBR_SIZE      (0)
+#define SD_FLASH_SIZE (0)
+#endif
+
 #include "peripherals/nrf/nvm.h" // for FLASH_PAGE_SIZE
 
 #define MICROPY_PY_SYS_STDIO_BUFFER              (1)
@@ -108,9 +116,13 @@
 
 #define CIRCUITPY_INTERNAL_NVM_START_ADDR (CIRCUITPY_INTERNAL_FLASH_FILESYSTEM_START_ADDR - CIRCUITPY_INTERNAL_NVM_SIZE)
 
-// 32kiB for bonding, etc.
+// 32kiB for bonding, etc. Nothing to store without a SoftDevice.
 #ifndef CIRCUITPY_BLE_CONFIG_SIZE
+#ifdef BLUETOOTH_SD
 #define CIRCUITPY_BLE_CONFIG_SIZE       (32 * 1024)
+#else
+#define CIRCUITPY_BLE_CONFIG_SIZE       (0)
+#endif
 #endif
 #define CIRCUITPY_BLE_CONFIG_START_ADDR (CIRCUITPY_INTERNAL_NVM_START_ADDR - CIRCUITPY_BLE_CONFIG_SIZE)
 
@@ -159,7 +171,14 @@
 // high enough to work and then check the mutation of the value done by sd_ble_enable().
 // See common.template.ld.
 #ifndef SOFTDEVICE_RAM_SIZE
+#ifdef BLUETOOTH_SD
 #define SOFTDEVICE_RAM_SIZE         (56 * 1024)
+#else
+// No SoftDevice, so none of the low RAM is reserved for it. The SPIM3 buffer
+// then sits at the very bottom of RAM, still inside the first 64kB as the
+// hardware workaround requires.
+#define SOFTDEVICE_RAM_SIZE         (0)
+#endif
 #endif
 
 

@@ -124,3 +124,10 @@ ifeq ($(INTERNAL_FLASH_FILESYSTEM),1)
 endif
 endif
 endif
+
+# Cannot have BLEIO without a SoftDevice.
+ifeq ($(SD), )
+CIRCUITPY_BLEIO_NATIVE = 0
+CIRCUITPY_BLE_FILE_SERVICE = 0
+CIRCUITPY_BLE_SERIAL_SERVICE = 0
+endif
