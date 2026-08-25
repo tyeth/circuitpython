@@ -8,9 +8,7 @@ include ../../py/circuitpy_mkenv.mk
 
 # The SoftDevice paths are built from MCU_VARIANT and SOFTDEV_VERSION, which
 # only exist once boards/$(BOARD)/mpconfigboard.mk has set MCU_CHIP. Skip when
-# the rule requested is not board-specific (e.g. fetch-port-submodules), or the
-# stack-missing check looks for an unexpanded path and fails on a tree where
-# nothing is actually missing.
+# the rule requested is not board-specific like fetch-port-submodules.
 ifneq ($(VALID_BOARD),)
 ifneq ($(SD), )
 	include bluetooth/bluetooth_common.mk

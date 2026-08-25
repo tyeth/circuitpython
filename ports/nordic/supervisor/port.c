@@ -22,7 +22,6 @@
 #include "nrf/power.h"
 #include "nrf/timers.h"
 
-// The SoftDevice headers (nrf_sdm.h / nrf_soc.h) come in via mpconfigport.h.
 #ifdef BLUETOOTH_SD
 #include "nrf_nvic.h"
 #endif

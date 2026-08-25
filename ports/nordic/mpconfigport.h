@@ -13,8 +13,6 @@
 #include "nrf_mbr.h"  // for MBR_SIZE
 #include "nrf_sdm.h"  // for SD_FLASH_SIZE
 #else
-// No SoftDevice: its headers are not on the include path at all, and neither the
-// MBR nor the SoftDevice occupy any flash.
 #define MBR_SIZE      (0)
 #define SD_FLASH_SIZE (0)
 #endif

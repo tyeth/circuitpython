@@ -125,7 +125,7 @@ endif
 endif
 endif
 
-# Cannot have BLEIO without a SoftDevice.
+# no BLEIO without a SoftDevice.
 ifeq ($(SD), )
 CIRCUITPY_BLEIO_NATIVE = 0
 CIRCUITPY_BLE_FILE_SERVICE = 0

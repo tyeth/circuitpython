@@ -39,7 +39,7 @@ void Reset_Handler(void) {
     #ifndef BLUETOOTH_SD
     // With a SoftDevice, the MBR at 0x0 owns the vector table and forwards
     // interrupts to us, so VTOR is already pointing at our table by the time we
-    // run. Without one, nothing has set it.
+    // run.
     SCB_VTOR = (uint32_t)&__Vectors[0];
     __asm volatile ("dsb 0xF" ::: "memory");
     #endif
