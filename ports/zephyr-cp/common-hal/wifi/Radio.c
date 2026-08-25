@@ -123,19 +123,14 @@ void common_hal_wifi_radio_set_hostname(wifi_radio_obj_t *self, const char *host
     }
 }
 
-void wifi_radio_get_mac_address(wifi_radio_obj_t *self, uint8_t *mac) {
-    memset(mac, 0, MAC_ADDRESS_LENGTH);
+mp_obj_t common_hal_wifi_radio_get_mac_address(wifi_radio_obj_t *self) {
+    uint8_t mac[MAC_ADDRESS_LENGTH] = { 0 };
     if (self->sta_netif != NULL) {
         struct net_linkaddr *addr = net_if_get_link_addr(self->sta_netif);
         if (addr != NULL && addr->len >= MAC_ADDRESS_LENGTH) {
             memcpy(mac, addr->addr, MAC_ADDRESS_LENGTH);
         }
     }
-}
-
-mp_obj_t common_hal_wifi_radio_get_mac_address(wifi_radio_obj_t *self) {
-    uint8_t mac[MAC_ADDRESS_LENGTH];
-    wifi_radio_get_mac_address(self, mac);
     return mp_obj_new_bytes(mac, MAC_ADDRESS_LENGTH);
 }
 
@@ -483,28 +478,11 @@ wifi_radio_error_t common_hal_wifi_radio_connect(wifi_radio_obj_t *self, uint8_t
     if (password_len > 0) {
         params.psk = password;
         params.psk_length = password_len;
-        // The security type must match what the AP advertises: this driver maps
-        // PSK to WPA2 and WPA_AUTO_PERSONAL to WPA3-transition, and rejects the
-        // wrong one with a generic "Authentication failure". So take it from the
-        // last scan, falling back to WPA2-PSK when the SSID was not seen. That
-        // fallback is wrong for a WPA3-only hidden AP.
-        params.security = WIFI_SECURITY_TYPE_PSK;
-        struct wifi_scan_result *cached = wifi_cached_scan_lookup(ssid, ssid_len);
-        if (cached != NULL) {
-            switch (cached->security) {
-                case WIFI_SECURITY_TYPE_SAE:
-                case WIFI_SECURITY_TYPE_SAE_H2E:
-                case WIFI_SECURITY_TYPE_SAE_AUTO:
-                    params.security = WIFI_SECURITY_TYPE_WPA_AUTO_PERSONAL;
-                    break;
-                case WIFI_SECURITY_TYPE_WPA_PSK:
-                    params.security = WIFI_SECURITY_TYPE_WPA_PSK;
-                    break;
-                default:
-                    params.security = WIFI_SECURITY_TYPE_PSK;
-                    break;
-            }
-        }
+        // WPA_AUTO_PERSONAL lets the driver settle on WPA2 or WPA3 with the AP
+        // rather than us guessing: it maps to WPA3-transition, which an AP in
+        // either mode accepts. WIFI_SECURITY_TYPE_UNKNOWN is not an option, the
+        // driver rejects it with -ENOTSUP.
+        params.security = WIFI_SECURITY_TYPE_WPA_AUTO_PERSONAL;
     } else {
         params.security = WIFI_SECURITY_TYPE_NONE;
     }
@@ -530,6 +508,7 @@ wifi_radio_error_t common_hal_wifi_radio_connect(wifi_radio_obj_t *self, uint8_t
         (void)net_mgmt(NET_REQUEST_WIFI_DISCONNECT, self->sta_netif, NULL, 0);
         // Give the controller a moment to tear the association down.
         for (int i = 0; i < 40 && self->connected; i++) {
+            RUN_BACKGROUND_TASKS;
             k_msleep(50);
         }
         self->connected = false;
@@ -559,6 +538,7 @@ wifi_radio_error_t common_hal_wifi_radio_connect(wifi_radio_obj_t *self, uint8_t
     int64_t deadline = k_uptime_get() + (int64_t)(timeout_s * 1000);
     bool signalled = false;
     while (k_uptime_get() < deadline) {
+        RUN_BACKGROUND_TASKS;
         if (k_sem_take(&self->connect_sem, K_MSEC(50)) == 0) {
             signalled = true;
             break;
@@ -600,6 +580,7 @@ wifi_radio_error_t common_hal_wifi_radio_connect(wifi_radio_obj_t *self, uint8_t
         if (mp_hal_is_interrupted()) {
             break;
         }
+        RUN_BACKGROUND_TASKS;
         k_msleep(50);
     }
     #endif
