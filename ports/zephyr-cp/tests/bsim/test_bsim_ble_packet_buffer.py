@@ -109,7 +109,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(25)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_SERVER_IN_CODE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_CLIENT_IN_CODE})
 def test_bsim_packet_buffer_server_incoming(bsim_phy, circuitpython1, circuitpython2):
@@ -344,7 +344,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(30)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_QUEUE_SERVER_CODE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_QUEUE_CLIENT_CODE})
 def test_bsim_packet_buffer_queue(bsim_phy, circuitpython1, circuitpython2):
@@ -453,7 +453,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(25)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_OVERFLOW_SERVER_CODE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_OVERFLOW_CLIENT_CODE})
 def test_bsim_packet_buffer_readinto_overflow(bsim_phy, circuitpython1, circuitpython2):
@@ -555,7 +555,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(25)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_HEADER_SERVER_CODE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_HEADER_CLIENT_CODE})
 def test_bsim_packet_buffer_write_header(bsim_phy, circuitpython1, circuitpython2):
@@ -930,7 +930,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(20)
+@pytest.mark.duration(30)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_MTU_SERVER_CODE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_MTU_CLIENT_CODE})
 def test_bsim_packet_buffer_outgoing_mtu_bounded(bsim_phy, circuitpython1, circuitpython2):
@@ -1099,7 +1099,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(20)
+@pytest.mark.duration(35)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_CLIENT_WRITE_SERVER_CODE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_PB_CLIENT_WRITE_CLIENT_CODE})
 def test_bsim_packet_buffer_client_write(bsim_phy, circuitpython1, circuitpython2):

@@ -145,7 +145,7 @@ def test_bsim_advertise_and_scan(bsim_phy, circuitpython, zephyr_sample):
 
 @pytest.mark.zephyr_sample("tests/bsim/samples/observer")
 @pytest.mark.code_py_runs(2)
-@pytest.mark.duration(25)
+@pytest.mark.duration(60)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_ADV_INTERRUPT_RELOAD_CODE})
 def test_bsim_advertise_ctrl_c_reload(bsim_phy, circuitpython, zephyr_sample):
     """Ensure advertising resumes after Ctrl-C and a reload."""
@@ -156,7 +156,9 @@ def test_bsim_advertise_ctrl_c_reload(bsim_phy, circuitpython, zephyr_sample):
     observer_count_before = observer.serial.all_output.count("Device found:")
 
     circuitpython.serial.write("\x03")
-    circuitpython.serial.wait_for("KeyboardInterrupt")
+    # Real AES for the link layer adds CPU overhead that can delay the
+    # interpreter noticing SIGINT beyond the default wait_for timeout.
+    circuitpython.serial.wait_for("KeyboardInterrupt", timeout=20)
 
     circuitpython.serial.write("\x04")
     circuitpython.wait_until_done()
@@ -175,7 +177,7 @@ def test_bsim_advertise_ctrl_c_reload(bsim_phy, circuitpython, zephyr_sample):
 
 
 @pytest.mark.zephyr_sample("tests/bsim/samples/observer")
-@pytest.mark.duration(20)
+@pytest.mark.duration(40)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_TX_POWER_DEFAULT_CODE})
 def test_bsim_tx_power_default_rssi(board, bsim_phy, circuitpython, zephyr_sample):
     """Verify default TX power produces expected RSSI."""
@@ -202,7 +204,7 @@ def test_bsim_tx_power_default_rssi(board, bsim_phy, circuitpython, zephyr_sampl
 
 
 @pytest.mark.zephyr_sample("tests/bsim/samples/observer")
-@pytest.mark.duration(20)
+@pytest.mark.duration(40)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_TX_POWER_LOW_CODE})
 def test_bsim_tx_power_low_rssi(bsim_phy, circuitpython, zephyr_sample):
     """Verify low TX power reduces RSSI."""

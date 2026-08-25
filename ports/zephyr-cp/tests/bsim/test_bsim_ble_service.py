@@ -182,7 +182,7 @@ print("disconnected", not connection.connected)
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(30)
 @pytest.mark.circuitpy_drive(
     {"code.py": BSIM_SERVER_CODE, "battery_service.py": BATTERY_LIB, **_ADAFRUIT_BLE}
 )
@@ -299,7 +299,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(35)
 @pytest.mark.circuitpy_drive(
     {
         "code.py": BSIM_DISCOVER_ALL_SERVER_CODE,
@@ -445,7 +445,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(25)
 @pytest.mark.circuitpy_drive(
     {"code.py": BSIM_MULTI_CHAR_SERVER_CODE, "multi_service.py": MULTI_LIB, **_ADAFRUIT_BLE}
 )
@@ -515,7 +515,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(25)
 @pytest.mark.circuitpy_drive(
     {"code.py": BSIM_MULTI_CHAR_SERVER_CODE, "multi_service.py": MULTI_LIB, **_ADAFRUIT_BLE}
 )
@@ -630,7 +630,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(25)
 @pytest.mark.circuitpy_drive(
     {"code.py": BSIM_CUSTOM_UUID_SERVER_CODE, "custom_service.py": CUSTOM_LIB, **_ADAFRUIT_BLE}
 )
@@ -694,7 +694,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(30)
 @pytest.mark.circuitpy_drive(
     {"code.py": BSIM_CUSTOM_UUID_SERVER_CODE, "custom_service.py": CUSTOM_LIB, **_ADAFRUIT_BLE}
 )

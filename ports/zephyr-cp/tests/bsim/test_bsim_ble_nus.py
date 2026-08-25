@@ -154,7 +154,7 @@ print("done")
 """
 
 
-@pytest.mark.duration(14)
+@pytest.mark.duration(30)
 @pytest.mark.circuitpy_drive({"code.py": BSIM_NUS_SERVER_CODE, **_ADAFRUIT_BLE})
 @pytest.mark.circuitpy_drive({"code.py": BSIM_NUS_CLIENT_CODE, **_ADAFRUIT_BLE})
 def test_bsim_nus_cp_to_cp(bsim_phy, circuitpython1, circuitpython2):
