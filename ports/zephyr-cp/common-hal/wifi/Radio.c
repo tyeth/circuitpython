@@ -30,7 +30,7 @@
 // dns_resolve_get_default() for radio.ipv4_dns.
 #include <zephyr/net/dns_resolve.h>
 #include <zephyr/net/hostname.h>
-#if defined(CONFIG_CIRCUITPY_WIFI_PING)
+#if CIRCUITPY_WIFI_PING
 // net_icmp_* for radio.ping().
 #include <zephyr/net/icmp.h>
 #endif
@@ -900,7 +900,7 @@ void common_hal_wifi_radio_set_ipv4_address_ap(wifi_radio_obj_t *self, mp_obj_t 
     // common_hal_wifi_radio_start_dhcp_server(self); // restart access point DHCP
 }
 
-#if defined(CONFIG_CIRCUITPY_WIFI_PING)
+#if CIRCUITPY_WIFI_PING
 // Zephyr delivers the echo reply on the network RX thread, not the caller's, so
 // the two halves share this state through the ICMP context's user_data. It lives
 // on the calling thread's stack, hence the cleanup discipline in ping() below.

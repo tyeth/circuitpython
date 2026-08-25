@@ -25,15 +25,6 @@ config UART_LINE_CTRL
 config ENTROPY_GENERATOR
 	default y
 
-# ===== CircuitPython feature defaults — enabled by default, boards can disable =====
-
-config CIRCUITPY_WIFI_PING
-	bool "wifi.radio.ping() on Zephyr's ICMP API"
-	default y
-	help
-	  Boards that are out of flash can set this to n. radio.ping() then
-	  returns None, as it does for an unreachable host.
-
 # ===== Bluetooth defaults =====
 
 # Use a variable for the chosen name so the comma isn't parsed as an argument separator
