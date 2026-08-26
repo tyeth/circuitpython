@@ -12,8 +12,8 @@
 
 // | """Block device access to the on-board eMMC
 // |
-// | The `emmcio` module exposes the board's soldered-down eMMC chip as a block
-// | device. It provides no filesystem of its own: to read files, hand an `EMMC`
+// | The `emmcio` module exposes an eMMC chip as a block device.
+// | It provides no filesystem of its own: to read files, hand an `EMMC`
 // | object to `storage.VfsFat` and mount it.
 // |
 // | .. note:: This module is only available on boards with an eMMC wired to the

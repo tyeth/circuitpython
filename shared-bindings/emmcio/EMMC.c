@@ -25,7 +25,7 @@ static void check_for_deinit(emmcio_emmc_obj_t *self) {
 }
 
 // | class EMMC:
-// |     """The on-board eMMC as a block device"""
+// |     """eMMC as a block device"""
 // |
 // |     def __init__(
 // |         self,

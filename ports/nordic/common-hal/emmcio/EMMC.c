@@ -6,8 +6,6 @@
 
 // ============================================================================
 //  eMMC flash driver (1-bit MMC protocol over the nRF52840)
-//  Read and write paths; writing is gated at runtime by
-//  EMMC(write_enabled=True).
 // ============================================================================
 //    Two layers:
 //
@@ -19,7 +17,7 @@
 //      CLK is low, the card samples (and launches) on the rising edge, MSB
 //      first. The start-bit hunt is bit-banged, then the payload + CRC16 is
 //      exactly byte-aligned for one RX DMA; on ENABLE=0 the pins fall back to
-//      their GPIO latches, so the surrounding bit-bang continues seamlessly.
+//      their GPIO latches.
 //
 //  INTEGRITY: every block read is verified against the card's CRC16 and the
 //  caller retries on a mismatch.
@@ -39,10 +37,9 @@
 #include "peripherals/nrf/nrf52840/pins.h"
 #include "shared-module/emmcio/__init__.h"
 
-#define CMD_SAFE_HALF_US 1u   // slow clock for the IDENTIFICATION phase only
+#define CMD_SAFE_HALF_US 1u
 
-// Command-phase half-period: starts safe (eMMC identification requires a slow
-// clock), switched to 0 (full-speed bit-bang, ~1-2 MHz) once init completes.
+// Command-phase half-period: starts slow, switched to 0 (full-speed) after init.
 static uint32_t s_cmd_half_us = CMD_SAFE_HALF_US;
 
 static volatile uint32_t g_emmc_clk_half_us = CMD_SAFE_HALF_US;
@@ -88,7 +85,6 @@ static bool emmc_deadline_expired(void) {
     return s_deadline_armed && ticks_since(s_deadline_t0) >= s_deadline_lim;
 }
 
-// Long-wait service: run background tasks
 static inline void emmc_yield(void) {
     RUN_BACKGROUND_TASKS;
 }
@@ -113,16 +109,14 @@ static void cmd_send_bit(uint8_t bit) {
 
 // SAMPLE POINT: read the line at the END of the low phase, i.e. before this
 // bit's clock pulse, not in the middle of it. That is the one point in the
-// cycle where BOTH of the card's timing modes hold valid data, which is what
-// makes this path work either side of an HS_TIMING switch:
+// cycle where both of the card's timing modes hold valid data.
 //
 //   * backward-compatible timing: the card launches on the FALLING edge and
 //     holds the bit until the next one, so the whole low phase is valid.
 //     tOSU(min) = tWL(min) - tODLY, data good from ~8 ns after the edge.
 //     We read a full low phase later.
 //   * high-speed timing: the card launches on the RISING edge (tODLY, 13.7 ns
-//     max, referenced to it) and holds until the next rising edge, so the low
-//     phase is again inside the window.
+//     max, referenced to it) and holds until the next rising edge.
 //
 static uint8_t cmd_recv_bit(void) {
     // caller sets CMD_IN() once before the response read
@@ -251,9 +245,9 @@ static bool send_command_retry(uint8_t cmd, uint32_t arg, uint8_t *r1_out, int t
 }
 
 // DATA read: per-bit CLK toggle uses the configurable (possibly 0) half-period.
-// -O2 opts up from the port's -Os default and is load-bearing: at -Os the GPIO
+// -O2 opts up from the port's -Os default and is needed: at -Os the GPIO
 // and delay helpers stop being inlined and become calls inside the per-bit
-// loop, where the instruction count is the bit timing.
+// loop, and throw off the timing
 __attribute__((optimize("O2")))
 static bool read_data_block(uint8_t *buf) {
     const uint32_t hd = g_emmc_clk_half_us;
@@ -619,20 +613,10 @@ static bool emmc_set_high_speed(emmcio_emmc_obj_t *self) {
     }
     self->hs_stage = 4;
 
-    // THE DATA PATH'S HALF OF THE SWITCH. HS_TIMING moves the edge the card
-    // launches DAT0 on, from falling to rising, so SPIM has to move its sample
-    // edge with it (CPHA=1) or every block after this point comes back shifted
-    // by a bit and fails its CRC16. The command path needs no such flag,
-    // cmd_recv_bit() reads at a point that is valid in both timings. But,
-    // SPIM samples on an edge, and an edge has to pick one.
-    //
-    // This happens BEFORE the readback, because the readback is itself a block
-    // read off a card that has already switched.
+
     NRF_SPIM3->CONFIG = SPIM_CONFIG_MODE1;
 
-    // Read the byte back AT THE OLD CLOCK. A card that ACKed the switch but did
-    // not take it would otherwise be met with a 32 MHz bus it never agreed to,
-    // and the only symptom would be CRC noise that looks like a wiring fault.
+    // Read the byte back AT THE OLD CLOCK.
     uint8_t ext_csd[EMMC_BLOCK_SIZE];
     if (!common_hal_emmcio_emmc_read_ext_csd(ext_csd) ||
         ext_csd[EMMC_EXT_CSD_HS_TIMING] != 1u) {
@@ -641,10 +625,8 @@ static bool emmc_set_high_speed(emmcio_emmc_obj_t *self) {
     }
     self->hs_stage = 5;
 
-    // Only now does the host clock move. The re-read is a smoke test of the
-    // faster bus with the integrity layer watching: if the first fast transfer
-    // cannot even fetch a block the card just served correctly, fall straight
-    // back.
+    // Now host clock moves. The re-read is a smoke test of the
+    // faster bus with the integrity layer watching.
     NRF_SPIM3->FREQUENCY = SPIM_FREQ_M32;
     if (!common_hal_emmcio_emmc_read_ext_csd(ext_csd) || ext_csd[EMMC_EXT_CSD_HS_TIMING] != 1u) {
         // Back to the old CLOCK but NOT to the old phase: the card is in
@@ -728,23 +710,7 @@ static bool write_data_block(const uint8_t *buf) {
     tx[2 + EMMC_BLOCK_SIZE] = (uint8_t)(crc >> 8);
     tx[2 + EMMC_BLOCK_SIZE + 1] = (uint8_t)crc;
     RCLK_LOW(clk_bit);
-    // Launch edge is mode 0's, always
-    //
-    // HS_TIMING moved the card's OUTPUT edge, and only that. Its input timing
-    // is unchanged: both of the datasheet's tables (p.18 high-speed, p.19
-    // backward-compatible) give tISU = tIH = 3 ns for CMD/DAT "referenced to
-    // CLK", i.e. the card latches the host on the rising edge in either mode.
-    // So the read path has to follow the card to CPHA=1 and the write path
-    // must NOT: in mode 1 SPIM shifts MOSI on the leading edge, which is the
-    // very edge the card samples -- zero setup against a 3 ns requirement,
-    // and the card takes the previous bit. Mode 0 shifts on the trailing
-    // edge and hands the card a whole half period of setup: 31 ns at M16,
-    // 15.6 ns at M32, both an order of magnitude over tISU.
-    //
-    // Saving and restoring rather than assuming keeps "the peripheral
-    // register is the state" true for the read path (emmc_hw.h): this
-    // function borrows the phase for one DMA and gives it back. Two register
-    // writes against a ~130 us transfer.
+
     const uint32_t saved_cfg = NRF_SPIM3->CONFIG;
     if (saved_cfg != SPIM_CONFIG_MODE0) {
         NRF_SPIM3->CONFIG = SPIM_CONFIG_MODE0;
@@ -794,9 +760,8 @@ static bool write_data_block(const uint8_t *buf) {
         return false;                    // DAT0 left an INPUT -- see the wait
     }
 
-    // ENFORCE the token: 0b010 = accepted. Anything else -- including "never
-    // saw one" -- means the card did not take the block, and returning false
-    // makes the caller retry instead of believing a glitch was stored.
+    // ENFORCE the token: 0b010 = accepted. Anything else means the card did
+    // not take the block.
     if (wr_status != 0x2) {
         return false;
     }
@@ -842,9 +807,6 @@ bool common_hal_emmcio_emmc_writeblocks(uint32_t block_addr, const uint8_t *buf,
 }
 
 uint32_t common_hal_emmcio_emmc_get_frequency(emmcio_emmc_obj_t *self) {
-    // SPIM3's M16/M32 codes are special values, NOT points on the linear scale
-    // the K125..M8 codes sit on (0x0A000000 would decode to 156 MHz there), so
-    // this is a lookup and not arithmetic. Only two values are ever written.
     (void)self;
     return NRF_SPIM3->FREQUENCY == SPIM_FREQ_M32 ? 32000000u : 16000000u;
 }

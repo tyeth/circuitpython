@@ -235,9 +235,8 @@ bool filesystem_init(bool create_allowed, bool force_create) {
     #endif
 
     // Same reason as the SD card above, mount it before USB enumerates rather than
-    // lazily from tud_msc_test_unit_ready_cb() -- and the same requirement,
-    // that settings.toml (just mounted, a few lines up) is readable, because
-    // this is where CIRCUITPY_EMMC_USB is honoured.
+    // lazily from tud_msc_test_unit_ready_cb(). Also the same requirement
+    // that settings.toml is readable.
     #if CIRCUITPY_EMMC_USB
     automount_emmc();
     #endif

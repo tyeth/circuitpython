@@ -74,8 +74,7 @@ static inline void emmc_opt_pin_output(uint8_t pin) {
 
 // ---- pin control ---------------------------------------------------------
 // The command/init path uses the HAL macros; the data path uses the direct
-// port-0 register accesses below (~3 cycles vs ~130 for the HAL, which is the
-// difference between a usable bit-bang clock and a useless one).
+// port-0 register accesses below
 #define CLK_HIGH()   nrf_gpio_pin_set(emmc_pinout.clk)
 #define CLK_LOW()    nrf_gpio_pin_clear(emmc_pinout.clk)
 #define CMD_HIGH()   nrf_gpio_pin_set(emmc_pinout.cmd)
@@ -124,17 +123,7 @@ static inline void emmc_pins_release(void) {
     // VCCQ stays an output, driven low: the rail must stay off, not float.
 }
 
-// ---- the write path's DMA buffer (anomaly 198) ----------------------------
-// SPIM3 on the nRF52840 corrupts TX bytes when EasyDMA reads them out of the
-// upper RAM regions while the CPU is busy elsewhere (errata 198). The port
-// already reserves 8 KiB of low RAM for exactly this (mpconfigport.h:36,
-// SPIM3_BUFFER_RAM_START_ADDR), and busio's SPI uses it for the same reason --
-// which is safe to share because an emmcio.EMMC object owns SPIM3 outright
-// while it lives: busio's allocator asks emmcio_spim3_in_use() and falls back
-// to SPIM0/1/2, so the two can never have a transfer in flight at once.
-//
-// The write path relies on this buffer rather than on retrying a bad CRC
-// status; the status token is still enforced as the backstop.
+// handle nrf52840 errata 198 SPIM3 data corruption
 #define EMMC_TX_FRAME  ((uint8_t *)SPIM3_BUFFER_RAM_START_ADDR)
 
 // ---- time ----------------------------------------------------------------
@@ -157,8 +146,6 @@ static inline uint32_t ticks_since_raw(uint32_t t0) {
 // in backwards-compatible mode). The bus is fixed there; the ONE way it moves
 // is emmc_set_high_speed(), which first gets the card's own EXT_CSD to read
 // back HS_TIMING = 1 (52 MHz limit) and only then steps to M32.
-// There is still no free-floating "speed knob": the two codes at the top of
-// this file are the only values ever written.
 //
 // NRF_SPIM3->FREQUENCY and ->CONFIG are read and written directly: the
 // peripheral register is the state, and it survives
@@ -186,12 +173,8 @@ static inline void emmc_spim_deinit(void) {
 
 // One blocking DMA transfer with the wires temporarily owned by SPIM. While
 // ENABLED the peripheral drives SCK (+MOSI for TX) / samples MISO; on disable
-// the pins fall back to their GPIO latches (CLK low, DAT0 as configured), so
-// the surrounding bit-bang phases continue seamlessly.
-//
-// A read is rx-only (MOSI unselected), so SPIM3 anomaly 198 (TX corruption)
-// cannot bite there at all. Writes make TX real, which is why their frame is
-// built in EMMC_TX_FRAME above.
+// the pins fall back to their GPIO latches (CLK low, DAT0 as configured).
+
 static inline void emmc_spim_xfer(const uint8_t *tx, uint32_t txlen, uint8_t *rx, uint32_t rxlen) {
     NRF_SPIM3->PSEL.MOSI = tx ? emmc_pinout.dat0 : 0xFFFFFFFFu;
     NRF_SPIM3->PSEL.MISO = rx ? emmc_pinout.dat0 : 0xFFFFFFFFu;
