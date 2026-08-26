@@ -40,7 +40,6 @@ static mp_vfs_mount_t _emmc_vfs;
 static fs_user_mount_t _emmc_usermount;
 
 static bool _tried;
-static emmcio_automount_status_t _status = EMMCIO_AUTOMOUNT_NOT_TRIED;
 
 #define AUTOMOUNT_BUDGET_US  5000000u
 
@@ -54,12 +53,11 @@ static struct {
     uint32_t in_progress;
 } _crumb __attribute__((section(".uninitialized")));
 
-static void automount_give_up(emmcio_automount_status_t status) {
+static void automount_give_up(void) {
     common_hal_emmcio_emmc_clear_deadline();
     // Leave the card powered down and the pins released
     emmcio_automount_abandon();
     _crumb.in_progress = 0;
-    _status = status;
 }
 
 void automount_emmc(void) {
@@ -69,20 +67,17 @@ void automount_emmc(void) {
     _tried = true;
 
     if (get_safe_mode() != SAFE_MODE_NONE) {
-        _status = EMMCIO_AUTOMOUNT_SAFE_MODE;
         return;
     }
 
     bool enabled = true;
     (void)settings_get_bool("CIRCUITPY_EMMC_USB", &enabled);
     if (!enabled) {
-        _status = EMMCIO_AUTOMOUNT_DISABLED;
         return;
     }
 
     if (_crumb.magic == AUTOMOUNT_CRUMB_MAGIC && _crumb.in_progress != 0) {
         _crumb.in_progress = 0;
-        _status = EMMCIO_AUTOMOUNT_SKIPPED_AFTER_FAULT;
         return;
     }
     _crumb.magic = AUTOMOUNT_CRUMB_MAGIC;
@@ -93,7 +88,7 @@ void automount_emmc(void) {
     mp_obj_t dev = emmcio_automount_construct(DEFAULT_EMMC_CLOCK, DEFAULT_EMMC_COMMAND,
         DEFAULT_EMMC_DATA, DEFAULT_EMMC_RESET, DEFAULT_EMMC_VCCQ, true, true);
     if (dev == MP_OBJ_NULL) {
-        automount_give_up(EMMCIO_AUTOMOUNT_NO_CARD);
+        automount_give_up();
         return;
     }
 
@@ -105,7 +100,7 @@ void automount_emmc(void) {
     mp_vfs_blockdev_init(&vfs->blockdev, dev);
 
     if (f_mount(&vfs->fatfs) != FR_OK) {
-        automount_give_up(EMMCIO_AUTOMOUNT_NO_FILESYSTEM);
+        automount_give_up();
         return;
     }
 
@@ -123,11 +118,6 @@ void automount_emmc(void) {
     // The budget covers bring-up and the mount only
     common_hal_emmcio_emmc_clear_deadline();
     _crumb.in_progress = 0;
-    _status = EMMCIO_AUTOMOUNT_OK;
-}
-
-emmcio_automount_status_t emmcio_automount_get_status(void) {
-    return _status;
 }
 
 #endif // CIRCUITPY_EMMC_USB

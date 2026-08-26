@@ -43,11 +43,6 @@
 
 #define EMMC_COUNT 1
 #define EMMC_LUN (1 + SAVES_COUNT + SDCARD_COUNT)
-
-// SCSI INQUIRY product id for the eMMC LUN. At most 16 characters.
-#ifndef CIRCUITPY_EMMC_MSC_PRODUCT_ID
-#define CIRCUITPY_EMMC_MSC_PRODUCT_ID "eMMC"
-#endif
 #else
 #define EMMC_COUNT 0
 #endif
@@ -396,15 +391,7 @@ void tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16
     (void)lun;
 
     memcpy(vendor_id, CFG_TUD_MSC_VENDOR, strlen(CFG_TUD_MSC_VENDOR));
-    #ifdef EMMC_LUN
-    if (lun == EMMC_LUN) {
-        static const char emmc_product_id[] = CIRCUITPY_EMMC_MSC_PRODUCT_ID;
-        memcpy(product_id, emmc_product_id, strlen(emmc_product_id));
-    } else
-    #endif
-    {
-        memcpy(product_id, CFG_TUD_MSC_PRODUCT, strlen(CFG_TUD_MSC_PRODUCT));
-    }
+    memcpy(product_id, CFG_TUD_MSC_PRODUCT, strlen(CFG_TUD_MSC_PRODUCT));
     memcpy(product_rev, CFG_TUD_MSC_PRODUCT_REV, strlen(CFG_TUD_MSC_PRODUCT_REV));
 }
 
