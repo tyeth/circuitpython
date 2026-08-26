@@ -78,7 +78,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
                 break;
             case WIFI_EVENT_AP_STACONNECTED: { /* CP-WIFI-DEBUG */
                 wifi_event_ap_staconnected_t *e = (wifi_event_ap_staconnected_t *)event_data;
-                ESP_LOGW(TAG, "ap sta connected " MACSTR " aid=%d", MAC2STR(e->mac), e->aid);
+                ESP_LOGW(TAG, "ap sta connected " MACSTR " aid=%d idf_free=%u largest=%u", MAC2STR(e->mac), e->aid, (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
                 break;
             }
             case WIFI_EVENT_AP_STADISCONNECTED: { /* CP-WIFI-DEBUG */
