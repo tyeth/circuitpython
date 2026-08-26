@@ -171,7 +171,6 @@ static void cp_saved_word_save(void) {
     if (path == NULL || path[0] == '\0') {
         return;
     }
-    int fd = nsi_host_open(path, O_WRONLY | O_CREAT | O_TRUNC);
     int fd = nsi_host_open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0) {
         return;
@@ -186,7 +185,7 @@ static void cp_saved_word_restore(void) {
     if (path == NULL || path[0] == '\0') {
         return;
     }
-    int fd = nsi_host_open(path, O_RDONLY);
+    int fd = nsi_host_open(path, O_RDONLY, 0 /* unused */);
     if (fd < 0) {
         return; // First boot: no save file yet.
     }
