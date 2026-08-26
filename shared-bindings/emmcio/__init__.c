@@ -10,24 +10,24 @@
 #include "shared-bindings/emmcio/EMMC.h"
 #include "shared-module/emmcio/__init__.h"
 
-// | """Block device access to the on-board eMMC
-// |
-// | The `emmcio` module exposes an eMMC chip as a block device.
-// | It provides no filesystem of its own: to read files, hand an `EMMC`
-// | object to `storage.VfsFat` and mount it.
-// |
-// | .. note:: This module is only available on boards with an eMMC wired to the
-// |     dedicated SPI peripheral, and only one `EMMC` object may exist at a time.
-// | """
-// |
+//| """Block device access to the on-board eMMC
+//|
+//| The `emmcio` module exposes an eMMC chip as a block device.
+//| It provides no filesystem of its own: to read files, hand an `EMMC`
+//| object to `storage.VfsFat` and mount it.
+//|
+//| .. note:: This module is only available on boards with an eMMC wired to the
+//|     dedicated SPI peripheral, and only one `EMMC` object may exist at a time.
+//| """
+//|
 
-// | def automounted() -> bool:
-// |     """`True` when the eMMC has been mounted as a filesystem for you at
-// |     startup, `False` when it is free for Python to open.
-// |
-// |     While this is `True`, constructing `EMMC` raises a `ValueError`."""
-// |     ...
-// |
+//| def automounted() -> bool:
+//|     """`True` when the eMMC has been mounted as a filesystem for you at
+//|     startup, `False` when it is free for Python to open.
+//|
+//|     While this is `True`, constructing `EMMC` raises a `ValueError`."""
+//|     ...
+//|
 static mp_obj_t emmcio_automounted(void) {
     return mp_obj_new_bool(emmcio_is_automounted());
 }

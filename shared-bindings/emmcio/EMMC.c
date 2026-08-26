@@ -24,61 +24,68 @@ static void check_for_deinit(emmcio_emmc_obj_t *self) {
     }
 }
 
-// | class EMMC:
-// |     """eMMC as a block device"""
-// |
-// |     def __init__(
-// |         self,
-// |         *,
-// |         clock: microcontroller.Pin,
-// |         command: microcontroller.Pin,
-// |         data: microcontroller.Pin,
-// |         reset: Optional[microcontroller.Pin] = None,
-// |         vccq: Optional[microcontroller.Pin] = None,
-// |         high_speed: bool = False,
-// |         write_enabled: bool = False,
-// |     ) -> None:
-// |         """Power up the card and make it ready for block access.
-// |
-// |         Only one `EMMC` object may exist at a time. Call `deinit()`, or use
-// |         the object as a context manager, to release the card and its pins.
-// |
-// |         :param ~microcontroller.Pin clock: the card's CLK pin
-// |         :param ~microcontroller.Pin command: the card's CMD pin
-// |         :param ~microcontroller.Pin data: the card's DAT0 pin. The bus is
-// |           1-bit, so this is a single pin.
-// |         :param ~microcontroller.Pin reset: the card's RST_n pin, if the board
-// |           wires one
-// |         :param ~microcontroller.Pin vccq: a pin gating the card's I/O rail,
-// |           if the board has one
-// |         :param bool high_speed: Run the bus at its faster clock rate. Raises
-// |           an `OSError` if the card will not make the switch.
-// |         :param bool write_enabled: Allow `writeblocks()`. When `False`, the
-// |           object is read-only and every write path refuses.
-// |
-// |         :raises ValueError: if the pins are unusable or already in use, or
-// |           if the card is owned by the USB drive.
-// |         :raises OSError: if the card does not come up.
-// |
-// |         Mount the card's filesystem::
-// |
-// |           import board
-// |           import emmcio
-// |           import storage
-// |
-// |           emmc = emmcio.EMMC(
-// |               clock=board.EMMC_CLK,
-// |               command=board.EMMC_CMD,
-// |               data=board.EMMC_DAT0,
-// |               reset=board.EMMC_RESET,
-// |               vccq=board.EMMC_VCCQ,
-// |               high_speed=True,
-// |               write_enabled=True,
-// |           )
-// |           storage.mount(storage.VfsFat(emmc), "/sd")
-// |         """
-// |         ...
-// |
+//| class EMMC:
+//|     """eMMC as a block device"""
+//|
+//|     def __init__(
+//|         self,
+//|         *,
+//|         clock: microcontroller.Pin,
+//|         command: microcontroller.Pin,
+//|         data: microcontroller.Pin,
+//|         reset: Optional[microcontroller.Pin] = None,
+//|         vccq: Optional[microcontroller.Pin] = None,
+//|         high_speed: bool = False,
+//|         write_enabled: bool = False,
+//|     ) -> None:
+//|         """Power up the card and make it ready for block access.
+//|
+//|         Only one `EMMC` object may exist at a time. Call `deinit()`, or use
+//|         the object as a context manager, to release the card and its pins.
+//|
+//|         :param ~microcontroller.Pin clock: the card's CLK pin
+//|         :param ~microcontroller.Pin command: the card's CMD pin
+//|         :param ~microcontroller.Pin data: the card's DAT0 pin. The bus is
+//|           1-bit, so this is a single pin.
+//|         :param ~microcontroller.Pin reset: the card's RST_n pin, if the board
+//|           wires one
+//|         :param ~microcontroller.Pin vccq: a pin gating the card's I/O rail,
+//|           if the board has one
+//|         :param bool high_speed: Run the bus at its faster clock rate. Raises
+//|           an `OSError` if the card will not make the switch.
+//|         :param bool write_enabled: Allow `writeblocks()`. When `False`, the
+//|           object is read-only and every write path refuses.
+//|
+//|         :raises ValueError: if the pins are unusable or already in use, or
+//|           if the card is owned by the USB drive.
+//|         :raises OSError: if the card does not come up. ``emmcio failure: n``
+//|           names the MMC command that did not answer (``8`` being the
+//|           extended CSD), and ``high_speed failure: n`` how far the switch
+//|           got: ``0`` the card does not advertise 52 MHz, ``1`` no CMD6
+//|           response, ``2`` the card never released DAT0, ``3`` it never came
+//|           back to the transfer state, ``4`` the EXT_CSD readback did not
+//|           take, ``5`` the 32 MHz smoke test failed, ``7`` the card rejected
+//|           HS_TIMING.
+//|
+//|         Mount the card's filesystem::
+//|
+//|           import board
+//|           import emmcio
+//|           import storage
+//|
+//|           emmc = emmcio.EMMC(
+//|               clock=board.EMMC_CLK,
+//|               command=board.EMMC_CMD,
+//|               data=board.EMMC_DAT0,
+//|               reset=board.EMMC_RESET,
+//|               vccq=board.EMMC_VCCQ,
+//|               high_speed=True,
+//|               write_enabled=True,
+//|           )
+//|           storage.mount(storage.VfsFat(emmc), "/sd")
+//|         """
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     enum { ARG_clock, ARG_command, ARG_data, ARG_reset, ARG_vccq, ARG_high_speed, ARG_write_enabled };
     static const mp_arg_t allowed_args[] = {
@@ -113,41 +120,58 @@ static mp_obj_t emmcio_emmc_make_new(const mp_obj_type_t *type, size_t n_args, s
     }
 
     emmcio_emmc_obj_t *self = mp_obj_malloc(emmcio_emmc_obj_t, &emmcio_emmc_type);
-    // A stage means the card itself did not come up; anything else means the
+    // An OSError means the card itself did not come up; a ValueError means the
     // wiring or the hardware is unusable.
-    const char *stage = NULL;
-    mp_rom_error_text_t err = common_hal_emmcio_emmc_construct(self,
-        clock, command, data, reset, vccq,
-        args[ARG_high_speed].u_bool, args[ARG_write_enabled].u_bool, &stage);
-    if (err != NULL) {
-        if (stage != NULL) {
-            mp_raise_msg_varg(&mp_type_OSError, err, stage);
-        }
-        mp_raise_ValueError(err);
+    int detail = 0;
+    switch (common_hal_emmcio_emmc_construct(self, clock, command, data, reset, vccq,
+        args[ARG_high_speed].u_bool, args[ARG_write_enabled].u_bool, &detail)) {
+        case EMMCIO_OK:
+            break;
+        case EMMCIO_ERR_PIN_PORT:
+            mp_raise_ValueError_varg(MP_ERROR_TEXT("Invalid %q pin"), (qstr)detail);
+            break;
+        case EMMCIO_ERR_SPI_IN_USE:
+            mp_raise_ValueError(MP_ERROR_TEXT("SPI peripheral in use"));
+            break;
+        case EMMCIO_ERR_PIN_IN_USE:
+            mp_raise_ValueError(MP_ERROR_TEXT("Hardware in use, try alternative pins"));
+            break;
+        case EMMCIO_ERR_USB_OWNED:
+            mp_raise_ValueError_varg(MP_ERROR_TEXT("%q in use"), MP_QSTR_emmcio);
+            break;
+        case EMMCIO_ERR_IN_USE:
+            mp_raise_ValueError(MP_ERROR_TEXT("Peripheral in use"));
+            break;
+        case EMMCIO_ERR_INIT:
+            mp_raise_OSError_msg_varg(MP_ERROR_TEXT("%q failure: %d"), MP_QSTR_emmcio, detail);
+            break;
+        case EMMCIO_ERR_HIGH_SPEED:
+            mp_raise_OSError_msg_varg(MP_ERROR_TEXT("%q failure: %d"), MP_QSTR_high_speed, detail);
+            break;
     }
     return MP_OBJ_FROM_PTR(self);
 }
 
-// |     def deinit(self) -> None:
-// |         """Release the card and the pins it uses. Any further use of this
-// |         object raises a `ValueError`."""
-// |         ...
-// |
+//|     def deinit(self) -> None:
+//|         """Release the card and the pins it uses. Any further use of this
+//|         object raises a `ValueError`."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_deinit(mp_obj_t self_in) {
     common_hal_emmcio_emmc_deinit(MP_OBJ_TO_PTR(self_in));
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_deinit_obj, emmcio_emmc_deinit);
 
-// |     def __enter__(self) -> EMMC:
-// |         """No-op used by Context Managers."""
-// |         ...
-// |
-// |     def __exit__(self) -> None:
-// |         """Automatically deinitializes the hardware when exiting a context. See
-// |         :ref:`lifetime-and-contextmanagers` for more info."""
-// |         ...
-// |
+//|     def __enter__(self) -> EMMC:
+//|         """No-op used by Context Managers."""
+//|         ...
+//|
+//|     def __exit__(self) -> None:
+//|         """Automatically deinitializes the hardware when exiting a context. See
+//|         :ref:`lifetime-and-contextmanagers` for more info."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_obj___exit__(size_t n_args, const mp_obj_t *args) {
     return emmcio_emmc_deinit(args[0]);
 }
@@ -178,18 +202,18 @@ static int emmc_read_chunked(emmcio_emmc_obj_t *self, uint8_t *out, mp_uint_t st
     return 0;
 }
 
-// |     def readblocks(self, start_block: int, buf: WriteableBuffer) -> None:
-// |         """Read into ``buf`` starting at ``start_block``.
-// |
-// |         :param int start_block: the first block to read
-// |         :param WriteableBuffer buf: a buffer whose length is a non-zero
-// |           multiple of `block_size`
-// |
-// |         :raises ValueError: if ``buf`` is the wrong length, or the requested
-// |           blocks run past the end of the card.
-// |         :raises OSError: if the card fails to deliver the data."""
-// |         ...
-// |
+//|     def readblocks(self, start_block: int, buf: WriteableBuffer) -> None:
+//|         """Read into ``buf`` starting at ``start_block``.
+//|
+//|         :param int start_block: the first block to read
+//|         :param WriteableBuffer buf: a buffer whose length is a non-zero
+//|           multiple of `block_size`
+//|
+//|         :raises ValueError: if ``buf`` is the wrong length, or the requested
+//|           blocks run past the end of the card.
+//|         :raises OSError: if the card fails to deliver the data."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_readblocks(mp_obj_t self_in, mp_obj_t start_in, mp_obj_t buf_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -237,20 +261,20 @@ static int emmc_write_chunked(emmcio_emmc_obj_t *self, const uint8_t *src, mp_ui
     return 0;
 }
 
-// |     def writeblocks(self, start_block: int, buf: ReadableBuffer) -> None:
-// |         """Write ``buf`` to the card starting at ``start_block``.
-// |
-// |         :param int start_block: the first block to write
-// |         :param ReadableBuffer buf: a buffer whose length is a non-zero
-// |           multiple of `block_size`
-// |
-// |         :raises RuntimeError: if this object was not constructed with
-// |           ``write_enabled=True``.
-// |         :raises ValueError: if ``buf`` is the wrong length, or the requested
-// |           blocks run past the end of the card.
-// |         :raises OSError: if the write fails."""
-// |         ...
-// |
+//|     def writeblocks(self, start_block: int, buf: ReadableBuffer) -> None:
+//|         """Write ``buf`` to the card starting at ``start_block``.
+//|
+//|         :param int start_block: the first block to write
+//|         :param ReadableBuffer buf: a buffer whose length is a non-zero
+//|           multiple of `block_size`
+//|
+//|         :raises RuntimeError: if this object was not constructed with
+//|           ``write_enabled=True``.
+//|         :raises ValueError: if ``buf`` is the wrong length, or the requested
+//|           blocks run past the end of the card.
+//|         :raises OSError: if the write fails."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_writeblocks(mp_obj_t self_in, mp_obj_t start_in, mp_obj_t buf_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -279,12 +303,12 @@ static mp_obj_t emmcio_emmc_writeblocks(mp_obj_t self_in, mp_obj_t start_in, mp_
 }
 static MP_DEFINE_CONST_FUN_OBJ_3(emmcio_emmc_writeblocks_obj, emmcio_emmc_writeblocks);
 
-// |     def ioctl(self, op: int, arg: int) -> Optional[int]:
-// |         """Perform a block-device control operation, as required by the
-// |         block-device protocol. Returns `None` for operations this device does
-// |         not implement."""
-// |         ...
-// |
+//|     def ioctl(self, op: int, arg: int) -> Optional[int]:
+//|         """Perform a block-device control operation, as required by the
+//|         block-device protocol. Returns `None` for operations this device does
+//|         not implement."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_ioctl(mp_obj_t self_in, mp_obj_t op_in, mp_obj_t arg_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -334,10 +358,10 @@ bool emmcio_emmc_is_write_enabled(mp_obj_t self_in) {
     return !common_hal_emmcio_emmc_deinited(self) && self->write_enabled;
 }
 
-// |     def read_ext_csd(self) -> bytes:
-// |         """Read the card's 512-byte extended CSD register."""
-// |         ...
-// |
+//|     def read_ext_csd(self) -> bytes:
+//|         """Read the card's 512-byte extended CSD register."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_read_ext_csd(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -350,10 +374,10 @@ static mp_obj_t emmcio_emmc_read_ext_csd(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_read_ext_csd_obj, emmcio_emmc_read_ext_csd);
 
-// |     def status(self) -> int:
-// |         """Read the card's 32-bit status register."""
-// |         ...
-// |
+//|     def status(self) -> int:
+//|         """Read the card's 32-bit status register."""
+//|         ...
+//|
 static mp_obj_t emmcio_emmc_status(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -368,9 +392,9 @@ static mp_obj_t emmcio_emmc_status(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_status_obj, emmcio_emmc_status);
 
-// |     count: int
-// |     """The number of blocks on the card."""
-// |
+//|     count: int
+//|     """The number of blocks on the card."""
+//|
 static mp_obj_t emmcio_emmc_get_count(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -379,18 +403,18 @@ static mp_obj_t emmcio_emmc_get_count(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_get_count_obj, emmcio_emmc_get_count);
 MP_PROPERTY_GETTER(emmcio_emmc_count_obj, (mp_obj_t)&emmcio_emmc_get_count_obj);
 
-// |     block_size: int
-// |     """The size of one block, in bytes."""
-// |
+//|     block_size: int
+//|     """The size of one block, in bytes."""
+//|
 static mp_obj_t emmcio_emmc_get_block_size(mp_obj_t self_in) {
     return MP_OBJ_NEW_SMALL_INT(EMMC_BLOCK_SIZE);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_get_block_size_obj, emmcio_emmc_get_block_size);
 MP_PROPERTY_GETTER(emmcio_emmc_block_size_obj, (mp_obj_t)&emmcio_emmc_get_block_size_obj);
 
-// |     cid: bytes
-// |     """The card's 16-byte identification register."""
-// |
+//|     cid: bytes
+//|     """The card's 16-byte identification register."""
+//|
 static mp_obj_t emmcio_emmc_get_cid(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -399,9 +423,9 @@ static mp_obj_t emmcio_emmc_get_cid(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_get_cid_obj, emmcio_emmc_get_cid);
 MP_PROPERTY_GETTER(emmcio_emmc_cid_obj, (mp_obj_t)&emmcio_emmc_get_cid_obj);
 
-// |     write_enabled: bool
-// |     """Whether `writeblocks()` is permitted on this object."""
-// |
+//|     write_enabled: bool
+//|     """Whether `writeblocks()` is permitted on this object."""
+//|
 static mp_obj_t emmcio_emmc_get_write_enabled(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -410,9 +434,9 @@ static mp_obj_t emmcio_emmc_get_write_enabled(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_get_write_enabled_obj, emmcio_emmc_get_write_enabled);
 MP_PROPERTY_GETTER(emmcio_emmc_write_enabled_obj, (mp_obj_t)&emmcio_emmc_get_write_enabled_obj);
 
-// |     high_speed: bool
-// |     """Whether the card is running at its faster clock rate."""
-// |
+//|     high_speed: bool
+//|     """Whether the card is running at its faster clock rate."""
+//|
 static mp_obj_t emmcio_emmc_get_high_speed(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);
@@ -421,9 +445,9 @@ static mp_obj_t emmcio_emmc_get_high_speed(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(emmcio_emmc_get_high_speed_obj, emmcio_emmc_get_high_speed);
 MP_PROPERTY_GETTER(emmcio_emmc_high_speed_obj, (mp_obj_t)&emmcio_emmc_get_high_speed_obj);
 
-// |     frequency: int
-// |     """The bus clock rate in Hz."""
-// |
+//|     frequency: int
+//|     """The bus clock rate in Hz."""
+//|
 static mp_obj_t emmcio_emmc_get_frequency(mp_obj_t self_in) {
     emmcio_emmc_obj_t *self = MP_OBJ_TO_PTR(self_in);
     check_for_deinit(self);

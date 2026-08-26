@@ -867,120 +867,115 @@ static void emmc_claim_pins(const mcu_pin_obj_t *clock, const mcu_pin_obj_t *com
     }
 }
 
-static mp_rom_error_text_t emmc_check_pins(const mcu_pin_obj_t *clock,
+static emmcio_construct_result_t emmc_check_pins(const mcu_pin_obj_t *clock,
     const mcu_pin_obj_t *command, const mcu_pin_obj_t *data,
-    const mcu_pin_obj_t *reset, const mcu_pin_obj_t *vccq) {
+    const mcu_pin_obj_t *reset, const mcu_pin_obj_t *vccq, int *detail) {
     // The data path drives CLK and DAT0 through NRF_P0 directly, so both have
     // to be on port 0. CMD, RESET and VCCQ go through the HAL and may be
     // anywhere.
-    if (clock->number >= P0_PIN_NUM || data->number >= P0_PIN_NUM) {
-        return MP_ERROR_TEXT("eMMC clock and data must be on port 0");
+    if (clock->number >= P0_PIN_NUM) {
+        *detail = MP_QSTR_clock;
+        return EMMCIO_ERR_PIN_PORT;
+    }
+    if (data->number >= P0_PIN_NUM) {
+        *detail = MP_QSTR_data;
+        return EMMCIO_ERR_PIN_PORT;
     }
     if ((NRF_SPIM3->ENABLE & SPIM_ENABLE_ENABLE_Msk) != 0) {
-        return MP_ERROR_TEXT("SPI peripheral in use");
+        return EMMCIO_ERR_SPI_IN_USE;
     }
     const mcu_pin_obj_t *pins[] = { clock, command, data, reset, vccq };
     for (size_t i = 0; i < MP_ARRAY_SIZE(pins); i++) {
         if (pins[i] != NULL && !pin_number_is_free(pins[i]->number)) {
-            return MP_ERROR_TEXT("Hardware in use, try alternative pins");
+            return EMMCIO_ERR_PIN_IN_USE;
         }
     }
-    return NULL;
+    return EMMCIO_OK;
 }
 
-static const char *init_failure_stage(emmcio_emmc_obj_t *self) {
+// The MMC command that never answered, so a failure names the step it stopped
+// at. CMD8 covers the extended CSD.
+static int init_failure_command(emmcio_emmc_obj_t *self) {
     if (!self->cmd0_sent) {
-        return "cmd0";
+        return 0;
     }
     if (self->cmd1_retries < 0) {
-        return "cmd1 (card never ready)";
+        return 1;               // card never left busy
     }
     if (!self->cmd2_resp) {
-        return "cmd2 (no CID)";
+        return 2;               // no CID
     }
     if (!self->cmd3_resp) {
-        return "cmd3";
+        return 3;
     }
     if (!self->cmd7_resp) {
-        return "cmd7 (select)";
+        return 7;               // select
     }
     if (!self->cmd16_resp) {
-        return "cmd16 (blocklen)";
+        return 16;              // blocklen
     }
-    return "ext_csd";
+    return 8;                   // extended CSD
 }
 
-static const char *hs_failure_stage(emmcio_emmc_obj_t *self) {
-    switch (self->hs_stage) {
-        case 0:
-            return "DEVICE_TYPE (card does not advertise 52 MHz)";
-        case 1:
-            return "cmd6 (no response)";
-        case 2:
-            return "cmd6 busy (card never released DAT0)";
-        case 3:
-            return self->hs_switch_error
-                ? "cmd13 SWITCH_ERROR (card rejected HS_TIMING)"
-                : "cmd13 (card never came back to tran)";
-        case 4:
-            return "readback (EXT_CSD[185] did not take)";
-        default:
-            return "32 MHz smoke test (fell back to 16 MHz)";
+// How far the high-speed switch got: hs_stage as documented on the struct,
+// except that a CMD13 SWITCH_ERROR (the card rejecting HS_TIMING) reports 7 to
+// tell it apart from the card simply never coming back to tran.
+static int hs_failure_stage(emmcio_emmc_obj_t *self) {
+    if (self->hs_stage == 3 && self->hs_switch_error) {
+        return 7;
     }
+    return self->hs_stage;
 }
 
-static const char *emmc_power_up(emmcio_emmc_obj_t *self, bool high_speed, bool *hs_failed) {
-    *hs_failed = false;
+static emmcio_construct_result_t emmc_power_up(emmcio_emmc_obj_t *self, bool high_speed,
+    int *detail) {
     s_constructed = true;
 
     if (!emmc_init(self)) {
-        const char *stage = init_failure_stage(self);
+        *detail = init_failure_command(self);
         emmcio_emmc_release_hardware();
-        return stage;
+        return EMMCIO_ERR_INIT;
     }
 
     uint8_t ext_csd[EMMC_BLOCK_SIZE];
     if (!common_hal_emmcio_emmc_read_ext_csd(ext_csd)) {
         emmcio_emmc_release_hardware();
-        return "ext_csd";
+        *detail = 8;
+        return EMMCIO_ERR_INIT;
     }
     if (high_speed && !emmc_set_high_speed(self)) {
-        const char *stage = hs_failure_stage(self);
+        *detail = hs_failure_stage(self);
         emmcio_emmc_release_hardware();
-        *hs_failed = true;
-        return stage;
+        return EMMCIO_ERR_HIGH_SPEED;
     }
-    return NULL;
+    return EMMCIO_OK;
 }
 
-mp_rom_error_text_t common_hal_emmcio_emmc_construct(emmcio_emmc_obj_t *self,
+emmcio_construct_result_t common_hal_emmcio_emmc_construct(emmcio_emmc_obj_t *self,
     const mcu_pin_obj_t *clock, const mcu_pin_obj_t *command, const mcu_pin_obj_t *data,
     const mcu_pin_obj_t *reset, const mcu_pin_obj_t *vccq,
-    bool high_speed, bool write_enabled, const char **stage_out) {
-    *stage_out = NULL;
+    bool high_speed, bool write_enabled, int *detail) {
+    *detail = 0;
     if (emmcio_is_automounted()) {
-        return MP_ERROR_TEXT("eMMC owned by the USB drive; set CIRCUITPY_EMMC_USB = false in settings.toml");
+        return EMMCIO_ERR_USB_OWNED;
     }
     if (s_constructed) {
-        return MP_ERROR_TEXT("Peripheral in use");
+        return EMMCIO_ERR_IN_USE;
     }
-    mp_rom_error_text_t pin_err = emmc_check_pins(clock, command, data, reset, vccq);
-    if (pin_err != NULL) {
+    emmcio_construct_result_t pin_err = emmc_check_pins(clock, command, data, reset, vccq, detail);
+    if (pin_err != EMMCIO_OK) {
         return pin_err;
     }
     emmc_claim_pins(clock, command, data, reset, vccq, false);
 
-    bool hs_failed = false;
-    const char *stage = emmc_power_up(self, high_speed, &hs_failed);
-    if (stage != NULL) {
-        *stage_out = stage;
-        return hs_failed ? MP_ERROR_TEXT("eMMC high-speed switch failed at %s")
-                         : MP_ERROR_TEXT("eMMC init failed at %s");
+    emmcio_construct_result_t err = emmc_power_up(self, high_speed, detail);
+    if (err != EMMCIO_OK) {
+        return err;
     }
 
     self->deinited = false;
     self->write_enabled = write_enabled;
-    return NULL;
+    return EMMCIO_OK;
 }
 
 void common_hal_emmcio_emmc_deinit(emmcio_emmc_obj_t *self) {
@@ -1006,13 +1001,13 @@ mp_obj_t emmcio_automount_construct(const mcu_pin_obj_t *clock, const mcu_pin_ob
     if (s_constructed) {
         return MP_OBJ_NULL;
     }
-    if (emmc_check_pins(clock, command, data, reset, vccq) != NULL) {
+    int detail;
+    if (emmc_check_pins(clock, command, data, reset, vccq, &detail) != EMMCIO_OK) {
         return MP_OBJ_NULL;
     }
     emmc_claim_pins(clock, command, data, reset, vccq, true);
     s_automount_obj.base.type = &emmcio_emmc_type;
-    bool hs_failed = false;
-    if (emmc_power_up(&s_automount_obj, high_speed, &hs_failed) != NULL) {
+    if (emmc_power_up(&s_automount_obj, high_speed, &detail) != EMMCIO_OK) {
         return MP_OBJ_NULL;
     }
     s_automount_obj.deinited = false;

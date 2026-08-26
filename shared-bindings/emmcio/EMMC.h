@@ -12,6 +12,19 @@
 
 extern const mp_obj_type_t emmcio_emmc_type;
 
+// Why bring-up failed. The binding turns these into exceptions; the automount
+// path just gives up.
+typedef enum {
+    EMMCIO_OK = 0,
+    EMMCIO_ERR_PIN_PORT,      // detail: qstr of the pin the port cannot drive
+    EMMCIO_ERR_SPI_IN_USE,
+    EMMCIO_ERR_PIN_IN_USE,
+    EMMCIO_ERR_USB_OWNED,
+    EMMCIO_ERR_IN_USE,
+    EMMCIO_ERR_INIT,          // detail: the MMC command that did not answer
+    EMMCIO_ERR_HIGH_SPEED,    // detail: the switch step it stopped at
+} emmcio_construct_result_t;
+
 // ---- native block-device protocol -----------------------------------------
 //
 // The same shape sdcardio and sdioio present, so extmod/vfs_blockdev.c can

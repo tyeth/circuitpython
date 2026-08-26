@@ -44,10 +44,12 @@ typedef struct {
     uint8_t hs_stage;
 } emmcio_emmc_obj_t;
 
-mp_rom_error_text_t common_hal_emmcio_emmc_construct(emmcio_emmc_obj_t *self,
+// EMMCIO_OK on success. On failure *detail carries the code's extra number,
+// which the binding turns into the exception's argument.
+emmcio_construct_result_t common_hal_emmcio_emmc_construct(emmcio_emmc_obj_t *self,
     const mcu_pin_obj_t *clock, const mcu_pin_obj_t *command, const mcu_pin_obj_t *data,
     const mcu_pin_obj_t *reset, const mcu_pin_obj_t *vccq,
-    bool high_speed, bool write_enabled, const char **stage_out);
+    bool high_speed, bool write_enabled, int *detail);
 void common_hal_emmcio_emmc_deinit(emmcio_emmc_obj_t *self);
 bool common_hal_emmcio_emmc_deinited(emmcio_emmc_obj_t *self);
 
