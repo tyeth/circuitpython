@@ -19,6 +19,9 @@
 
 #include "esp_now.h"
 #include "mphalport.h"
+#include "esp_wifi.h" /* CP-WIFI-DEBUG */
+#include "esp_log.h" /* CP-WIFI-DEBUG */
+static const char *TAG = "CP espnow"; /* CP-WIFI-DEBUG */
 
 #include "esp_now.h"
 
@@ -120,7 +123,18 @@ void common_hal_espnow_init(espnow_obj_t *self) {
         common_hal_wifi_radio_set_enabled(&common_hal_wifi_radio_obj, true);
     }
 
-    CHECK_ESP_RESULT(esp_now_init());
+    { /* CP-WIFI-DEBUG */
+        wifi_mode_t m = 0; uint8_t ch = 0; wifi_second_chan_t sc = 0;
+        esp_wifi_get_mode(&m); esp_wifi_get_channel(&ch, &sc);
+        ESP_LOGW(TAG, "esp_now_init: before mode=%d ch=%d/%d", m, ch, sc);
+    }
+    esp_err_t now_res = esp_now_init();
+    {
+        wifi_mode_t m = 0; uint8_t ch = 0; wifi_second_chan_t sc = 0;
+        esp_wifi_get_mode(&m); esp_wifi_get_channel(&ch, &sc);
+        ESP_LOGW(TAG, "esp_now_init -> 0x%x: after mode=%d ch=%d/%d", now_res, m, ch, sc);
+    }
+    CHECK_ESP_RESULT(now_res);
 
     // esp_now_set_peer_rate_config() is poorly documented, and we haven't figured out
     // what the esp_now_rate_config_t settings should be. For now, just ignore phy_rate.
@@ -177,6 +191,9 @@ mp_obj_t common_hal_espnow_send(espnow_obj_t *self, const mp_buffer_info_t *mess
     while ((ESP_ERR_ESPNOW_NO_MEM == (err = esp_now_send(mac, message->buf, message->len))) &&
            (mp_hal_ticks_ms() - start) <= DEFAULT_SEND_TIMEOUT_MS) {
         RUN_BACKGROUND_TASKS;
+    }
+    if (err != ESP_OK) { /* CP-WIFI-DEBUG */
+        ESP_LOGW(TAG, "esp_now_send len=%u -> 0x%x (waited %lu ms)", (unsigned)message->len, err, (unsigned long)(mp_hal_ticks_ms() - start));
     }
     CHECK_ESP_RESULT(err);
 

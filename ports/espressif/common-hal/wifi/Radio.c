@@ -25,6 +25,8 @@
 
 #include "components/esp_netif/include/esp_netif_net_stack.h"
 #include "components/esp_wifi/include/esp_wifi.h"
+#include "components/log/include/esp_log.h" /* CP-WIFI-DEBUG */
+static const char *TAG = "CP wifi"; /* CP-WIFI-DEBUG */
 #include "components/lwip/include/apps/ping/ping_sock.h"
 #include "lwip/sockets.h"
 
@@ -269,7 +271,13 @@ void common_hal_wifi_radio_start_ap(wifi_radio_obj_t *self, uint8_t *ssid, size_
 
     config->ap.max_connection = max_connections;
 
-    esp_wifi_set_config(WIFI_IF_AP, config);
+    esp_err_t cfg_res = esp_wifi_set_config(WIFI_IF_AP, config); /* CP-WIFI-DEBUG */
+    {
+        wifi_mode_t m = 0; uint8_t ch = 0; wifi_second_chan_t sc = 0;
+        esp_wifi_get_mode(&m); esp_wifi_get_channel(&ch, &sc);
+        ESP_LOGW(TAG, "start_ap ssid='%s' req_ch=%d auth=%d maxconn=%d -> set_config=0x%x mode=%d cur_ch=%d/%d",
+            (char *)config->ap.ssid, channel, esp_authmode, max_connections, cfg_res, m, ch, sc);
+    }
     // Wait a few ms for the AP to start. Empirically, this takes < 3ms on ESP32, and < 1ms on other chips.
     for (size_t ms = 0; ms < 10; ms++) {
         if (common_hal_wifi_radio_get_ap_active(self)) {
@@ -277,6 +285,7 @@ void common_hal_wifi_radio_start_ap(wifi_radio_obj_t *self, uint8_t *ssid, size_
         }
         mp_hal_delay_ms(1);
     }
+    ESP_LOGW(TAG, "start_ap done: ap_active=%d netif_up=%d", common_hal_wifi_radio_get_ap_active(self), esp_netif_is_netif_up(self->ap_netif)); /* CP-WIFI-DEBUG */
 }
 
 bool common_hal_wifi_radio_get_ap_active(wifi_radio_obj_t *self) {
@@ -614,11 +623,14 @@ void common_hal_wifi_radio_stop_dhcp_client(wifi_radio_obj_t *self) {
 }
 
 void common_hal_wifi_radio_start_dhcp_server(wifi_radio_obj_t *self) {
-    esp_netif_dhcps_start(self->ap_netif);
+    esp_err_t r = esp_netif_dhcps_start(self->ap_netif); /* CP-WIFI-DEBUG */
+    esp_netif_dhcp_status_t st = 0; esp_netif_dhcps_get_status(self->ap_netif, &st);
+    ESP_LOGW(TAG, "dhcps_start -> 0x%x status=%d", r, st);
 }
 
 void common_hal_wifi_radio_stop_dhcp_server(wifi_radio_obj_t *self) {
-    esp_netif_dhcps_stop(self->ap_netif);
+    esp_err_t r = esp_netif_dhcps_stop(self->ap_netif); /* CP-WIFI-DEBUG */
+    ESP_LOGW(TAG, "dhcps_stop -> 0x%x", r);
 }
 
 void common_hal_wifi_radio_set_ipv4_address(wifi_radio_obj_t *self, mp_obj_t ipv4, mp_obj_t netmask, mp_obj_t gateway, mp_obj_t ipv4_dns) {
