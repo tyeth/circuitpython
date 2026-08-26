@@ -38,7 +38,21 @@
 #define SDCARD_COUNT 0
 #endif
 
-#define LUN_COUNT (1 + SAVES_COUNT + SDCARD_COUNT)
+#if CIRCUITPY_EMMC_USB
+#include "shared-module/emmcio/__init__.h"
+
+#define EMMC_COUNT 1
+#define EMMC_LUN (1 + SAVES_COUNT + SDCARD_COUNT)
+
+// SCSI INQUIRY product id for the eMMC LUN. At most 16 characters.
+#ifndef CIRCUITPY_EMMC_MSC_PRODUCT_ID
+#define CIRCUITPY_EMMC_MSC_PRODUCT_ID "eMMC"
+#endif
+#else
+#define EMMC_COUNT 0
+#endif
+
+#define LUN_COUNT (1 + SAVES_COUNT + SDCARD_COUNT + EMMC_COUNT)
 
 // The ellipsis range in the designated initializer of `ejected` is not standard C,
 // but it works in both gcc and clang.
@@ -162,6 +176,26 @@ static fs_user_mount_t *get_vfs(int lun) {
             // Clear any ejected state so that a re-insert causes it to reappear.
             ejected[SDCARD_LUN] = false;
             locked[SDCARD_LUN] = false;
+        }
+    }
+    #endif
+    #ifdef EMMC_LUN
+    if (lun == EMMC_LUN) {
+        const char *path_under_mount;
+
+        fs_user_mount_t *emmc = filesystem_for_path(CIRCUITPY_EMMC_MOUNT_PATH, &path_under_mount);
+        // Unlike the SD card there is no heap-mount case to allow: the eMMC's
+        // drive exists only when the supervisor mounted it, and
+        // that mount is static. A user mount made by code.py stays a Python
+        // filesystem and never becomes a LUN.
+        if (emmc != root &&
+            ((emmc->blockdev.flags & MP_BLOCKDEV_FLAG_NATIVE) != 0) &&
+            !gc_ptr_on_heap(emmc)) {
+            return emmc;
+        } else {
+            // Clear any ejected state so that a remount causes it to reappear.
+            ejected[EMMC_LUN] = false;
+            locked[EMMC_LUN] = false;
         }
     }
     #endif
@@ -362,7 +396,15 @@ void tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16
     (void)lun;
 
     memcpy(vendor_id, CFG_TUD_MSC_VENDOR, strlen(CFG_TUD_MSC_VENDOR));
-    memcpy(product_id, CFG_TUD_MSC_PRODUCT, strlen(CFG_TUD_MSC_PRODUCT));
+    #ifdef EMMC_LUN
+    if (lun == EMMC_LUN) {
+        static const char emmc_product_id[] = CIRCUITPY_EMMC_MSC_PRODUCT_ID;
+        memcpy(product_id, emmc_product_id, strlen(emmc_product_id));
+    } else
+    #endif
+    {
+        memcpy(product_id, CFG_TUD_MSC_PRODUCT, strlen(CFG_TUD_MSC_PRODUCT));
+    }
     memcpy(product_rev, CFG_TUD_MSC_PRODUCT_REV, strlen(CFG_TUD_MSC_PRODUCT_REV));
 }
 

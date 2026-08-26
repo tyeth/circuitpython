@@ -22,6 +22,10 @@
 #include "nrf/power.h"
 #include "nrf/timers.h"
 
+#if CIRCUITPY_EMMCIO
+#include "shared-bindings/emmcio/__init__.h"
+#endif
+
 #include "nrf_nvic.h"
 
 #include "common-hal/microcontroller/Pin.h"
@@ -202,6 +206,10 @@ void reset_port(void) {
 
     #if CIRCUITPY_RTC
     rtc_reset();
+    #endif
+
+    #if CIRCUITPY_EMMCIO
+    emmcio_reset();
     #endif
 
     timers_reset();
