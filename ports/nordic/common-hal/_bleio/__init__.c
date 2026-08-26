@@ -133,7 +133,7 @@ void bleio_reset(void) {
     // connection, the BLE workflow's included. So run it only when user code created
     // services. All other user BLE state has already been torn down individually by
     // bleio_user_reset().
-    if (!bleio_user_services_created()) {
+    if (!bleio_get_user_services_created()) {
         return;
     }
     bleio_clear_user_services_created();

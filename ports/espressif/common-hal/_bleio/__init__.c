@@ -82,7 +82,7 @@ void bleio_reset(void) {
     // used in Service.c), so bleio_user_reset() could delete user services one by
     // one and never restart the BLE stack at all. For now this port matches
     // nordic, whose SoftDevice can only clear services with a full cycle.
-    if (!bleio_user_services_created()) {
+    if (!bleio_get_user_services_created()) {
         return;
     }
     bleio_clear_user_services_created();

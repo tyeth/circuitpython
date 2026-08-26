@@ -93,7 +93,7 @@ MP_NORETURN void mp_raise_bleio_SecurityError(mp_rom_error_text_t fmt, ...) {
 
 static bool _user_services_created;
 
-bool bleio_user_services_created(void) {
+bool bleio_get_user_services_created(void) {
     return _user_services_created;
 }
 
