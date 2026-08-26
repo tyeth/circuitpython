@@ -4,8 +4,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include <string.h>
-
 #include "common-hal/wifi/__init__.h"
 #include "shared-bindings/wifi/__init__.h"
 
@@ -55,7 +53,6 @@ static void schedule_background_on_cp_core(void *arg) {
 static struct net_mgmt_event_callback wifi_cb;
 static struct net_mgmt_event_callback ipv4_cb;
 
-
 static void _event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt_event, struct net_if *iface) {
     wifi_radio_obj_t *self = &common_hal_wifi_radio_obj;
     (void)iface;
@@ -64,12 +61,8 @@ static void _event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt_eve
         case NET_EVENT_WIFI_SCAN_RESULT: {
             LOG_DBG("NET_EVENT_WIFI_SCAN_RESULT");
             const struct wifi_scan_result *result = cb->info;
-            if (result != NULL) {
-                // Remember the authmode so connect() can request the matching
-                // security type later.
-                if (self->current_scan != NULL) {
-                    wifi_scannednetworks_scan_result(self->current_scan, result);
-                }
+            if (result != NULL && self->current_scan != NULL) {
+                wifi_scannednetworks_scan_result(self->current_scan, result);
             }
             break;
         }
