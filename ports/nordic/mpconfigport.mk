@@ -125,9 +125,7 @@ endif
 endif
 endif
 
-# no BLEIO without a SoftDevice.
-ifeq ($(SD), )
-CIRCUITPY_BLEIO_NATIVE = 0
+ifneq ($(CIRCUITPY_BLEIO_NATIVE),1)
 CIRCUITPY_BLE_FILE_SERVICE = 0
 CIRCUITPY_BLE_SERIAL_SERVICE = 0
 endif

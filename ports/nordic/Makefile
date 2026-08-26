@@ -8,7 +8,7 @@ include ../../py/circuitpy_mkenv.mk
 
 # Skip when the make command is not board-specific i.e. fetch-port-submodules.
 ifneq ($(VALID_BOARD),)
-ifneq ($(SD), )
+ifeq ($(CIRCUITPY_BLEIO_NATIVE),1)
 	include bluetooth/bluetooth_common.mk
 endif
 endif
@@ -120,7 +120,7 @@ SRC_C += \
 	device/$(MCU_VARIANT)/startup_$(MCU_SUB_VARIANT).c \
 	nrfx/mdk/system_$(MCU_SUB_VARIANT).c \
 
-ifneq ($(SD), )
+ifeq ($(CIRCUITPY_BLEIO_NATIVE),1)
 SRC_C += \
 	bluetooth/ble_drv.c \
 	common-hal/_bleio/bonding.c \
@@ -185,7 +185,7 @@ UF2_FAMILY_ID_nrf52840 = 0xADA52840
 UF2_FAMILY_ID_nrf52833 = 0x621E937A
 
 
-ifneq ($(SD), )
+ifeq ($(CIRCUITPY_BLEIO_NATIVE),1)
 all: $(BUILD)/firmware.bin $(BUILD)/firmware.uf2 $(BUILD)/firmware.combined.hex
 else
 # firmware.combined.hex merges in the SoftDevice hex; without one there is
