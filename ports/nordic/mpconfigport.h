@@ -12,9 +12,6 @@
 
 #include "nrf_mbr.h"  // for MBR_SIZE
 #include "nrf_sdm.h"  // for SD_FLASH_SIZE
-#else
-#define MBR_SIZE      (0)
-#define SD_FLASH_SIZE (0)
 #endif
 
 #include "peripherals/nrf/nvm.h" // for FLASH_PAGE_SIZE
@@ -49,6 +46,17 @@
 #include "py/circuitpy_mpconfig.h"
 
 // Definitions that might be overridden by mpconfigboard.h
+
+#ifndef BLUETOOTH_SD
+
+#ifndef MBR_SIZE
+#define MBR_SIZE      (0x1000)
+#endif
+
+#ifndef SD_FLASH_SIZE
+#define SD_FLASH_SIZE (0)
+#endif
+#endif
 
 #ifndef CIRCUITPY_INTERNAL_NVM_SIZE
 #define CIRCUITPY_INTERNAL_NVM_SIZE (8 * 1024)
@@ -114,13 +122,8 @@
 
 #define CIRCUITPY_INTERNAL_NVM_START_ADDR (CIRCUITPY_INTERNAL_FLASH_FILESYSTEM_START_ADDR - CIRCUITPY_INTERNAL_NVM_SIZE)
 
-// 32kiB for bonding, etc. Nothing to store without a SoftDevice.
 #ifndef CIRCUITPY_BLE_CONFIG_SIZE
-#ifdef BLUETOOTH_SD
 #define CIRCUITPY_BLE_CONFIG_SIZE       (32 * 1024)
-#else
-#define CIRCUITPY_BLE_CONFIG_SIZE       (0)
-#endif
 #endif
 #define CIRCUITPY_BLE_CONFIG_START_ADDR (CIRCUITPY_INTERNAL_NVM_START_ADDR - CIRCUITPY_BLE_CONFIG_SIZE)
 
