@@ -121,12 +121,6 @@ uint8_t value_out = 0;
 #include "supervisor/shared/settings.h"
 #endif
 
-static void reset_devices(void) {
-    #if CIRCUITPY_BLEIO_HCI
-    bleio_reset();
-    #endif
-}
-
 static uint8_t *_heap;
 static uint8_t *_pystack;
 static volatile bool _vm_is_running = false;
@@ -374,9 +368,6 @@ static void cleanup_after_vm(mp_obj_t exception) {
         }
     }
 
-    // Reset port-independent devices, like CIRCUITPY_BLEIO_HCI.
-    reset_devices();
-
     #if CIRCUITPY_ATEXIT
     atexit_reset();
     #endif
@@ -390,7 +381,7 @@ static void cleanup_after_vm(mp_obj_t exception) {
     memorymonitor_reset();
     #endif
 
-    // Disable user related BLE state that uses the micropython heap.
+    // Disable user related BLE state that uses the VM heap. Leave BLE workflow running if it's in use.
     #if CIRCUITPY_BLEIO
     bleio_user_reset();
     #endif
@@ -1088,8 +1079,6 @@ int __attribute__((used)) main(void) {
 
     // Reset everything and prep MicroPython to run boot.py.
     reset_port();
-    // Port-independent devices, like CIRCUITPY_BLEIO_HCI.
-    reset_devices();
     reset_board();
 
     // displays init after filesystem, since they could share the flash SPI
