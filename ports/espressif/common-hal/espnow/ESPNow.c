@@ -21,6 +21,10 @@
 #include "mphalport.h"
 #include "esp_wifi.h" /* CP-WIFI-DEBUG */
 #include "esp_log.h" /* CP-WIFI-DEBUG */
+#include "esp_heap_caps.h" /* CP-WIFI-DEBUG */
+static const char *TAG = "CP espnow"; /* CP-WIFI-DEBUG */
+#include "esp_wifi.h" /* CP-WIFI-DEBUG */
+#include "esp_log.h" /* CP-WIFI-DEBUG */
 static const char *TAG = "CP espnow"; /* CP-WIFI-DEBUG */
 
 #include "esp_now.h"
