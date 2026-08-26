@@ -767,7 +767,7 @@ static bool __attribute__((noinline)) run_code_py(safe_mode_t safe_mode, bool *s
     // Done waiting, start the board back up.
 
     // Resetting BLE is delayed until here, after the wait, in case files were being
-    // transferred over the BLE workflow during the wait. The reset cycles the BLE
+    // transferred over the BLE workflow during the wait. The reset restarts the BLE
     // stack, dropping the workflow connection, only if user code created GATT
     // services; otherwise it is a no-op and the connection continues.
     #if CIRCUITPY_BLEIO
@@ -986,7 +986,7 @@ static int run_repl(safe_mode_t safe_mode) {
     cleanup_after_vm(MP_OBJ_SENTINEL);
 
     // Also reset bleio, which cleanup_after_vm() above omits so workflows can
-    // continue between VMs. As in run_code_py(), this cycles the BLE stack only if
+    // continue between VMs. As in run_code_py(), this restarts the BLE stack only if
     // user code created GATT services.
     #if CIRCUITPY_BLEIO
     bleio_reset();

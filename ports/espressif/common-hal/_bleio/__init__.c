@@ -73,15 +73,15 @@ void bleio_reset(void) {
         return;
     }
 
-    // The disable/enable cycle below clears user-created services from the GATT
-    // table, and it drops every connection, the BLE workflow's included. So run it
+    // The stop/start cycle below clears user-created services from the GATT
+    // table, and drops every connection, BLE workflow included. So run it
     // only when user code created services. All other user BLE state has already
     // been torn down individually by bleio_user_reset().
     //
-    // ESP-IDF NimBLE can delete individual services (ble_gatts_delete_svc(), used
-    // in Service.c), so a possible refinement is for bleio_user_reset() to delete
-    // user services one by one and never cycle the stack at all. For now this port
-    // matches nordic, whose SoftDevice can only clear services with a full cycle.
+    // TODO: ESP-IDF NimBLE can delete individual services (ble_gatts_delete_svc(),
+    // used in Service.c), so bleio_user_reset() could delete user services one by
+    // one and never restart the BLE stack at all. For now this port matches
+    // nordic, whose SoftDevice can only clear services with a full cycle.
     if (!bleio_user_services_created()) {
         return;
     }
@@ -93,12 +93,10 @@ void bleio_reset(void) {
     common_hal_bleio_adapter_set_enabled(&common_hal_bleio_adapter_obj, false);
     supervisor_start_bluetooth();
 
-    // The cycle above rebuilt the GATT table, so bonded peers' cached tables are
-    // stale. Signal Service Changed over the whole handle range: NimBLE indicates
-    // connected subscribed peers immediately (there are none right after the
-    // cycle) and records the change for bonded peers, indicating them when they
-    // reconnect. Without this, a bonded host trusts its cache indefinitely and
-    // can look up characteristics at stale handles.
+    // The stop/start above rebuilt the GATT table, so now any bonded peers' cached
+    // tables are stale. Signal Service Changed over the whole handle range.
+    // Without Service Changed, a bonded host trusts its cache indefinitely and can
+    // look up characteristics at stale handles.
     ble_svc_gatt_changed(0x0001, 0xffff);
 }
 

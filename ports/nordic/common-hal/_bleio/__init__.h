@@ -8,11 +8,9 @@
 
 void bleio_background(void);
 
-// The range of attribute handles the application has populated in the
-// SoftDevice's GATT table. Kept because sd_ble_gatts_service_changed() rejects
-// handles outside that range (BLE_ERROR_INVALID_ATTR_HANDLE): 0xFFFF is beyond
-// it, and handles at or below 0xC are in the SoftDevice's own GAP and GATT
-// services, not the application's.
+// Remember the range of attribute handles the application has populated in the
+// SoftDevice's GATT table. Required to call sd_ble_gatts_service_changed()
+// with valid arguments: it fails if the args are outside that range.
 extern uint16_t bleio_gatts_min_handle;
 extern uint16_t bleio_gatts_max_handle;
 
