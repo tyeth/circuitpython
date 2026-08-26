@@ -43,21 +43,10 @@ static bool _tried;
 
 #define AUTOMOUNT_BUDGET_US  5000000u
 
-// One word of RAM that survives a reset but not a power cycle. If it is still
-// set when we get here, the previous boot faulted. Skip the card for this
-// boot so the board enumerates, and clear the crumb so the next boot tries again.
-#define AUTOMOUNT_CRUMB_MAGIC  0x454d4d43u   // 'EMMC'
-
-static struct {
-    uint32_t magic;
-    uint32_t in_progress;
-} _crumb __attribute__((section(".uninitialized")));
-
 static void automount_give_up(void) {
     common_hal_emmcio_emmc_clear_deadline();
     // Leave the card powered down and the pins released
     emmcio_automount_abandon();
-    _crumb.in_progress = 0;
 }
 
 void automount_emmc(void) {
@@ -75,13 +64,6 @@ void automount_emmc(void) {
     if (!enabled) {
         return;
     }
-
-    if (_crumb.magic == AUTOMOUNT_CRUMB_MAGIC && _crumb.in_progress != 0) {
-        _crumb.in_progress = 0;
-        return;
-    }
-    _crumb.magic = AUTOMOUNT_CRUMB_MAGIC;
-    _crumb.in_progress = 1;
 
     common_hal_emmcio_emmc_set_deadline(AUTOMOUNT_BUDGET_US);
 
@@ -117,7 +99,6 @@ void automount_emmc(void) {
 
     // The budget covers bring-up and the mount only
     common_hal_emmcio_emmc_clear_deadline();
-    _crumb.in_progress = 0;
 }
 
 #endif // CIRCUITPY_EMMC_USB
