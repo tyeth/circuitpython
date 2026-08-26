@@ -109,7 +109,6 @@ uint16_t common_hal_analogio_analogin_get_value(analogio_analogin_obj_t *self) {
 
     nrf_saadc_disable(NRF_SAADC);
 
-    asm volatile ("" : : : "memory");
 
     // Disconnect ADC from pin.
     nrf_saadc_channel_input_set(NRF_SAADC, CHANNEL_NO, NRF_SAADC_INPUT_DISABLED, NRF_SAADC_INPUT_DISABLED);
