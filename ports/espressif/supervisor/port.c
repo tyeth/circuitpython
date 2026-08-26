@@ -32,6 +32,8 @@
 #include "common-hal/watchdog/WatchDogTimer.h"
 #include "common-hal/socketpool/Socket.h"
 #include "common-hal/wifi/__init__.h"
+#include "shared-bindings/wifi/__init__.h"
+#include "shared-bindings/wifi/Radio.h"
 #include "supervisor/background_callback.h"
 #include "supervisor/shared/tick.h"
 #include "shared-bindings/microcontroller/__init__.h"
@@ -50,6 +52,7 @@
 
 #if CIRCUITPY_BLEIO_NATIVE
 #include "shared-bindings/_bleio/__init__.h"
+#include "shared-bindings/_bleio/Adapter.h"
 #endif
 
 #if CIRCUITPY_ESPCAMERA
@@ -342,9 +345,34 @@ void *port_realloc(void *ptr, size_t size, bool dma_capable) {
     return heap_caps_realloc(ptr, size, caps);
 }
 
+// Headroom kept in the IDF heap when the Python heap grows while a radio is
+// enabled. The wifi driver, lwIP and NimBLE allocate at runtime (TX buffers,
+// station association, DHCP replies, ESP-NOW frames); without this the GC heap
+// absorbs the whole system heap and those allocations fail silently
+// (ESP_ERR_ESPNOW_NO_MEM, stations that associate and drop, hard faults).
+#ifndef CIRCUITPY_ESP_RADIO_HEAP_RESERVE
+#define CIRCUITPY_ESP_RADIO_HEAP_RESERVE (32 * 1024)
+#endif
+
 size_t port_heap_get_largest_free_size(void) {
-    size_t free_size = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
-    return free_size;
+    size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    size_t reserve = 0;
+    #if CIRCUITPY_WIFI
+    if (common_hal_wifi_radio_get_enabled(&common_hal_wifi_radio_obj)) {
+        reserve = CIRCUITPY_ESP_RADIO_HEAP_RESERVE;
+    }
+    #endif
+    #if CIRCUITPY_BLEIO_NATIVE
+    if (common_hal_bleio_adapter_get_enabled(&common_hal_bleio_adapter_obj)) {
+        reserve = CIRCUITPY_ESP_RADIO_HEAP_RESERVE;
+    }
+    #endif
+    if (reserve == 0) {
+        return largest;
+    }
+    size_t total = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    size_t allowed = total > reserve ? total - reserve : 0;
+    return MIN(largest, allowed);
 }
 
 void reset_port_early(void) {
