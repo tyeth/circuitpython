@@ -24,6 +24,7 @@
 wifi_radio_obj_t common_hal_wifi_radio_obj;
 
 #include "components/log/include/esp_log.h"
+#include "esp_mac.h" /* CP-WIFI-DEBUG */
 
 #include "supervisor/port.h"
 #include "supervisor/workflow.h"
@@ -75,10 +76,16 @@ static void event_handler(void *arg, esp_event_base_t event_base,
             case WIFI_EVENT_AP_STOP:
                 ESP_LOGW(TAG, "ap stop");
                 break;
-            case WIFI_EVENT_AP_STACONNECTED:
+            case WIFI_EVENT_AP_STACONNECTED: { /* CP-WIFI-DEBUG */
+                wifi_event_ap_staconnected_t *e = (wifi_event_ap_staconnected_t *)event_data;
+                ESP_LOGW(TAG, "ap sta connected " MACSTR " aid=%d", MAC2STR(e->mac), e->aid);
                 break;
-            case WIFI_EVENT_AP_STADISCONNECTED:
+            }
+            case WIFI_EVENT_AP_STADISCONNECTED: { /* CP-WIFI-DEBUG */
+                wifi_event_ap_stadisconnected_t *e = (wifi_event_ap_stadisconnected_t *)event_data;
+                ESP_LOGW(TAG, "ap sta disconnected " MACSTR " aid=%d reason=%d", MAC2STR(e->mac), e->aid, e->reason);
                 break;
+            }
             case WIFI_EVENT_STA_START:
                 ESP_LOGW(TAG, "sta start");
                 break;
