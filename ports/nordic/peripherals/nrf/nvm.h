@@ -7,7 +7,6 @@
 
 #pragma once
 
-// Without a SoftDevice these do not arrive via nrf_sdm.h's include chain.
 #include <stdbool.h>
 #include <stdint.h>
 

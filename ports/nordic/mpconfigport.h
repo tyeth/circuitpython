@@ -122,6 +122,7 @@
 
 #define CIRCUITPY_INTERNAL_NVM_START_ADDR (CIRCUITPY_INTERNAL_FLASH_FILESYSTEM_START_ADDR - CIRCUITPY_INTERNAL_NVM_SIZE)
 
+// 32kiB for bonding, etc.
 #ifndef CIRCUITPY_BLE_CONFIG_SIZE
 #define CIRCUITPY_BLE_CONFIG_SIZE       (32 * 1024)
 #endif
@@ -175,9 +176,7 @@
 #ifdef BLUETOOTH_SD
 #define SOFTDEVICE_RAM_SIZE         (56 * 1024)
 #else
-// No SoftDevice, so none of the low RAM is reserved for it. The SPIM3 buffer
-// then sits at the very bottom of RAM, still inside the first 64kB as the
-// hardware workaround requires.
+
 #define SOFTDEVICE_RAM_SIZE         (0)
 #endif
 #endif
