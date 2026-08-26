@@ -21,7 +21,6 @@
 #include "shared-bindings/socketpool/enum.h"
 
 #include "mbedtls/version.h"
-#include "mbedtls/ssl_ticket.h" /* CP-TLS-TICKETS */
 
 #define MP_STREAM_POLL_RDWR (MP_STREAM_POLL_RD | MP_STREAM_POLL_WR)
 
@@ -328,23 +327,6 @@ ssl_sslsocket_obj_t *common_hal_ssl_sslcontext_wrap_socket(ssl_sslcontext_obj_t 
             goto cleanup;
         }
     }
-    #if defined(MBEDTLS_SSL_SESSION_TICKETS) && defined(MBEDTLS_SSL_TICKET_C) /* CP-TLS-TICKETS */
-    if (server_side) {
-        // Session tickets let a returning client resume without the (expensive) public-key
-        // handshake. One process-wide ticket key, rotated by lifetime; nothing to persist.
-        static mbedtls_ssl_ticket_context ticket_ctx;
-        static bool ticket_ready = false;
-        if (!ticket_ready) {
-            mbedtls_ssl_ticket_init(&ticket_ctx);
-            if (mbedtls_ssl_ticket_setup(&ticket_ctx, PSA_ALG_GCM, PSA_KEY_TYPE_AES, 256, 86400) == 0) {
-                ticket_ready = true;
-            }
-        }
-        if (ticket_ready) {
-            mbedtls_ssl_conf_session_tickets_cb(&o->conf, mbedtls_ssl_ticket_write, mbedtls_ssl_ticket_parse, &ticket_ctx);
-        }
-    }
-    #endif
     return o;
 cleanup:
     mbedtls_pk_free(&o->pkey);
