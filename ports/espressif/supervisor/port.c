@@ -351,7 +351,7 @@ void *port_realloc(void *ptr, size_t size, bool dma_capable) {
 // absorbs the whole system heap and those allocations fail silently
 // (ESP_ERR_ESPNOW_NO_MEM, stations that associate and drop, hard faults).
 #ifndef CIRCUITPY_ESP_RADIO_HEAP_RESERVE
-#define CIRCUITPY_ESP_RADIO_HEAP_RESERVE (32 * 1024)
+#define CIRCUITPY_ESP_RADIO_HEAP_RESERVE (48 * 1024)
 #endif
 
 size_t port_heap_get_largest_free_size(void) {
