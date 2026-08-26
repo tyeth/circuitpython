@@ -23,9 +23,6 @@
 #include "esp_log.h" /* CP-WIFI-DEBUG */
 #include "esp_heap_caps.h" /* CP-WIFI-DEBUG */
 static const char *TAG = "CP espnow"; /* CP-WIFI-DEBUG */
-#include "esp_wifi.h" /* CP-WIFI-DEBUG */
-#include "esp_log.h" /* CP-WIFI-DEBUG */
-static const char *TAG = "CP espnow"; /* CP-WIFI-DEBUG */
 
 #include "esp_now.h"
 
@@ -196,8 +193,9 @@ mp_obj_t common_hal_espnow_send(espnow_obj_t *self, const mp_buffer_info_t *mess
            (mp_hal_ticks_ms() - start) <= DEFAULT_SEND_TIMEOUT_MS) {
         RUN_BACKGROUND_TASKS;
     }
-    if (err != ESP_OK) { /* CP-WIFI-DEBUG */
-        ESP_LOGW(TAG, "esp_now_send len=%u -> 0x%x (waited %lu ms)", (unsigned)message->len, err, (unsigned long)(mp_hal_ticks_ms() - start));
+    { /* CP-WIFI-DEBUG */
+        ESP_LOGW(TAG, "esp_now_send len=%u -> 0x%x (waited %lu ms) idf_free=%u largest=%u internal_free=%u", (unsigned)message->len, err, (unsigned long)(mp_hal_ticks_ms() - start),
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT), (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     }
     CHECK_ESP_RESULT(err);
 
