@@ -289,27 +289,51 @@ def circuitpython(request, board, sim_id, native_sim_binary, native_sim_env, tmp
             tmp_drive = tmp_path / f"drive{i}"
             tmp_drive.mkdir(exist_ok=True)
 
+            fat_dirs_created = set()
             for name, content in files.items():
                 src = tmp_drive / name
+                src.parent.mkdir(parents=True, exist_ok=True)
                 if isinstance(content, bytes):
                     src.write_bytes(content)
                 else:
                     src.write_text(content)
+                # Create parent directories on the FAT image.
+                fat_dir = Path(name).parent
+                for fat_part in [*reversed(fat_dir.parents), fat_dir]:
+                    if fat_part == Path("."):
+                        continue
+                    fat_path = "::" + str(fat_part)
+                    if fat_path not in fat_dirs_created:
+                        subprocess.run(["mmd", "-i", str(flash), fat_path], check=True)
+                        fat_dirs_created.add(fat_path)
                 subprocess.run(["mcopy", "-i", str(flash), str(src), f"::{name}"], check=True)
 
         trace_file = tmp_path / f"trace-{i}.perfetto"
 
         if "bsim" in board:
-            cmd = [str(native_sim_binary), f"--flash_app={flash}"]
+            # nRF54 bsim boards use RRAMC (--flash), others use NVMC (--flash_app)
+            flash_arg = "--flash" if "nrf54" in board else "--flash_app"
+            cmd = [str(native_sim_binary), f"{flash_arg}={flash}"]
             if instance_count > 1:
                 cmd.append("-disconnect_on_exit=1")
+            # nRF54 bsim boards: console UART is SERIAL20 (bsim instance 1), others use instance 0
+            uart_n = "1" if "nrf54" in board else "0"
             cmd.extend(
                 (
                     f"-s={sim_id}",
                     f"-d={i}",
-                    "-uart0_pty",
-                    "-uart0_pty_wait_for_readers",
+                    f"-uart{uart_n}_pty",
+                    f"-uart{uart_n}_pty_wait_for_readers",
                     "-uart_pty_wait",
+                    # Use the real AES implementation (libCryptov1.so) for the
+                    # link layer instead of BabbleSim's plain-text stand-in.
+                    # The nRF54L HW models route AES through several different
+                    # stand-ins (ECB/CCM copy the data, CRACEN scrambles it),
+                    # which are not consistent with each other, so LE
+                    # encryption only works with real AES. Zephyr's own bsim
+                    # encryption tests pass -RealEncryption=1 for the same
+                    # reason.
+                    "-RealEncryption=1",
                     f"--vm-runs={code_py_runs + 1}",
                 )
             )
@@ -326,6 +350,10 @@ def circuitpython(request, board, sim_id, native_sim_binary, native_sim_env, tmp
                     f"--vm-runs={code_py_runs + 1}",
                 )
             )
+
+        # Always preserve retained memory (e.g. the safe-mode saved word) in
+        # in case of reboot.
+        cmd.append(f"--retained-memory={tmp_path / f'retained-{i}.bin'}")
 
         if flash_erase_block_size is not None:
             cmd.append(f"--flash_erase_block_size={flash_erase_block_size}")

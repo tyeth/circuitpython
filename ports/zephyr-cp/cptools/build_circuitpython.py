@@ -67,9 +67,17 @@ DEFAULT_MODULES = [
     "adafruit_bus_device",
     "getpass",
     "storage",
+    "binascii",
+    "re",
+    "asyncio",
+    "select",
 ]
 # Flags that don't match with with a *bindings module. Some used by adafruit_requests
-MPCONFIG_FLAGS = ["array", "errno", "io", "json", "math"]
+MPCONFIG_FLAGS = ["array", "errno", "io", "json", "math", "binascii"]
+
+# extmod-based modules that should appear in the autogen list even though they
+# don't have shared-bindings/ or bindings/ directories.
+EXTMOD_MODULES = ["asyncio", "binascii", "json", "re", "select"]
 
 # List of other modules (the value) that can be enabled when another one (the key) is.
 REVERSE_DEPENDENCIES = {
@@ -343,7 +351,7 @@ def determine_enabled_modules(board_info, portdir, srcdir):
     return enabled_modules, module_reasons
 
 
-async def build_circuitpython():
+async def build_circuitpython():  # noqa: C901
     circuitpython_flags = ["-DCIRCUITPY"]
     port_flags = []
     enable_mpy_native = False
@@ -361,7 +369,13 @@ async def build_circuitpython():
     lto = cmake_args.get("LTO", "n") == "y"
     circuitpython_flags.append(f"-DCIRCUITPY_ENABLE_MPY_NATIVE={1 if enable_mpy_native else 0}")
     circuitpython_flags.append(f"-DCIRCUITPY_FULL_BUILD={1 if full_build else 0}")
+    circuitpython_flags.append("-DCIRCUITPY_OPT_LOAD_ATTR_FAST_PATH=1")
+    circuitpython_flags.append(f"-DCIRCUITPY_OPT_MAP_LOOKUP_CACHE={1 if full_build else 0}")
     circuitpython_flags.append(f"-DCIRCUITPY_SETTINGS_TOML={1 if full_build else 0}")
+    circuitpython_flags.append(f"-DMICROPY_PY_ASYNC_AWAIT={1 if full_build else 0}")
+    circuitpython_flags.append(f"-DMICROPY_PY_ASYNCIO={1 if full_build else 0}")
+    circuitpython_flags.append(f"-DMICROPY_PY_SELECT={1 if full_build else 0}")
+    circuitpython_flags.append(f"-DMICROPY_PY_SELECT_SELECT={1 if full_build else 0}")
     circuitpython_flags.append("-DCIRCUITPY_STATUS_BAR=1")
     circuitpython_flags.append(f"-DCIRCUITPY_USB_HOST={1 if usb_host else 0}")
     circuitpython_flags.append(f"-DCIRCUITPY_BOARD_ID='\"{board}\"'")
@@ -434,6 +448,10 @@ async def build_circuitpython():
     supervisor_source = [
         "main.c",
         "extmod/modjson.c",
+        "extmod/modbinascii.c",
+        "extmod/modre.c",
+        "extmod/modasyncio.c",
+        "extmod/modselect.c",
         "extmod/vfs_fat.c",
         "lib/tlsf/tlsf.c",
         portdir / "background.c",
@@ -463,8 +481,16 @@ async def build_circuitpython():
     supervisor_source = [pathlib.Path(p) for p in supervisor_source]
     supervisor_source.extend(board_info["source_files"])
     supervisor_source.extend(top.glob("supervisor/shared/*.c"))
-    if "_bleio" in enabled_modules:
+    ble_workflow_enabled = "_bleio" in enabled_modules
+    if ble_workflow_enabled:
         supervisor_source.append(top / "supervisor/shared/bluetooth/bluetooth.c")
+        # BLE workflow = file transfer + serial services, matching other ports.
+        supervisor_source.append(top / "supervisor/shared/bluetooth/file_transfer.c")
+        supervisor_source.append(top / "supervisor/shared/bluetooth/serial.c")
+    circuitpython_flags.append(f"-DCIRCUITPY_BLE_FILE_SERVICE={1 if ble_workflow_enabled else 0}")
+    circuitpython_flags.append(
+        f"-DCIRCUITPY_BLE_SERIAL_SERVICE={1 if ble_workflow_enabled else 0}"
+    )
     supervisor_source.append(top / "supervisor/shared/translate/translate.c")
     if web_workflow_enabled:
         supervisor_source.extend(top.glob("supervisor/shared/web_workflow/*.c"))
@@ -474,6 +500,11 @@ async def build_circuitpython():
 
     if usb_ok:
         enabled_modules.add("usb_cdc")
+        enabled_modules.add("usb_hid")
+
+        usb_num_endpoint_pairs = board_info.get("usb_num_endpoint_pairs", 4)
+        circuitpython_flags.append(f"-DUSB_NUM_ENDPOINT_PAIRS={usb_num_endpoint_pairs}")
+        circuitpython_flags.append("-DCIRCUITPY_USB_HID_ENABLED_DEFAULT=1")
 
         for macro in ("USB_PID", "USB_VID"):
             print(f"Setting {macro} to {mpconfigboard.get(macro)}")
@@ -578,6 +609,10 @@ async def build_circuitpython():
             # Only include shared-module/*.c if no common-hal/*.c files were found
             if len(hal_source) == len_before or module.name in SHARED_MODULE_AND_COMMON_HAL:
                 hal_source.extend(top.glob(f"shared-module/{module.name}/**/*.c"))
+            # The USB HID report descriptors are shared with the TinyUSB ports and
+            # have no common-hal override, so always compile them.
+            if module.name == "usb_hid":
+                hal_source.append(top / "shared-module/usb_hid/report_descriptors.c")
             hal_source.extend(top.glob(f"shared-bindings/{module.name}/**/*.c"))
             if module.name in LIBRARY_SOURCE:
                 for library_source in LIBRARY_SOURCE[module.name]:
@@ -592,6 +627,16 @@ async def build_circuitpython():
             logger.warning(
                 f"autogen_board_info.toml is missing or out of date. Please run `make BOARD={board}` locally and commit {autogen_board_info_fn}."
             )
+    autogen_modules.add(tomlkit.comment("extmod modules shared with MicroPython"))
+    for extmod_module in EXTMOD_MODULES:
+        enabled = extmod_module in enabled_modules
+        v = tomlkit.item(enabled)
+        if extmod_module in module_reasons:
+            v.comment(module_reasons[extmod_module])
+        autogen_modules.add(extmod_module, v)
+        flag_name = MODULE_FLAG_NAMES.get(extmod_module, extmod_module.upper())
+        circuitpython_flags.append(f"-DCIRCUITPY_{flag_name}={1 if enabled else 0}")
+
     if autogen_board_info_fn.parent.exists():
         autogen_board_info_fn.write_text(tomlkit.dumps(autogen_board_info))
 
@@ -599,7 +644,23 @@ async def build_circuitpython():
         enabled = mpflag in DEFAULT_MODULES
         circuitpython_flags.append(f"-DCIRCUITPY_{mpflag.upper()}={1 if enabled else 0}")
 
+    # ulab is on by default and boards that cannot spare the flash set
+    # CIRCUITPY_ULAB = false in their circuitpython.toml. Flags mirror py/py.mk.
+    ulab_enabled = mpconfigboard.get("CIRCUITPY_ULAB", True)
+    circuitpython_flags.append(f"-DCIRCUITPY_ULAB={1 if ulab_enabled else 0}")
+    if ulab_enabled:
+        circuitpython_flags.extend(
+            (
+                "-DMODULE_ULAB_ENABLED=1",
+                "-DULAB_HAS_USER_MODULE=0",
+                "-iquote",
+                str(top / "extmod" / "ulab" / "code"),
+            )
+        )
+
     source_files = supervisor_source + hal_source + ["extmod/vfs.c"]
+    if ulab_enabled:
+        source_files.extend(sorted((top / "extmod" / "ulab" / "code").rglob("*.c")))
     assembly_files = []
     for file in top.glob("py/*.c"):
         source_files.append(file)

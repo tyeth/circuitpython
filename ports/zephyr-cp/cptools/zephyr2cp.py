@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import re
 
 import cpbuild
 import yaml
@@ -12,7 +13,14 @@ logger.setLevel(logging.DEBUG)
 # GPIO flags defined here: include/zephyr/dt-bindings/gpio/gpio.h
 GPIO_ACTIVE_LOW = 1 << 0
 
-MINIMUM_RAM_SIZE = 1024
+# A region has to be big enough to host TLSF's control structure to be usable as
+# the first heap pool, and TLSF sizes that structure from the maximum heap size
+# rather than from the region: at an 8 MB maximum it is 2412 bytes. Anything
+# smaller than this is not worth adding as a later pool either. The previous
+# value of 1024 let through two SiWx917 regions that are exactly 0x400 bytes,
+# /memory@0 (reserved for the network processor) and /memory-dma@24061c00,
+# neither of which should ever be in the Python heap.
+MINIMUM_RAM_SIZE = 8192
 
 MANUAL_COMPAT_TO_DRIVER = {
     "renesas_ra_nv_flash": "flash",
@@ -98,6 +106,29 @@ CONNECTORS = {
         "D11",
         "D12",
         "D13",
+    ],
+    "adafruit-clue": [
+        ["P0", "D0", "A2", "RX"],
+        ["P1", "D1", "A3", "TX"],
+        ["P2", "D2", "A4"],
+        ["P3", "D3", "A5"],
+        ["P4", "D4", "A6"],
+        ["P5", "D5", "BUTTON_A"],
+        ["P6", "D6"],
+        ["P7", "D7"],
+        ["P8", "D8"],
+        ["P9", "D9"],
+        ["P10", "D10", "A7"],
+        ["P11", "D11", "BUTTON_B"],
+        ["P12", "D12", "A0"],
+        ["P13", "D13", "SCK"],
+        ["P14", "D14", "MISO"],
+        ["P15", "D15", "MOSI"],
+        ["P16", "D16", "A1"],
+        ["P17", "D17", "L", "LED"],
+        ["P18", "D18", "NEOPIXEL"],
+        ["P19", "D19", "SCL"],
+        ["P20", "D20", "SDA"],
     ],
     "nordic,expansion-board-header": [
         "P1_04",
@@ -451,6 +482,33 @@ def find_ram_regions(device_tree):
     return rams
 
 
+# gpio-keys nodes identify a key with `zephyr,code` rather than the optional and
+# deprecated `label`, so the code is the only name a modern board gives.
+INPUT_KEY_NAMES = {}
+
+
+def _populate_input_key_names():
+    header = (
+        pathlib.Path(__file__).parent.parent
+        / "zephyr"
+        / "include"
+        / "zephyr"
+        / "dt-bindings"
+        / "input"
+        / "input-event-codes.h"
+    )
+    if not header.exists():
+        return
+    pattern = re.compile(r"^#define\s+INPUT_(?P<name>KEY_\w+)\s+(?P<code>\d+)")
+    for line in header.read_text().splitlines():
+        match = pattern.match(line)
+        if match:
+            INPUT_KEY_NAMES.setdefault(int(match.group("code")), match.group("name"))
+
+
+_populate_input_key_names()
+
+
 @cpbuild.run_in_thread
 def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfigboard=None):  # noqa: C901
     board_dir = builddir / "board"
@@ -494,7 +552,15 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     else:
         board_yaml = board_yaml["board"]
     board_info["vendor_id"] = board_yaml["vendor"]
-    vendor_index = zephyr_board_dir.parent / "index.rst"
+    # Most vendors put boards directly in boards/<vendor>/<board>, but some group
+    # them further, like boards/silabs/dev_kits/<board>. Walk up to the directory
+    # named for the vendor so we read the vendor's index.rst and not a category's.
+    vendor_dir = zephyr_board_dir.parent
+    for parent in zephyr_board_dir.parents:
+        if parent.name == board_info["vendor_id"]:
+            vendor_dir = parent
+            break
+    vendor_index = vendor_dir / "index.rst"
     if vendor_index.exists():
         vendor_index = vendor_index.read_text()
         vendor_index = vendor_index.split("\n")
@@ -526,6 +592,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     board_names = {}
     status_led = None
     status_led_inverted = False
+    boot_button = None
     path2chosen = {}
     chosen2path = {}
 
@@ -671,17 +738,34 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
         if "gpio-keys" in compatible:
             for key in node.nodes:
-                props = node.nodes[key].props
+                key_node = node.nodes[key]
+                props = key_node.props
                 ioport = props["gpios"]._markers[1][2]
                 num = int.from_bytes(props["gpios"].value[4:8], "big")
 
                 if (ioport, num) not in board_names:
                     board_names[(ioport, num)] = []
-                board_names[(ioport, num)].append(props["label"].to_string())
-                if key in node2alias:
-                    if "sw0" in node2alias[key]:
+                # `label` is optional and deprecated on gpio-keys. Modern
+                # boards identify keys with `zephyr,code`, so fall back to the
+                # name of that code.
+                if "label" in props:
+                    board_names[(ioport, num)].append(props["label"].to_string())
+                elif "zephyr,code" in props:
+                    key_code = props["zephyr,code"].to_num()
+                    if key_code in INPUT_KEY_NAMES:
+                        board_names[(ioport, num)].append(INPUT_KEY_NAMES[key_code])
+                if key_node in node2alias:
+                    aliases = node2alias[key_node]
+                    if "sw0" in aliases:
                         board_names[(ioport, num)].append("BUTTON")
-                    board_names[(ioport, num)].extend(node2alias[key])
+                        # The sw0 alias designates the conventional first user
+                        # button, so prefer it as the boot button.
+                        boot_button = (ioport, num)
+                    board_names[(ioport, num)].extend(aliases)
+                # Default to the first button in device tree order when no sw0
+                # alias has designated one yet.
+                if boot_button is None:
+                    boot_button = (ioport, num)
 
     if len(all_ioports) > 1:
         a, b = all_ioports[:2]
@@ -708,6 +792,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             pin_object_name = f"P{ioport[len(shared_prefix) :].upper()}_{num:02d}"
             if status_led and (ioport, num) == status_led:
                 status_led = pin_object_name
+            if boot_button and (ioport, num) == boot_button:
+                boot_button = pin_object_name
             pin_defs.append(
                 f"const mcu_pin_obj_t pin_{pin_object_name} = {{ .base.type = &mcu_pin_type, .port = DEVICE_DT_GET(DT_NODELABEL({ioport})), .number = {num}}};"
             )
@@ -870,6 +956,10 @@ void board_init(void) {
     else:
         status_led = ""
         status_led_inverted = ""
+    if boot_button:
+        boot_button = f"#define CIRCUITPY_BOOT_BUTTON (&pin_{boot_button})\n"
+    else:
+        boot_button = ""
     ram_list = []
     ram_externs = []
     max_size = 0
@@ -899,6 +989,7 @@ void board_init(void) {
 #define CIRCUITPY_RAM_DEVICE_COUNT  {len(rams)}
 {status_led}
 {status_led_inverted}
+{boot_button}
         """
     if not header.exists() or header.read_text() != new_header_content:
         header.write_text(new_header_content)

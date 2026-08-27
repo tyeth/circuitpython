@@ -405,6 +405,9 @@ endif
 ifeq ($(CIRCUITPY_STAGE),1)
 SRC_PATTERNS += _stage/%
 endif
+ifeq ($(CIRCUITPY_PICOGAME),1)
+SRC_PATTERNS += picogame/%
+endif
 ifeq ($(CIRCUITPY_STORAGE),1)
 SRC_PATTERNS += storage/%
 endif
@@ -482,6 +485,9 @@ SRC_PATTERNS += watchdog/%
 endif
 ifeq ($(CIRCUITPY_WIFI),1)
 SRC_PATTERNS += wifi/%
+endif
+ifeq ($(CIRCUITPY_WIZNET),1)
+SRC_PATTERNS += wiznet/%
 endif
 ifeq ($(CIRCUITPY_ZLIB),1)
 SRC_PATTERNS += zlib/%
@@ -603,6 +609,12 @@ SRC_COMMON_HAL_ALL = \
 	wifi/ScannedNetworks.c \
 	wifi/__init__.c \
 
+# The fast Display backend is the only common-hal picogame source; include it
+# only on ports that provide it (others use the portable bus.send renderer).
+ifeq ($(CIRCUITPY_PICOGAME_FAST_DISPLAY),1)
+SRC_COMMON_HAL_ALL += picogame/Display.c
+endif
+
 SRC_COMMON_HAL = $(filter $(SRC_PATTERNS), $(SRC_COMMON_HAL_ALL))
 
 ifeq ($(CIRCUITPY_BLEIO_HCI),1)
@@ -630,6 +642,11 @@ endif
 # All possible sources are listed here, and are filtered by SRC_PATTERNS.
 SRC_BINDINGS_ENUMS = \
 $(filter $(SRC_PATTERNS), \
+	picogame/Bitmap.c \
+	picogame/Sprite.c \
+	picogame/StripDraw.c \
+	picogame/Triangles.c \
+	picogame/Framebuffer.c \
 	_bleio/Address.c \
 	_bleio/Attribute.c \
 	_bleio/ScanEntry.c \
@@ -701,6 +718,11 @@ SRC_SHARED_MODULE_ALL = \
 	_stage/Layer.c \
 	_stage/Text.c \
 	_stage/__init__.c \
+	picogame/__init__.c \
+	picogame/Scene.c \
+	picogame/Tilemap.c \
+	picogame/Particles.c \
+	picogame/Canvas.c \
 	aesio/__init__.c \
 	aesio/aes.c \
 	atexit/__init__.c \
@@ -712,6 +734,7 @@ SRC_SHARED_MODULE_ALL = \
 	audiospeed/__init__.c \
 	audiodelays/Echo.c \
 	audiodelays/Chorus.c \
+	audiodelays/Flanger.c \
 	audiodelays/PitchShift.c \
 	audiodelays/GranularPitchShift.c \
 	audiodelays/MultiTapDelay.c \
@@ -944,15 +967,58 @@ $(BUILD)/lib/tjpgd/src/tjpgd.o: CFLAGS += -Wno-shadow -Wno-cast-align
 endif
 
 ifeq ($(CIRCUITPY_HASHLIB_MBEDTLS_ONLY),1)
-SRC_MOD += $(addprefix lib/mbedtls/library/, \
-        sha1.c \
-        sha256.c \
-        sha512.c \
-        platform_util.c \
-	)
+# mbedtls 4.x moved the crypto implementations out of lib/mbedtls/library into the
+# tf-psa-crypto submodule and made the legacy mbedtls_sha256_*() headers private, so
+# hashlib goes through the PSA hash API. That needs the PSA core, whose driver dispatch
+# layer is generated rather than shipped -- see the same rule in ports/raspberrypi/Makefile.
+SRC_MOD += \
+	$(addprefix lib/mbedtls/tf-psa-crypto/core/, \
+		psa_crypto.c \
+		psa_crypto_client.c \
+		psa_crypto_slot_management.c \
+		psa_util.c \
+	) \
+	$(addprefix lib/mbedtls/tf-psa-crypto/drivers/builtin/src/, \
+		psa_crypto_hash.c \
+		psa_util_internal.c \
+		sha1.c \
+		sha256.c \
+	) \
+	$(addprefix lib/mbedtls/tf-psa-crypto/platform/, \
+		platform.c \
+		platform_util.c \
+	) \
+	lib/mbedtls/tf-psa-crypto/utilities/constant_time.c \
+	lib/mbedtls_config/hashlib_psa_port.c
+
+MBEDTLS_HASHLIB_GEN := $(BUILD)/tf-psa-crypto
+MBEDTLS_HASHLIB_WRAPPERS_H := $(MBEDTLS_HASHLIB_GEN)/psa_crypto_driver_wrappers.h
+MBEDTLS_HASHLIB_WRAPPERS_C := $(MBEDTLS_HASHLIB_GEN)/psa_crypto_driver_wrappers_no_static.c
+SRC_MOD += $(MBEDTLS_HASHLIB_WRAPPERS_C:$(BUILD)/%=%)
+
+# The script writes both files at once; naming both as targets would run it twice.
+$(MBEDTLS_HASHLIB_WRAPPERS_C): $(MBEDTLS_HASHLIB_WRAPPERS_H)
+	@true
+
+$(MBEDTLS_HASHLIB_WRAPPERS_H): $(TOP)/lib/mbedtls/tf-psa-crypto/scripts/generate_driver_wrappers.py
+	$(STEPECHO) "GEN $@"
+	$(Q)mkdir -p $(MBEDTLS_HASHLIB_GEN)
+	$(Q)PYTHONPATH=$(TOP)/lib/mbedtls/framework/scripts $(PYTHON) $< $(MBEDTLS_HASHLIB_GEN)
+
+# psa_crypto.c and friends #include the generated header.
+$(addprefix $(BUILD)/, $(SRC_MOD:.c=.o)): $(MBEDTLS_HASHLIB_WRAPPERS_H)
+
 CFLAGS += \
-	  -isystem $(TOP)/lib/mbedtls/include \
-	  -DMBEDTLS_CONFIG_FILE='"$(TOP)/lib/mbedtls_config/mbedtls_config_hashlib.h"' \
+	  -I$(MBEDTLS_HASHLIB_GEN) \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/include \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/drivers/builtin/include \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/drivers/builtin/src \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/core \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/dispatch \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/extras \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/platform \
+	  -isystem $(TOP)/lib/mbedtls/tf-psa-crypto/utilities \
+	  -DTF_PSA_CRYPTO_CONFIG_FILE='"$(TOP)/lib/mbedtls_config/tf_psa_crypto_config_hashlib.h"' \
 
 endif
 

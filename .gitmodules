@@ -316,7 +316,7 @@
 	branch = circuitpython9
 [submodule "lib/mbedtls"]
 	path = lib/mbedtls
-	url = https://github.com/ARMmbed/mbedtls.git
+	url = https://github.com/Mbed-TLS/mbedtls.git
 [submodule "frozen/Adafruit_CircuitPython_UC8151D"]
 	path = frozen/Adafruit_CircuitPython_UC8151D
 	url = https://github.com/adafruit/Adafruit_CircuitPython_UC8151D
@@ -421,3 +421,6 @@
 [submodule "frozen/CircuitPython_edupico2_paj7620"]
 	path = frozen/CircuitPython_edupico2_paj7620
 	url = https://github.com/CytronTechnologies/CircuitPython_edupico2_paj7620.git
+[submodule "frozen/Adafruit_CircuitPython_BLE_File_Transfer"]
+	path = frozen/Adafruit_CircuitPython_BLE_File_Transfer
+	url = https://github.com/adafruit/Adafruit_CircuitPython_BLE_File_Transfer.git

@@ -78,7 +78,9 @@ extern void common_hal_mcu_enable_interrupts(void);
 #define MICROPY_ENABLE_SELECTIVE_COLLECT (1)
 #define MICROPY_ENABLE_GC                (1)
 #define MICROPY_ENABLE_PYSTACK           (1)
-#define MICROPY_TRACKED_ALLOC            (CIRCUITPY_SSL_MBEDTLS)
+// mbedtls allocates through m_tracked_calloc/m_tracked_free. hashlib-only ports need
+// them too as of mbedtls 4.x: hashlib uses mbedtls_md_*(), which allocates on the heap.
+#define MICROPY_TRACKED_ALLOC            (CIRCUITPY_SSL_MBEDTLS || CIRCUITPY_HASHLIB_MBEDTLS_ONLY)
 #define MICROPY_ENABLE_SOURCE_LINE       (1)
 #define MICROPY_EPOCH_IS_1970            (1)
 #define MICROPY_ERROR_REPORTING          (CIRCUITPY_FULL_BUILD ? MICROPY_ERROR_REPORTING_NORMAL : MICROPY_ERROR_REPORTING_TERSE)
@@ -528,6 +530,11 @@ void background_callback_run_all(void);
 #ifndef CIRCUITPY_SDCARD_USB
 #if CIRCUITPY_USB_DEVICE
 #define CIRCUITPY_SDCARD_USB (CIRCUITPY_SDCARDIO && CIRCUITPY_USB_MSC)
+// Default value of CIRCUITPY_SDCARD_USB in settings.toml.
+#ifndef CIRCUITPY_SDCARD_USB_DEFAULT
+// True for most boards.
+#define CIRCUITPY_SDCARD_USB_DEFAULT (true)
+#endif
 #else
 #define CIRCUITPY_SDCARD_USB (0)
 #endif

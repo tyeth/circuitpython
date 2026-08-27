@@ -715,7 +715,7 @@ msgstr ""
 #: ports/analog/common-hal/busio/SPI.c ports/analog/common-hal/busio/UART.c
 #: ports/stm/common-hal/audioio/AudioOut.c
 #: shared-bindings/digitalio/DigitalInOutProtocol.c
-#: shared-module/busdisplay/BusDisplay.c
+#: shared-module/busdisplay/BusDisplay.c shared-module/ssl/SSLContext.c
 msgid "%q init failed"
 msgstr ""
 
@@ -1041,7 +1041,7 @@ msgstr ""
 #: ports/espressif/common-hal/sdioio/SDCard.c
 #: ports/raspberrypi/common-hal/sdioio/SDCard.c
 #: ports/stm/common-hal/sdioio/SDCard.c shared-bindings/floppyio/__init__.c
-#: shared-module/sdcardio/SDCard.c
+#: shared-bindings/picogame/Canvas.c shared-module/sdcardio/SDCard.c
 #, c-format
 msgid "Buffer must be a multiple of %d bytes"
 msgstr ""
@@ -1200,6 +1200,7 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 #: ports/nordic/common-hal/_bleio/Characteristic.c
+#: ports/zephyr-cp/common-hal/_bleio/Characteristic.c
 msgid "No CCCD for this Characteristic"
 msgstr ""
 
@@ -1222,11 +1223,13 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/PacketBuffer.c
 #: ports/nordic/common-hal/_bleio/PacketBuffer.c
+#: ports/zephyr-cp/common-hal/_bleio/PacketBuffer.c
 msgid "Writes not supported on Characteristic"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/PacketBuffer.c
 #: ports/nordic/common-hal/_bleio/PacketBuffer.c
+#: ports/zephyr-cp/common-hal/_bleio/PacketBuffer.c
 msgid "Total data to write is larger than %q"
 msgstr ""
 
@@ -1241,6 +1244,9 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Characteristic.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
+#: ports/zephyr-cp/common-hal/_bleio/Descriptor.c
 #: shared-bindings/_bleio/CharacteristicBuffer.c
 msgid "Not connected"
 msgstr ""
@@ -1470,6 +1476,7 @@ msgid "Requested resource not found"
 msgstr ""
 
 #: ports/espressif/common-hal/espidf/__init__.c
+#: ports/raspberrypi/common-hal/picogame/Display.c
 msgid "Operation or feature not supported"
 msgstr ""
 
@@ -1676,7 +1683,8 @@ msgstr ""
 msgid "Only IPv4 addresses supported"
 msgstr ""
 
-#: ports/mimxrt10xx/common-hal/busio/SPI.c shared-bindings/busio/SPI.c
+#: ports/mimxrt10xx/common-hal/busio/SPI.c
+#: ports/raspberrypi/bindings/wiznet/PIO_SPI.c shared-bindings/busio/SPI.c
 msgid "Must provide MISO or MOSI pin"
 msgstr ""
 
@@ -1732,12 +1740,14 @@ msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
 msgid ""
-"Unspecified issue. Can be that the pairing prompt on the other device was "
+"Unspecified issue. The pairing request on the other device may have been "
 "declined or ignored."
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
 #, c-format
 msgid "Unknown security error: 0x%04x"
 msgstr ""
@@ -1807,9 +1817,9 @@ msgstr ""
 
 #: ports/raspberrypi/bindings/cyw43/__init__.c py/argcheck.c py/objexcept.c
 #: shared-bindings/bitmapfilter/__init__.c shared-bindings/canio/CAN.c
-#: shared-bindings/digitalio/Pull.c shared-bindings/supervisor/__init__.c
-#: shared-module/audiofilters/Filter.c shared-module/displayio/__init__.c
-#: shared-module/synthio/Synthesizer.c
+#: shared-bindings/digitalio/Pull.c shared-bindings/picogame/Sprite.c
+#: shared-bindings/supervisor/__init__.c shared-module/audiofilters/Filter.c
+#: shared-module/displayio/__init__.c shared-module/synthio/Synthesizer.c
 msgid "%q must be of type %q or %q, not %q"
 msgstr ""
 
@@ -1838,9 +1848,26 @@ msgstr ""
 msgid "In-buffer elements must be <= 4 bytes long"
 msgstr ""
 
+#: ports/raspberrypi/bindings/wiznet/PIO_SPI.c shared-bindings/bitbangio/I2C.c
+#: shared-bindings/bitbangio/SPI.c shared-bindings/busio/I2C.c
+#: shared-bindings/busio/SPI.c
+msgid "Function requires lock"
+msgstr ""
+
+#: ports/raspberrypi/bindings/wiznet/PIO_SPI.c shared-bindings/bitbangio/SPI.c
+#: shared-bindings/busio/SPI.c
+msgid "buffer slices must be of equal length"
+msgstr ""
+
 #: ports/raspberrypi/common-hal/alarm/touch/TouchAlarm.c
 #: ports/stm/common-hal/alarm/touch/TouchAlarm.c
 msgid "Touch alarms not available"
+msgstr ""
+
+#: ports/raspberrypi/common-hal/audiobusio/I2SOut.c
+#: ports/raspberrypi/common-hal/audioi2sin/I2SIn.c
+#: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
+msgid "Cannot use GPIO0..15 together with GPIO32..47"
 msgstr ""
 
 #: ports/raspberrypi/common-hal/audiobusio/I2SOut.c
@@ -1946,6 +1973,13 @@ msgstr ""
 msgid "All timers for this pin are in use"
 msgstr ""
 
+#: ports/raspberrypi/common-hal/picogame/Display.c py/argcheck.c py/runtime.c
+#: shared-bindings/bitmapfilter/__init__.c
+#: shared-module/audiodelays/MultiTapDelay.c shared-module/synthio/Note.c
+#: shared-module/synthio/__init__.c
+msgid "%q must be of type %q, not %q"
+msgstr ""
+
 #: ports/raspberrypi/common-hal/rotaryio/IncrementalEncoder.c
 msgid "Pins must be sequential GPIO pins"
 msgstr ""
@@ -1996,10 +2030,6 @@ msgstr ""
 
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 msgid "Missing first_in_pin. %q[%u] reads pin(s)"
-msgstr ""
-
-#: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
-msgid "Cannot use GPIO0..15 together with GPIO32..47"
 msgstr ""
 
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
@@ -2236,6 +2266,10 @@ msgstr ""
 msgid "SocketPool can only be used with wifi.radio or hostnetwork.HostNetwork"
 msgstr ""
 
+#: ports/zephyr-cp/common-hal/usb_hid/Device.c shared-module/usb_hid/Device.c
+msgid "USB error"
+msgstr ""
+
 #: ports/zephyr-cp/common-hal/wifi/Radio.c
 msgid "Failed to set hostname"
 msgstr ""
@@ -2284,7 +2318,7 @@ msgid "extra keyword arguments given"
 msgstr ""
 
 #: py/argcheck.c shared-bindings/_stage/__init__.c
-#: shared-bindings/digitalio/DigitalInOut.c
+#: shared-bindings/digitalio/DigitalInOut.c shared-bindings/picogame/__init__.c
 msgid "argument num/types mismatch"
 msgstr ""
 
@@ -2303,12 +2337,6 @@ msgstr ""
 #: py/argcheck.c shared-bindings/gifio/GifWriter.c
 #: shared-module/gifio/OnDiskGif.c
 msgid "%q must be <= %d"
-msgstr ""
-
-#: py/argcheck.c py/runtime.c shared-bindings/bitmapfilter/__init__.c
-#: shared-module/audiodelays/MultiTapDelay.c shared-module/synthio/Note.c
-#: shared-module/synthio/__init__.c
-msgid "%q must be of type %q, not %q"
 msgstr ""
 
 #: py/argcheck.c
@@ -2860,7 +2888,9 @@ msgstr ""
 msgid "schedule queue full"
 msgstr ""
 
-#: py/modstruct.c shared-module/struct/__init__.c
+#: py/modstruct.c shared-bindings/picogame/Bitmap.c
+#: shared-bindings/picogame/Canvas.c shared-bindings/picogame/Framebuffer.c
+#: shared-module/picogame/__init__.c shared-module/struct/__init__.c
 msgid "buffer too small"
 msgstr ""
 
@@ -3724,6 +3754,7 @@ msgid "file must be a file opened in byte mode"
 msgstr ""
 
 #: shared-bindings/audiodelays/Chorus.c shared-bindings/audiodelays/Echo.c
+#: shared-bindings/audiodelays/Flanger.c
 #: shared-bindings/audiodelays/GranularPitchShift.c
 #: shared-bindings/audiodelays/MultiTapDelay.c
 #: shared-bindings/audiodelays/PitchShift.c
@@ -3748,15 +3779,6 @@ msgstr ""
 
 #: shared-bindings/audioio/AudioOut.c
 msgid "%q and %q must be different"
-msgstr ""
-
-#: shared-bindings/bitbangio/I2C.c shared-bindings/bitbangio/SPI.c
-#: shared-bindings/busio/I2C.c shared-bindings/busio/SPI.c
-msgid "Function requires lock"
-msgstr ""
-
-#: shared-bindings/bitbangio/SPI.c shared-bindings/busio/SPI.c
-msgid "buffer slices must be of equal length"
 msgstr ""
 
 #: shared-bindings/bitmapfilter/__init__.c
@@ -4076,6 +4098,11 @@ msgstr ""
 msgid "Specify exactly one of data0 or data_pins"
 msgstr ""
 
+#: shared-bindings/picogame/Bitmap.c shared-module/msgpack/__init__.c
+#: supervisor/shared/settings.c
+msgid "Invalid format"
+msgstr ""
+
 #: shared-bindings/ps2io/Ps2.c
 msgid "Failed sending command."
 msgstr ""
@@ -4169,6 +4196,10 @@ msgstr ""
 
 #: shared-bindings/time/__init__.c
 msgid "timestamp out of range for platform time_t"
+msgstr ""
+
+#: shared-bindings/traceback/__init__.c
+msgid "Supply both or neither of %q and %q"
 msgstr ""
 
 #: shared-bindings/traceback/__init__.c
@@ -4395,10 +4426,6 @@ msgstr ""
 msgid "no default packer"
 msgstr ""
 
-#: shared-module/msgpack/__init__.c supervisor/shared/settings.c
-msgid "Invalid format"
-msgstr ""
-
 #: shared-module/paralleldisplaybus/ParallelBus.c
 msgid ""
 "This microcontroller only supports data0=, not data_pins=, because it "
@@ -4500,10 +4527,6 @@ msgstr ""
 
 #: shared-module/usb_hid/Device.c
 msgid "USB busy"
-msgstr ""
-
-#: shared-module/usb_hid/Device.c
-msgid "USB error"
 msgstr ""
 
 #: shared-module/vectorio/Circle.c shared-module/vectorio/Polygon.c
