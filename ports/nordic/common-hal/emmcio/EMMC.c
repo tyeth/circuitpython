@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "extmod/vfs.h"          // MP_BLOCKDEV_IOCTL_*
+#include "lib/sdmmc/include/sdmmc_defs.h" // MMC_* command numbers
 #include "py/mphal.h"
 #include "py/runtime.h"          // RUN_BACKGROUND_TASKS
 #include "shared-bindings/microcontroller/__init__.h"
@@ -893,29 +894,20 @@ static emmcio_construct_result_t emmc_check_pins(const mcu_pin_obj_t *clock,
     return EMMCIO_OK;
 }
 
-// The MMC command that never answered, so a failure names the step it stopped
-// at. CMD8 covers the extended CSD.
+#define RETURN_CMD_UNLESS(cmd, done) do { if (!(done)) { return cmd; } } while (0)
+
+// The MMC command that never answered, so a failure names the step it stopped at.
 static int init_failure_command(emmcio_emmc_obj_t *self) {
-    if (!self->cmd0_sent) {
-        return 0;
-    }
-    if (self->cmd1_retries < 0) {
-        return 1;               // card never left busy
-    }
-    if (!self->cmd2_resp) {
-        return 2;               // no CID
-    }
-    if (!self->cmd3_resp) {
-        return 3;
-    }
-    if (!self->cmd7_resp) {
-        return 7;               // select
-    }
-    if (!self->cmd16_resp) {
-        return 16;              // blocklen
-    }
-    return 8;                   // extended CSD
+    RETURN_CMD_UNLESS(MMC_GO_IDLE_STATE, self->cmd0_sent);
+    RETURN_CMD_UNLESS(MMC_SEND_OP_COND, self->cmd1_retries >= 0);  // never left busy
+    RETURN_CMD_UNLESS(MMC_ALL_SEND_CID, self->cmd2_resp);
+    RETURN_CMD_UNLESS(MMC_SET_RELATIVE_ADDR, self->cmd3_resp);
+    RETURN_CMD_UNLESS(MMC_SELECT_CARD, self->cmd7_resp);
+    RETURN_CMD_UNLESS(MMC_SET_BLOCKLEN, self->cmd16_resp);
+    return MMC_SEND_EXT_CSD;
 }
+
+#undef RETURN_CMD_UNLESS
 
 // How far the high-speed switch got: hs_stage as documented on the struct,
 // except that a CMD13 SWITCH_ERROR (the card rejecting HS_TIMING) reports 7 to
