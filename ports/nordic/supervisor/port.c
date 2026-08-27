@@ -22,11 +22,13 @@
 #include "nrf/power.h"
 #include "nrf/timers.h"
 
+#ifdef BLUETOOTH_SD
+#include "nrf_nvic.h"
+#endif
+
 #if CIRCUITPY_EMMCIO
 #include "shared-bindings/emmcio/__init__.h"
 #endif
-
-#include "nrf_nvic.h"
 
 #include "common-hal/microcontroller/Pin.h"
 #include "common-hal/alarm/time/TimeAlarm.h"
@@ -38,7 +40,6 @@
 #include "common-hal/watchdog/WatchDogTimer.h"
 #include "common-hal/alarm/__init__.h"
 
-#include "shared-bindings/_bleio/__init__.h"
 #include "shared-bindings/microcontroller/__init__.h"
 #include "shared-bindings/rtc/__init__.h"
 
@@ -331,6 +332,7 @@ void port_idle_until_interrupt(void) {
         (void)__get_FPSCR();
         NVIC_ClearPendingIRQ(FPU_IRQn);
     }
+    #ifdef BLUETOOTH_SD
     uint8_t sd_enabled;
 
     sd_softdevice_is_enabled(&sd_enabled);
@@ -338,7 +340,10 @@ void port_idle_until_interrupt(void) {
         if (!background_callback_pending()) {
             sd_app_evt_wait();
         }
-    } else {
+        return;
+    }
+    #endif
+    {
         // Call wait for interrupt ourselves if the SD isn't enabled.
         // Note that `wfi` should be called with interrupts disabled,
         // to ensure that the queue is properly drained.  The `wfi`
