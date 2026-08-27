@@ -63,19 +63,39 @@ static mp_obj_t scene_resolve_target(mp_obj_t disp, bool *fast, bool *fb_target)
 }
 
 //| class Scene:
-//|     """Retained-mode scene with dirty-rectangle rendering. Add sprites and
-//|     tilemaps once (tilemaps first = bottom layer), mutate them each frame,
-//|     then call :py:meth:`refresh` - only the changed region is repainted.
-//|     Backed by a fast :py:class:`Display`."""
+//|     """A retained-mode scene with dirty-rectangle rendering for a `Display`,
+//|     :py:class:`~busdisplay.BusDisplay` or `Framebuffer` target. Add layers once
+//|     (insertion order is bottom to top), mutate them each frame, then call
+//|     :py:meth:`refresh`; only the regions reported changed are repainted."""
 //|
 //|     def __init__(
 //|         self,
-//|         display: Display,
-//|         buffer_a: WriteableBuffer,
-//|         buffer_b: WriteableBuffer,
+//|         display: Union[Display, busdisplay.BusDisplay, Framebuffer],
+//|         buffer_a: Optional[WriteableBuffer],
+//|         buffer_b: Optional[WriteableBuffer],
 //|         *,
 //|         background: int = 0,
-//|     ) -> None: ...
+//|         top: int = 0,
+//|         bottom: int = 0,
+//|         left: int = 0,
+//|         right: int = 0,
+//|     ) -> None:
+//|         """:param display: the render target
+//|         :param ~circuitpython_typing.WriteableBuffer buffer_a: a strip buffer of at
+//|             least ``display.width * STRIP_H * 2`` bytes. Two buffers let the next
+//|             strip be composited while the previous one is being sent. On a
+//|             `Framebuffer` target there are no strips and both may be `None`.
+//|         :param ~circuitpython_typing.WriteableBuffer buffer_b: the second strip
+//|             buffer, sized like ``buffer_a``
+//|         :param int background: color that exposed areas are cleared to
+//|         :param int top: rows at the top edge the scene never renders into
+//|         :param int bottom: rows at the bottom edge the scene never renders into
+//|         :param int left: columns at the left edge the scene never renders into
+//|         :param int right: columns at the right edge the scene never renders into
+//|
+//|         The four border insets reserve screen edges for content the application
+//|         draws itself; the scene renders only the inner rectangle."""
+//|         ...
 //|
 static mp_obj_t picogame_scene_make_new(const mp_obj_type_t *type, size_t n_args,
     size_t n_kw, const mp_obj_t *all_args) {
@@ -180,12 +200,15 @@ static void snapshot_sync(picogame_scene_obj_t *self) {
 
 //|
 //|     def add(
-//|         self, item: Union[Sprite, Tilemap], *, fixed: bool = False
-//|     ) -> Union[Sprite, Tilemap]:
-//|         """Add a sprite/tilemap/particles/canvas (drawn next refresh; insertion
-//|         order is bottom-to-top). fixed=True pins the item to the screen (it ignores
-//|         the view offset) - use it for HUD / score / dialog over a scrolling world.
-//|         Returns the added item, so you can write ``spr = scene.add(Sprite(...))``."""
+//|         self, item: Union[Sprite, Tilemap, Canvas, Particles, StripDraw, Triangles], *, fixed: bool = False
+//|     ) -> Union[Sprite, Tilemap, Canvas, Particles, StripDraw, Triangles]:
+//|         """Add a layer of any kind, drawn starting with the next refresh; insertion
+//|         order is bottom to top. Returns the added item.
+//|
+//|         ``fixed=True`` pins the item to the screen so it ignores the view offset
+//|         set by :py:meth:`set_view`, for example for a HUD over a scrolling world.
+//|         `StripDraw` and `Triangles` layers always draw in screen coordinates and
+//|         are unaffected by both ``fixed`` and the view offset."""
 //|         ...
 //|
 static void scene_add_one(picogame_scene_obj_t *self, mp_obj_t item_in, bool fixed) {
@@ -229,8 +252,8 @@ static mp_obj_t picogame_scene_add(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(picogame_scene_add_obj, 2, picogame_scene_add);
 
-//|     def add_all(self, items: Iterable[Union[Sprite, Tilemap]]) -> None:
-//|         """Add several sprites/tilemaps at once (bottom-to-top in order)."""
+//|     def add_all(self, items: Iterable[Union[Sprite, Tilemap, Canvas, Particles, StripDraw, Triangles]]) -> None:
+//|         """Add several layers at once, bottom to top in iteration order."""
 //|         ...
 //|
 static mp_obj_t picogame_scene_add_all(mp_obj_t self_in, mp_obj_t iterable) {
@@ -244,12 +267,11 @@ static mp_obj_t picogame_scene_add_all(mp_obj_t self_in, mp_obj_t iterable) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(picogame_scene_add_all_obj, picogame_scene_add_all);
 
-//|     def remove(self, item: Union[Sprite, Tilemap]) -> None:
-//|         """Remove a previously add()ed item (draw order of the rest is unchanged).
-//|         The next refresh repaints over where it was (a full repaint, like
-//|         :py:meth:`invalidate`), so it leaves no ghost. The item itself is untouched -
-//|         keep a reference and add() it again later to bring it back. Raises
-//|         ValueError if the item is not in the scene (e.g. already removed)."""
+//|     def remove(self, item: Union[Sprite, Tilemap, Canvas, Particles, StripDraw, Triangles]) -> None:
+//|         """Remove a previously added item; the draw order of the rest is unchanged.
+//|         The next refresh repaints the scene, so the item leaves no ghost. The item
+//|         itself is untouched and may be added again later. Raises
+//|         :py:class:`ValueError` if the item is not in the scene."""
 //|         ...
 //|
 static mp_obj_t picogame_scene_remove(mp_obj_t self_in, mp_obj_t item_in) {
@@ -273,7 +295,7 @@ static mp_obj_t picogame_scene_remove(mp_obj_t self_in, mp_obj_t item_in) {
 static MP_DEFINE_CONST_FUN_OBJ_2(picogame_scene_remove_obj, picogame_scene_remove);
 
 //|     def invalidate(self) -> None:
-//|         """Force a full-screen repaint on the next refresh (e.g. on scene change)."""
+//|         """Force the scene's whole render area to repaint on the next refresh."""
 //|         ...
 //|
 static mp_obj_t picogame_scene_invalidate(mp_obj_t self_in) {
@@ -283,9 +305,10 @@ static mp_obj_t picogame_scene_invalidate(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(picogame_scene_invalidate_obj, picogame_scene_invalidate);
 
 //|     def set_view(self, ox: int, oy: int) -> None:
-//|         """Set the view offset = screen position of the scene origin. Use a
-//|         constant offset to centre a small game, or update it each frame to
-//|         scroll (which repaints the whole screen)."""
+//|         """Set the screen position ``(ox, oy)`` of scene coordinate ``(0, 0)``:
+//|         a scene point ``(x, y)`` is drawn at ``(x + ox, y + oy)``. Use a constant
+//|         offset to center a small scene, or update it each frame to scroll, which
+//|         repaints the whole render area."""
 //|         ...
 //|
 static mp_obj_t picogame_scene_set_view(mp_obj_t self_in, mp_obj_t ox_in, mp_obj_t oy_in) {
@@ -302,7 +325,7 @@ static mp_obj_t picogame_scene_set_view(mp_obj_t self_in, mp_obj_t ox_in, mp_obj
 static MP_DEFINE_CONST_FUN_OBJ_3(picogame_scene_set_view_obj, picogame_scene_set_view);
 
 //|     view: Tuple[int, int]
-//|     """The current view offset (ox, oy) as set by set_view() (read-only)."""
+//|     """The current view offset ``(ox, oy)`` as set by :py:meth:`set_view`. (read-only)"""
 static mp_obj_t picogame_scene_get_view(mp_obj_t self_in) {
     picogame_scene_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_obj_t t[2] = { MP_OBJ_NEW_SMALL_INT(self->ox), MP_OBJ_NEW_SMALL_INT(self->oy) };
@@ -311,9 +334,8 @@ static mp_obj_t picogame_scene_get_view(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(picogame_scene_get_view_obj, picogame_scene_get_view);
 MP_PROPERTY_GETTER(picogame_scene_view_obj, (mp_obj_t)&picogame_scene_get_view_obj);
 
-//|     display: Union[Display, busdisplay.BusDisplay]
-//|     """The backend this Scene was built with (a picogame.Display or a busdisplay),
-//|     read-only - handy for one-off picogame.render() / Display.render() calls."""
+//|     display: Union[Display, busdisplay.BusDisplay, Framebuffer]
+//|     """The render target this Scene was built with. (read-only)"""
 //|
 static mp_obj_t picogame_scene_get_display(mp_obj_t self_in) {
     return ((picogame_scene_obj_t *)MP_OBJ_TO_PTR(self_in))->display;
@@ -439,9 +461,11 @@ static mp_obj_t scene_refresh_fb(picogame_scene_obj_t *self) {
 #endif // CIRCUITPY_PICOGAME_FRAMEBUFFER
 
 //|     def refresh(self) -> Optional[list]:
-//|         """Diff against the previous frame and repaint only the changed region(s).
-//|         Returns the bounding dirty rect as a REUSED list [x1, y1, x2, y2] (read it
-//|         immediately; it's overwritten next call), or None if nothing changed."""
+//|         """Repaint the regions reported changed by the scene's layers since the
+//|         previous refresh. Returns the bounding dirty rectangle as a list
+//|         ``[x1, y1, x2, y2]`` with exclusive ``x2``/``y2``, or `None` if nothing
+//|         changed. The returned list object is reused: read it before the next
+//|         ``refresh()`` call."""
 //|         ...
 //|
 //|

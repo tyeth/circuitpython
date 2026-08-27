@@ -31,16 +31,12 @@
 // platforms - WASM playground, desktop sim, FruitJam DVI/HSTX)
 // ---------------------------------------------------------------------------
 //| class Framebuffer:
-//|     """A RAM framebuffer render target that a Scene or :py:func:`render` can draw
-//|     into instead of a BusDisplay. ``buffer`` must be a writable buffer of at least
-//|     ``width*height*2`` bytes (``width*height`` for ``rgb332=True``); the caller owns it
-//|     (a ``bytearray`` in the browser, the DVI scanout buffer on FruitJam). By default the
-//|     pixels are wire-order RGB565 (the engine's internal format); ``native_rgb565=True``
-//|     byte-swaps each finished region to NATIVE RGB565 - the format 16-bit picodvi /
-//|     canvas scanout targets expect; ``rgb332=True`` quantizes each finished region to
-//|     RGB332 bytes - the format of 8-bit picodvi scanout (FruitJam 640x480, which the
-//|     hardware only offers at 8bpp). Assets, palettes and ``rgb565()`` stay wire-order
-//|     RGB565 throughout regardless of the output format."""
+//|     """A RAM framebuffer render target that a `Scene` or :py:func:`render` can
+//|     draw into instead of a :py:class:`~busdisplay.BusDisplay`, for example the
+//|     scanout buffer of a :py:class:`picodvi.Framebuffer`.
+//|
+//|     Constructing it raises :py:class:`NotImplementedError` when
+//|     :py:data:`FRAMEBUFFER_SUPPORTED` is `False`."""
 //|
 //|     def __init__(
 //|         self,
@@ -50,11 +46,27 @@
 //|         *,
 //|         native_rgb565: bool = False,
 //|         rgb332: bool = False,
-//|     ) -> None: ...
+//|     ) -> None:
+//|         """:param ~circuitpython_typing.WriteableBuffer buffer: caller-owned target
+//|             buffer of at least ``width * height * 2`` bytes, or ``width * height``
+//|             bytes with ``rgb332=True``
+//|         :param int width: target width in pixels
+//|         :param int height: target height in pixels
+//|         :param bool native_rgb565: fill the buffer with native-endian RGB565, the
+//|             format 16-bit scanout targets expect. By default the buffer holds
+//|             transfer-order RGB565.
+//|         :param bool rgb332: fill the buffer with 8-bit RGB332, the format of 8-bit
+//|             scanout targets
+//|
+//|         ``native_rgb565`` and ``rgb332`` cannot both be true. Bitmaps, palettes and
+//|         :py:func:`rgb565` values stay transfer-order RGB565 regardless of the
+//|         output format."""
+//|         ...
 //|
 //|     width: int
+//|     """Target width in pixels. (read-only)"""
 //|     height: int
-//|     """Target size in pixels (read-only)."""
+//|     """Target height in pixels. (read-only)"""
 //|
 //|
 // Static SRAM compose strip (see the scratch comment in make_new). 640*16*2 = 20 KB .bss,
