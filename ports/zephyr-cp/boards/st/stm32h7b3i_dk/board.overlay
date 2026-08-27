@@ -42,4 +42,4 @@ zephyr_udc0: &usbotg_hs {
     status = "okay";
 };
 
-#include "../app.overlay"
+#include "../../../app.overlay"

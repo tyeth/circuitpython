@@ -73,4 +73,4 @@ zephyr_udc0: &usbotg_hs {
 	interrupt-names = "radio", "radio-sw-low";
 };
 
-#include "../app.overlay"
+#include "../../../app.overlay"
