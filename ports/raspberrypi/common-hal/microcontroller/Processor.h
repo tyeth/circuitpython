@@ -18,5 +18,5 @@ typedef struct {
 } mcu_processor_obj_t;
 
 #ifdef CIRCUITPY_PSRAM_CHIP_SELECT
-void common_hal_mcu_processor_update_psram_timing(uint32_t sys_clk_khz);
+void mcu_processor_update_psram_timing(uint32_t sys_clk_khz);
 #endif

@@ -57,7 +57,7 @@ uint32_t common_hal_mcu_processor_get_frequency(void) {
 }
 
 #ifdef CIRCUITPY_PSRAM_CHIP_SELECT
-void __no_inline_not_in_flash_func(common_hal_mcu_processor_update_psram_timing)(uint32_t sys_clk_khz) {
+void __no_inline_not_in_flash_func(mcu_processor_update_psram_timing)(uint32_t sys_clk_khz) {
     // MAX_SELECT is in units of 64 system clock cycles; PSRAM allows 8 us max CS
     // assertion. Use 7.5 us so there is margin at any clk_sys.
     uint32_t max_select = (75 * sys_clk_khz) / 640000;
@@ -102,7 +102,7 @@ void common_hal_mcu_processor_set_frequency(mcu_processor_obj_t *self, uint32_t 
     #endif
     set_sys_clock_khz(freq_khz, false);
     #ifdef CIRCUITPY_PSRAM_CHIP_SELECT
-    common_hal_mcu_processor_update_psram_timing(freq_khz);
+    mcu_processor_update_psram_timing(freq_khz);
     common_hal_mcu_enable_interrupts();
     #endif
 }
