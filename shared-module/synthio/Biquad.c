@@ -156,7 +156,7 @@ void common_hal_synthio_biquad_tick(mp_obj_t self_in) {
         case SYNTHIO_PEAKING_EQ:
             b0 = 1 + alpha * A;
             b1 = -2 * sc.c;
-            b2 = 1 + alpha * A;
+            b2 = 1 - alpha * A;
             a0 = 1 + alpha / A;
             a1 = -2 * sc.c;
             a2 = 1 - alpha / A;
