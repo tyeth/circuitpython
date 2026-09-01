@@ -235,15 +235,16 @@ void *port_realloc(void *ptr, size_t size, bool dma_capable) {
 }
 #endif
 
-// Pending request for the ST system bootloader, kept where the other ports keep
-// theirs: _bootloader_dbl_tap on atmel-samd, NRF_POWER->GPREGRET on nordic,
-// SNVS->LPGPR[3] on mimxrt10xx. BKP0R is already STM_ALARM_FLAG. The low half is
-// the attempt count.
-#define STM_BOOTLOADER_FLAG (RTC->BKP1R)
+// Pending request for the ST system bootloader. This lives in the saved word,
+// RAM that startup does not clear, which is where the other ports keep theirs:
+// _bootloader_dbl_tap on atmel-samd, NRF_POWER->GPREGRET on nordic,
+// SNVS->LPGPR[3] on mimxrt10xx. The low byte is the attempt count.
 #define BOOTLOADER_MAGIC 0xf05a0000
 #define BOOTLOADER_MAGIC_MASK 0xffff0000
+// Magic in the top half, RTC seconds of the last attempt in bits 15:8, attempt
+// count in bits 7:0.
 #define BOOTLOADER_SECONDS_SHIFT 8
-#define BOOTLOADER_SECONDS_MASK 0xff
+#define BOOTLOADER_FIELD_MASK 0xff
 
 // A retry only counts if it follows the previous attempt closely. The ROM fails
 // and resets within a second, so anything slower is the part being reset by
@@ -260,7 +261,8 @@ void *port_realloc(void *ptr, size_t size, bool dma_capable) {
 #if CPY_STM32F4
 // Seconds field of the RTC clock, read straight from the register because the
 // HAL handle is not initialised this early. rtc_init() leaves shadow bypass on
-// and that setting survives a reset, so the register reads live.
+// and that setting survives a reset, so the register reads live. Only a read is
+// needed, so the backup domain does not have to be unlocked for write.
 static uint32_t bootloader_rtc_seconds(void) {
     uint32_t tr = RTC->TR;
     return ((tr >> 4) & 0x7) * 10 + (tr & 0xF);
@@ -277,15 +279,12 @@ MP_NORETURN static __attribute__((naked)) void branch_to_bootloader(uint32_t bl_
 }
 
 // Runs before HAL_Init() starts SysTick, so the ROM gets the part close to reset
-// state, and ahead of the __HAL_RCC_BACKUPRESET_FORCE() further down port_init()
-// which clears STM_BOOTLOADER_FLAG. The ROM sets its own VTOR and runs from
-// 0x1FFF0000, so no SYSCFG remap is needed here.
+// state. The ROM sets its own VTOR and runs from 0x1FFF0000, so no SYSCFG remap
+// is needed here.
 static void check_enter_bootloader(void) {
-    __HAL_RCC_PWR_CLK_ENABLE();
-    HAL_PWR_EnableBkUpAccess();
-
-    uint32_t request = STM_BOOTLOADER_FLAG;
+    uint32_t request = port_get_saved_word();
     if ((request & BOOTLOADER_MAGIC_MASK) != BOOTLOADER_MAGIC) {
+        // Not our word. Safe mode shares it, so leave it alone.
         return;
     }
 
@@ -293,24 +292,24 @@ static void check_enter_bootloader(void) {
     // what tells a retry apart from a cold boot, and a power cycle always leaves
     // the bootloader.
     if (!(RCC->CSR & RCC_CSR_SFTRSTF)) {
-        STM_BOOTLOADER_FLAG = 0;
+        port_set_saved_word(0);
         return;
     }
 
     uint32_t now = bootloader_rtc_seconds();
-    uint32_t then = (request >> BOOTLOADER_SECONDS_SHIFT) & BOOTLOADER_SECONDS_MASK;
+    uint32_t then = (request >> BOOTLOADER_SECONDS_SHIFT) & BOOTLOADER_FIELD_MASK;
     if ((now + 60 - then) % 60 > BOOTLOADER_RETRY_WINDOW_S) {
-        STM_BOOTLOADER_FLAG = 0;
+        port_set_saved_word(0);
         return;
     }
 
-    uint32_t attempts = request & BOOTLOADER_SECONDS_MASK;
+    uint32_t attempts = request & BOOTLOADER_FIELD_MASK;
     if (attempts >= BOOTLOADER_MAX_ATTEMPTS) {
-        STM_BOOTLOADER_FLAG = 0;
+        port_set_saved_word(0);
         return;
     }
-    STM_BOOTLOADER_FLAG = BOOTLOADER_MAGIC |
-        (now << BOOTLOADER_SECONDS_SHIFT) | (attempts + 1);
+    port_set_saved_word(BOOTLOADER_MAGIC |
+        (now << BOOTLOADER_SECONDS_SHIFT) | (attempts + 1));
     // Clearing the flags cancels the request once the ROM succeeds: leaving DFU
     // is a jump, not a reset, so SFTRSTF stays clear and the branch above zeroes
     // the flag on the way back into the application.
@@ -345,8 +344,6 @@ safe_mode_t port_init(void) {
     }
     #endif
 
-    // This clears STM_BOOTLOADER_FLAG too, so check_enter_bootloader() above has
-    // to run before it.
     __HAL_RCC_BACKUPRESET_FORCE();
     __HAL_RCC_BACKUPRESET_RELEASE();
 
@@ -418,10 +415,8 @@ void reset_to_bootloader(void) {
     #if CPY_STM32F4
     // Record the request and reset, rather than jumping from a running
     // application. check_enter_bootloader() jumps on the way back up.
-    __HAL_RCC_PWR_CLK_ENABLE();
-    HAL_PWR_EnableBkUpAccess();
-    STM_BOOTLOADER_FLAG = BOOTLOADER_MAGIC |
-        (bootloader_rtc_seconds() << BOOTLOADER_SECONDS_SHIFT);
+    port_set_saved_word(BOOTLOADER_MAGIC |
+        (bootloader_rtc_seconds() << BOOTLOADER_SECONDS_SHIFT));
     #endif
     NVIC_SystemReset();
 
