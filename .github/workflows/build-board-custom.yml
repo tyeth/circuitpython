@@ -79,6 +79,12 @@ jobs:
         PORT=$(python tools/board_to_port.py "${{ inputs.board }}")
         echo "port=$PORT" >> $GITHUB_OUTPUT
       shell: bash
+    - name: Build extensions
+      id: build-extensions
+      run: |
+        EXT=$(python tools/board_build_extensions.py "${{ inputs.board }}")
+        echo "extensions=$EXT" >> $GITHUB_OUTPUT
+      shell: bash
     - name: Set up port
       id: set-up-port
       uses: ./.github/actions/deps/ports
@@ -121,7 +127,18 @@ jobs:
         BOARD: ${{ inputs.board }}
         FLAGS: ${{ inputs.flags }}
         DEBUG: ${{ inputs.debug && '1' || '0' }}
-      run: make -j$(nproc) $FLAGS BOARD="$BOARD" DEBUG=$DEBUG TRANSLATION="$TRANSLATION"
+        BUILD: build-${{ inputs.board }}
+        EXTENSIONS: ${{ steps.build-extensions.outputs.extensions }}
+      run: |
+        # Name the firmware.<ext> targets explicitly rather than relying on the
+        # default goal. The zephyr-cp port's default goal is the Zephyr ELF, so
+        # the firmware.* copies the artifact upload expects are never made.
+        ARTIFACTS=""
+        for ext in $EXTENSIONS; do
+          ARTIFACTS="$ARTIFACTS $BUILD/firmware.$ext"
+        done
+        make -j4 $FLAGS BOARD="$BOARD" BUILD="$BUILD" DEBUG=$DEBUG \
+             TRANSLATION="$TRANSLATION" $ARTIFACTS
       working-directory: ports/${{ steps.board-to-port.outputs.port }}
     - name: Upload artifact
       uses: actions/upload-artifact@v7

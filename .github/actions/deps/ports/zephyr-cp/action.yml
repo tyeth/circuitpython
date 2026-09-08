@@ -37,6 +37,13 @@ runs:
       run: west zephyr-export
       shell: bash
       working-directory: ports/zephyr-cp
+    - name: Fetch cyw43-driver submodule
+      # The CYW43 shared-bus Bluetooth transport needs the georgerobotics
+      # cyw43-driver headers and the BT controller patchram, which live in a
+      # submodule of hal_rpi_pico that west does not check out.
+      run: git -C modules/hal/rpi_pico submodule update --init --depth 1 lib/cyw43-driver
+      shell: bash
+      working-directory: ports/zephyr-cp
     - name: Install Zephyr protobuf dependency
       run: pip install protobuf==6.33.5
       shell: bash
