@@ -12,9 +12,25 @@ manifest:
       url: https://github.com/adafruit/adaboot
       revision: 14d84b0ba784fec227208d4917b9e7c38e4e87bc
       path: bootloader/mcuboot
+    # CI-ONLY OVERRIDES -- do not merge to main.
+    #
+    # The Pico 2 W Bluetooth work lives in fork branches that are still in
+    # review, so point the manifest at them to get a BLE-capable CI artifact.
+    # A project declared here overrides the same-named project imported from
+    # Zephyr's own manifest.
+    #
+    #   tyeth/zephyr#1        CYW43 shared-bus HCI driver (+ #2 USB DPRAM fix)
+    #   tyeth/hal_rpi_pico#1  cybt ring-index hardening
+    #   tyeth/hal_rpi_pico#2  flash helper RAM placement
+    #   tyeth/hal_infineon#1  Murata-1YN BT coex NVRAM
+    #
+    # Revert to these upstream revisions before merging:
+    #   zephyr        adafruit/zephyr @ 70f1a63cc8bc96ea53ab0c7983f3f8ff60f438bb
+    #   hal_rpi_pico  as imported by Zephyr's own manifest
+    #   hal_infineon  as imported by Zephyr's own manifest
     - name: zephyr
-      url: https://github.com/adafruit/zephyr
-      revision: 70f1a63cc8bc96ea53ab0c7983f3f8ff60f438bb
+      url: https://github.com/tyeth/zephyr
+      revision: cyw43-shared-bus-ble
       clone-depth: 100
       import:
         # Skip what no CircuitPython board can use, so west update fetches 37
@@ -61,3 +77,11 @@ manifest:
           - percepio
           - uoscore-uedhoc
           - zephyr-xenlib
+    - name: hal_rpi_pico
+      url: https://github.com/tyeth/hal_rpi_pico
+      revision: integration-pico2w-ble
+      path: modules/hal/rpi_pico
+    - name: hal_infineon
+      url: https://github.com/tyeth/hal_infineon
+      revision: cyw43-shared-bus-ble
+      path: modules/hal/infineon
