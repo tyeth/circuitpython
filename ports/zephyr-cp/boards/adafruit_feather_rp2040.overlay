@@ -2,6 +2,18 @@
 	/delete-node/ partitions;
 
 	partitions {
+		/*
+		 * The RP2040 flash is memory mapped at 0x10000000 and flash0 carries
+		 * "ranges" to express that. Re-creating "partitions" after
+		 * /delete-node/ drops the "ranges" the stock rpi_pico-common.dtsi puts
+		 * here, which breaks address translation for the
+		 * "zephyr,mapped-partition" children: DT_REG_ADDR(code_partition)
+		 * would then return the bare 0x100 offset instead of 0x10000100. That
+		 * links the image at 0x100 (ROM_ADDR in cortex_m/scripts/linker.ld)
+		 * and makes RP2_REQUIRES_SECOND_STAGE_BOOT default to n, so no .boot2
+		 * is emitted at 0x10000000 and the resulting UF2 does not boot.
+		 */
+		ranges;
 		#address-cells = <1>;
 		#size-cells = <1>;
 
