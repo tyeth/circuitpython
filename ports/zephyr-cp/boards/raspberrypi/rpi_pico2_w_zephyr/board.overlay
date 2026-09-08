@@ -1,3 +1,26 @@
 /* Partition layout is owned by the mcuboot fork (dts/raspberrypi/rpi_pico2.dtsi)
  * and applied to this image by sysbuild. This overlay only adds board/app config. */
+
+/*
+ * Bluetooth. The CYW43439's HCI is not on a UART here — it shares the WiFi
+ * gSPI bus — so hang the shared-bus HCI transport off the board's stock
+ * infineon,airoc-wifi node and point the host at it. CONFIG_BT then turns
+ * itself on via the zephyr,bt-hci chosen (see
+ * ../../../internal-modules/circuitpython-kconfig/Kconfig).
+ */
+&pio0_spi0 {
+	airoc-wifi@0 {
+		cyw43_bt_hci: cyw43_bt_hci {
+			compatible = "infineon,cyw43-bt-hci";
+			status = "okay";
+		};
+	};
+};
+
+/ {
+	chosen {
+		zephyr,bt-hci = &cyw43_bt_hci;
+	};
+};
+
 #include "../../../app.overlay"
