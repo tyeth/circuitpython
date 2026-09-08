@@ -6,14 +6,25 @@
 		code_partition: partition@0 {
 			compatible = "zephyr,mapped-partition";
 			label = "code-partition";
-			reg = <0x0 0x17f000>;
+			reg = <0x0 0x17e000>;
 			read-only;
 		};
 
-		storage_partition: partition@17f000 {
+		/*
+		 * The settings partition backs Bluetooth bond keys via NVS, so it
+		 * must be erase-sector aligned and hold at least two of the
+		 * RP2350's 4K sectors: nvs_mount() rejects a single sector with
+		 * -EINVAL, which makes bt_enable() fail before ever opening the HCI
+		 * driver and surfaces as a bare OSError from "import _bleio".
+		 *
+		 * nvm and circuitpy must stay where ports/raspberrypi puts them
+		 * (cptools/check_partitions.py enforces this), so the second sector
+		 * comes out of the code partition, not out of the CIRCUITPY drive.
+		 */
+		storage_partition: partition@17e000 {
 			compatible = "zephyr,mapped-partition";
 			label = "storage";
-			reg = <0x17f000 0x1000>;
+			reg = <0x17e000 0x2000>;
 		};
 
 		nvm_partition: partition@180000 {
