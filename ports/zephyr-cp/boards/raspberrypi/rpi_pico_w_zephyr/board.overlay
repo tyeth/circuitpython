@@ -17,14 +17,25 @@
 		code_partition: partition@100 {
 			compatible = "zephyr,mapped-partition";
 			label = "code-partition";
-			reg = <0x100 (0x17f000 - 0x100)>;
+			reg = <0x100 (0x17e000 - 0x100)>;
 			read-only;
 		};
 
-		storage_partition: partition@17f000 {
+		/*
+		 * The settings partition backs Bluetooth bond keys via NVS, so it
+		 * must be erase-sector aligned and hold at least two of the
+		 * RP2040's 4K sectors: nvs_mount() rejects a single sector with
+		 * -EINVAL, which makes bt_enable() fail before ever opening the HCI
+		 * driver and surfaces as a bare OSError from "import _bleio".
+		 *
+		 * nvm and circuitpy must stay where ports/raspberrypi puts them
+		 * (cptools/check_partitions.py enforces this), so the second sector
+		 * comes out of the code partition, not out of the CIRCUITPY drive.
+		 */
+		storage_partition: partition@17e000 {
 			compatible = "zephyr,mapped-partition";
 			label = "storage";
-			reg = <0x17f000 0x1000>;
+			reg = <0x17e000 0x2000>;
 		};
 
 		nvm_partition: partition@180000 {
@@ -38,6 +49,27 @@
 			label = "circuitpy";
 			reg = <0x181000 (DT_SIZE_M(2) - 0x181000)>;
 		};
+	};
+};
+
+/*
+ * Bluetooth. Same CYW43439 as the Pico 2 W: HCI is not on a UART, it shares
+ * the WiFi gSPI bus, so hang the shared-bus HCI transport off the board's
+ * stock infineon,airoc-wifi node and point the host at it. CONFIG_BT then
+ * enables itself via the zephyr,bt-hci chosen (see ../../../Kconfig).
+ */
+&pio0_spi0 {
+	airoc-wifi@0 {
+		cyw43_bt_hci: cyw43_bt_hci {
+			compatible = "infineon,cyw43-bt-hci";
+			status = "okay";
+		};
+	};
+};
+
+/ {
+	chosen {
+		zephyr,bt-hci = &cyw43_bt_hci;
 	};
 };
 
