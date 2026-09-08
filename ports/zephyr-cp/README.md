@@ -116,3 +116,47 @@ west build -b nrf52840dk/nrf52840
 ```
 
 This is already supported in `ports/nordic` as `pca10056`.
+
+## Board overlay pitfalls
+
+Two things about `boards/<board>.overlay` that are easy to get wrong and fail in
+ways that point away from the cause.
+
+### Keep `ranges;` when replacing the partitions node
+
+If an overlay does `/delete-node/ partitions;` and rebuilds the node, it must
+re-add `ranges;`. Board DTS files put it there, and it is what lets devicetree
+address translation walk from a partition up through the flash node's
+`ranges = <0x0 0x10000000 ...>` into the SoC address space. Drop it and the code
+partition resolves to a raw offset instead of an absolute address:
+
+```
+code_partition REG_IDX_0_VAL_ADDRESS = 256          /* 0x100, wrong  */
+                                     = 268435712    /* 0x10000100    */
+```
+
+Prefer merging into the existing `partitions` node over deleting and recreating
+it, which avoids the problem entirely.
+
+On a SoC whose flash base is not `0x0` this produces an unbootable image, and the
+symptom is remote from the cause. With `CONFIG_FLASH_USES_MAPPED_PARTITION=y` the
+linker takes `ROM_ADDR` straight from the partition address, so the whole image
+is mis-linked. On RP2040 it also silently disables the second-stage bootloader:
+`soc/raspberrypi/rpi_pico/rp2040/Kconfig` gates `RP2_REQUIRES_SECOND_STAGE_BOOT`
+on the address being *exactly* `0x10000100`, so `.boot2` is omitted from the ELF
+altogether and the chip drops back to BOOTSEL when flashed.
+
+Overlays whose flash base is `0x0` (the nRF boards, `native_sim`) are unaffected,
+because the untranslated offset happens to equal the absolute address.
+
+### Size the settings partition for the flash geometry
+
+Any board enabling `CONFIG_BT_SETTINGS` (which Bluetooth bond keys need) must
+give the `storage` partition at least **two erase sectors**, aligned to an erase
+sector boundary. NVS needs two sectors minimum, and `flash_area_get_sectors()`
+reports zero sectors for a partition too small or misaligned to hold one.
+
+`settings_subsys_init()` then fails and `bt_enable()` returns before it ever
+opens the HCI driver, which surfaces to Python as a bare `OSError` from
+`import _bleio` with nothing pointing at flash layout. On a part with 4K sectors
+that means 8K aligned to 4K, not the 2K some boards started with.
