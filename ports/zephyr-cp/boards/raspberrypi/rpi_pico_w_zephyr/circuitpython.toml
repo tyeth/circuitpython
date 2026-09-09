@@ -3,3 +3,8 @@ BLOBS=["hal_infineon"]
 
 # Non-Zephyr build of the same board; nvm and CIRCUITPY must sit where it puts them.
 counterpart = "raspberrypi/raspberry_pi_pico_w"
+
+# Frozen into flash: the Pico W has ~42 KB of heap, and adafruit_ble alone takes
+# ~30 KB of it when loaded from CIRCUITPY as .mpy. Freezing keeps the bytecode in
+# flash so a BLE node fits.
+FROZEN_MPY_DIRS = ["frozen/Adafruit_CircuitPython_BLE"]

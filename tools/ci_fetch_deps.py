@@ -5,6 +5,7 @@ import shlex
 import pathlib
 import re
 import subprocess
+import tomllib
 
 TOP = pathlib.Path(__file__).parent.parent
 
@@ -254,8 +255,13 @@ def main(target):
                             lib_folder = "/".join(lib_folder[:2])
                         submodules.append(lib_folder)
         else:
-            # TODO: Add a way to specify frozen modules in circuitpython.toml
-            pass
+            # ports/zephyr-cp: FROZEN_MPY_DIRS = ["frozen/<lib>", ...] in circuitpython.toml
+            with config.open("rb") as f:
+                board_config = tomllib.load(f)
+            for lib_folder in board_config.get("FROZEN_MPY_DIRS", []):
+                if lib_folder.count("/") > 1:
+                    lib_folder = "/".join(lib_folder.split("/", maxsplit=2)[:2])
+                submodules.append(lib_folder)
 
     print("Submodules:", " ".join(submodules))
 
