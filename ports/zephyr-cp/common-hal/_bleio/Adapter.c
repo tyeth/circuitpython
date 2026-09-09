@@ -51,6 +51,9 @@ void bleio_request_bluetooth_background(void) {
 static bool scan_callbacks_registered = false;
 static bleio_scanresults_obj_t *active_scan_results = NULL;
 static struct bt_le_scan_cb scan_callbacks;
+// supervisor_ticks_ms64() value at which the running scan must stop, or 0 for
+// no timeout. See bleio_background() for why the host side enforces this.
+static uint64_t scan_deadline_ms;
 static bool ble_advertising = false;
 // True when advertising was started by the BLE workflow (supervisor) rather
 // than user code. Lets the workflow restart its own adverts without disturbing
@@ -277,6 +280,7 @@ static void scan_recv_cb(const struct bt_le_scan_recv_info *info, struct net_buf
 }
 
 static void scan_timeout_cb(void) {
+    scan_deadline_ms = 0;
     if (active_scan_results == NULL) {
         return;
     }
@@ -702,10 +706,21 @@ mp_obj_t common_hal_bleio_adapter_start_scan(bleio_adapter_obj_t *self, uint8_t 
         raise_zephyr_error(err);
     }
 
+    // Zephyr hands scan_params.timeout to the controller only on the extended
+    // scanning path (LE Set Extended Scan Enable carries a duration and the
+    // controller reports LE Scan Timeout). start_le_scan_legacy() never reads
+    // it, and the legacy path is what CONFIG_BT_EXT_ADV=n selects -- which a
+    // controller without extended advertising, like the CYW43439, forces. So
+    // on those builds the scan would run until stop_scan() and the ScanResults
+    // iterator would never finish. Keep the deadline here and enforce it from
+    // bleio_background(), on the main thread, where stopping is safe.
+    scan_deadline_ms = timeout > 0 ? supervisor_ticks_ms64() + (uint64_t)(timeout * 1000.0f) : 0;
+
     return MP_OBJ_FROM_PTR(self->scan_results);
 }
 
 void common_hal_bleio_adapter_stop_scan(bleio_adapter_obj_t *self) {
+    scan_deadline_ms = 0;
     if (self->scan_results == NULL) {
         return;
     }
@@ -713,6 +728,22 @@ void common_hal_bleio_adapter_stop_scan(bleio_adapter_obj_t *self) {
     shared_module_bleio_scanresults_set_done(self->scan_results, true);
     active_scan_results = NULL;
     self->scan_results = NULL;
+}
+
+// Called from port_background_task(), i.e. from RUN_BACKGROUND_TASKS on the
+// main thread. This is where the scan timeout is enforced when the controller
+// cannot do it (see common_hal_bleio_adapter_start_scan). Stopping from here
+// rather than from a k_timer keeps the blocking HCI round-trip in
+// bt_le_scan_stop() off the system work queue, which the USB CDC console also
+// runs on.
+void bleio_background(void) {
+    if (active_scan_results == NULL || scan_deadline_ms == 0) {
+        return;
+    }
+    if (supervisor_ticks_ms64() < scan_deadline_ms) {
+        return;
+    }
+    common_hal_bleio_adapter_stop_scan(&common_hal_bleio_adapter_obj);
 }
 
 bool common_hal_bleio_adapter_get_connected(bleio_adapter_obj_t *self) {
@@ -907,6 +938,7 @@ void bleio_adapter_reset(bleio_adapter_obj_t *adapter) {
     adapter->scan_results = NULL;
     adapter->connection_objs = NULL;
     active_scan_results = NULL;
+    scan_deadline_ms = 0;
     ble_advertising = false;
     ble_advertising_internal = false;
     ble_adapter_enabled = bt_is_ready();
