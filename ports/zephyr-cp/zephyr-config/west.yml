@@ -30,7 +30,7 @@ manifest:
     #   hal_infineon  as imported by Zephyr's own manifest
     - name: zephyr
       url: https://github.com/tyeth/zephyr
-      revision: cyw43-shared-bus-ble
+      revision: airoc-softap-fixes
       clone-depth: 100
       import:
         # Skip what no CircuitPython board can use, so west update fetches 37
