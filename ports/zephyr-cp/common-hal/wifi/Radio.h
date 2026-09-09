@@ -15,6 +15,10 @@
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/wifi.h>
 
+// Stations tracked for wifi.radio.stations_ap; more than this and the oldest
+// entries are simply not listed.
+#define WIFI_AP_MAX_STATIONS 8
+
 // Event bits for the Radio event group.
 #define WIFI_SCAN_DONE_BIT BIT0
 #define WIFI_CONNECTED_BIT BIT1
@@ -50,6 +54,24 @@ typedef struct {
     // for the network we are already on can return without touching the link.
     uint8_t current_ssid[WIFI_SSID_MAX_LEN];
     size_t current_ssid_len;
+
+    // Access point state. The AIROC (CYW43439) driver runs the AP on the same
+    // net_if as the station, so this is bookkeeping beside sta_netif rather
+    // than a second interface: the AP's IPv4 configuration, whether the DHCPv4
+    // server is up, and the stations the driver has reported as associated.
+    struct net_in_addr ap_addr;
+    struct net_in_addr ap_netmask;
+    struct net_in_addr ap_gw;
+    bool ap_addr_configured;
+    bool dhcp_server_running;
+    uint8_t ap_stations[WIFI_AP_MAX_STATIONS][6];
+    size_t ap_station_count;
 } wifi_radio_obj_t;
+
+// Maintained from the net_mgmt AP station events (common-hal/wifi/__init__.c).
+void wifi_radio_ap_station_add(wifi_radio_obj_t *self, const uint8_t *mac);
+void wifi_radio_ap_station_remove(wifi_radio_obj_t *self, const uint8_t *mac);
+// Non-raising AP teardown for the supervisor's wifi_reset().
+void wifi_radio_ap_reset(wifi_radio_obj_t *self);
 
 extern void common_hal_wifi_radio_gc_collect(wifi_radio_obj_t *self);
