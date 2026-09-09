@@ -35,6 +35,7 @@ wifi_radio_obj_t common_hal_wifi_radio_obj;
 #include <zephyr/net/wifi_mgmt.h>
 
 #include <inttypes.h>
+#include <string.h>
 
 #define MAC_ADDRESS_LENGTH 6
 
@@ -52,6 +53,36 @@ static void schedule_background_on_cp_core(void *arg) {
 
 static struct net_mgmt_event_callback wifi_cb;
 static struct net_mgmt_event_callback ipv4_cb;
+
+// The station table is written here, on the net_mgmt event thread, and read by
+// wifi.radio.stations_ap on the main thread; it is tiny, so an irq lock is the
+// simplest way to keep the two consistent.
+void wifi_radio_ap_station_add(wifi_radio_obj_t *self, const uint8_t *mac) {
+    unsigned int key = irq_lock();
+    for (size_t i = 0; i < self->ap_station_count; i++) {
+        if (memcmp(self->ap_stations[i], mac, MAC_ADDRESS_LENGTH) == 0) {
+            irq_unlock(key);
+            return;
+        }
+    }
+    if (self->ap_station_count < WIFI_AP_MAX_STATIONS) {
+        memcpy(self->ap_stations[self->ap_station_count++], mac, MAC_ADDRESS_LENGTH);
+    }
+    irq_unlock(key);
+}
+
+void wifi_radio_ap_station_remove(wifi_radio_obj_t *self, const uint8_t *mac) {
+    unsigned int key = irq_lock();
+    for (size_t i = 0; i < self->ap_station_count; i++) {
+        if (memcmp(self->ap_stations[i], mac, MAC_ADDRESS_LENGTH) == 0) {
+            self->ap_station_count--;
+            memmove(self->ap_stations[i], self->ap_stations[i + 1],
+                (self->ap_station_count - i) * MAC_ADDRESS_LENGTH);
+            break;
+        }
+    }
+    irq_unlock(key);
+}
 
 static void _event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt_event, struct net_if *iface) {
     wifi_radio_obj_t *self = &common_hal_wifi_radio_obj;
@@ -119,12 +150,22 @@ static void _event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt_eve
         case NET_EVENT_WIFI_AP_DISABLE_RESULT:
             LOG_DBG("NET_EVENT_WIFI_AP_DISABLE_RESULT");
             break;
-        case NET_EVENT_WIFI_AP_STA_CONNECTED:
+        case NET_EVENT_WIFI_AP_STA_CONNECTED: {
+            const struct wifi_ap_sta_info *info = cb->info;
             LOG_DBG("NET_EVENT_WIFI_AP_STA_CONNECTED");
+            if (info != NULL && info->mac_length == MAC_ADDRESS_LENGTH) {
+                wifi_radio_ap_station_add(self, info->mac);
+            }
             break;
-        case NET_EVENT_WIFI_AP_STA_DISCONNECTED:
+        }
+        case NET_EVENT_WIFI_AP_STA_DISCONNECTED: {
+            const struct wifi_ap_sta_info *info = cb->info;
             LOG_DBG("NET_EVENT_WIFI_AP_STA_DISCONNECTED");
+            if (info != NULL && info->mac_length == MAC_ADDRESS_LENGTH) {
+                wifi_radio_ap_station_remove(self, info->mac);
+            }
             break;
+        }
         case NET_EVENT_IPV4_ADDR_ADD:
             // DHCP bound, or a static address was configured. The address is read
             // live by the ipv4_address getter, so nothing is stored here; the
@@ -376,6 +417,7 @@ void wifi_reset(void) {
     }
     common_hal_wifi_monitor_deinit(MP_STATE_VM(wifi_monitor_singleton));
     wifi_radio_obj_t *radio = &common_hal_wifi_radio_obj;
+    wifi_radio_ap_reset(radio);
     common_hal_wifi_radio_set_enabled(radio, false);
     // #ifndef CONFIG_IDF_TARGET_ESP32
     // ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT,
