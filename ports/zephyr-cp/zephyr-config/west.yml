@@ -24,7 +24,7 @@ manifest:
     #   hal_infineon  as imported by Zephyr's own manifest
     - name: zephyr
       url: https://github.com/tyeth/zephyr
-      revision: cyw43-shared-bus-ble
+      revision: airoc-softap-fixes
       clone-depth: 100
       import: true
     - name: hal_rpi_pico
