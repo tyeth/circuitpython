@@ -13,6 +13,7 @@
 #include "py/mperrno.h"
 #include "py/runtime.h"
 #include "py/stream.h"
+#include "supervisor/port.h"
 
 #include <stdatomic.h>
 #include <string.h>
@@ -37,7 +38,9 @@ static void serial_cb(const struct device *dev, void *user_data) {
     }
 
     /* read until FIFO empty */
+    bool received = false;
     while (uart_fifo_read(dev, &c, 1) == 1) {
+        received = true;
         if (mp_interrupt_char == c) {
             common_hal_busio_uart_clear_rx_buffer(self);
             mp_sched_keyboard_interrupt();
@@ -46,6 +49,14 @@ static void serial_cb(const struct device *dev, void *user_data) {
                 self->rx_paused = true;
             }
         }
+    }
+
+    // The console is one of these UARTs (USB CDC is presented as one). When
+    // the main thread is parked in port_idle_until_interrupt() -- after code.py
+    // ends, waiting for a key -- nothing else wakes it for input; without this
+    // a keypress is only noticed at the next timed wake-up.
+    if (received) {
+        port_wake_main_task_from_isr();
     }
 }
 
