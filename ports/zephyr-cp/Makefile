@@ -67,9 +67,21 @@ else
 CP_BOARD_CONF := $(DEBUG_CONF_FILE)
 endif
 endif
-# Always pass the conf file, even if empty. This undoes DEBUG=1 when it's omitted on a later run.
-# Quoted because with DEBUG=1 the value is a semicolon-separated list, and an unquoted semicolon
-# would end the shell command.
+# When RTT=1, move the Zephyr console and log backend from UART0 to SEGGER RTT, so
+# printk/LOG_* can be read over the same SWD probe with OpenOCD (`rtt setup`,
+# `rtt start`, `rtt server start <port> 0`) even when USB CDC is down and no UART
+# is wired. Composable with DEBUG=1.
+RTT_CONF_FILE ?= $(CURDIR)/rtt.conf
+ifeq ($(RTT),1)
+ifneq ($(CP_BOARD_CONF),)
+CP_BOARD_CONF := $(CP_BOARD_CONF);$(RTT_CONF_FILE)
+else
+CP_BOARD_CONF := $(RTT_CONF_FILE)
+endif
+endif
+# Always pass the conf file, even if empty. This undoes DEBUG=1 (or RTT=1) when it's omitted on a
+# later run. Quoted because with DEBUG=1 or RTT=1 the value is a semicolon-separated list, and an
+# unquoted semicolon would end the shell command.
 WEST_CMAKE_ARGS += -Dzephyr-cp_EXTRA_CONF_FILE="$(CP_BOARD_CONF)"
 
 # Boards can opt into building the MCUboot bootloader (and thus BLE OTA
