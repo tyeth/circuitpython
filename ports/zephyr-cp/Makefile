@@ -40,7 +40,19 @@ else
 CP_BOARD_CONF := $(DEBUG_CONF_FILE)
 endif
 endif
-# Quoted: with DEBUG=1 this is a ;-separated list, and an unquoted ; ends the
+# When RTT=1, move the Zephyr console and log backend from UART0 to SEGGER RTT, so
+# printk/LOG_* can be read over the same SWD probe with OpenOCD (`rtt setup`,
+# `rtt start`, `rtt server start <port> 0`) even when USB CDC is down and no UART
+# is wired. Composable with DEBUG=1.
+RTT_CONF_FILE ?= $(CURDIR)/rtt.conf
+ifeq ($(RTT),1)
+ifneq ($(CP_BOARD_CONF),)
+CP_BOARD_CONF := $(CP_BOARD_CONF);$(RTT_CONF_FILE)
+else
+CP_BOARD_CONF := $(RTT_CONF_FILE)
+endif
+endif
+# Quoted: with DEBUG=1 or RTT=1 this is a ;-separated list, and an unquoted ; ends the
 # shell command, so west built without debug.conf and the shell then tried to
 # run debug.conf as a program.
 ifneq ($(CP_BOARD_CONF),)
