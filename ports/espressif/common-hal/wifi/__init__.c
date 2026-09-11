@@ -491,7 +491,28 @@ void common_hal_wifi_init(bool user_initiated) {
         &self->handler_instance_got_ip));
 
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
+    { /* CP-WIFI-DEBUG */
+        // `import wifi` lands here, long before user code can reach a
+        // gc.mem_free() probe, so a failure here otherwise leaves no number
+        // anywhere in the log -- only the driver's bare "alloc eb fail".
+        // MALLOC_CAP_INTERNAL is the pool that actually runs out (WiFi buffers
+        // cannot live in PSRAM), and the largest free block matters as much as
+        // the total, because the esf_buf pool needs it contiguous.
+        ESP_LOGW(TAG, "esp_wifi_init: before idf_free=%u largest=%u internal_free=%u internal_largest=%u",
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    }
     esp_err_t result = esp_wifi_init(&config);
+    { /* CP-WIFI-DEBUG */
+        ESP_LOGW(TAG, "esp_wifi_init -> 0x%x: after idf_free=%u largest=%u internal_free=%u internal_largest=%u",
+            result,
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    }
     #ifdef CONFIG_ESP32_WIFI_NVS_ENABLED
     // Generally we don't use this because we store ssid and passwords ourselves in the filesystem.
     esp_err_t err = nvs_flash_init();

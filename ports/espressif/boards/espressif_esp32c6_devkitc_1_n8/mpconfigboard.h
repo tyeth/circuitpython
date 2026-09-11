@@ -15,3 +15,12 @@
 
 #define DEFAULT_UART_BUS_RX         (&pin_GPIO17)
 #define DEFAULT_UART_BUS_TX         (&pin_GPIO16)
+
+// Move the console onto UART0, which reaches the on-board CH343 bridge. The
+// bridge stays enumerated across a reset, so a fault is still recorded after
+// USB-Serial-JTAG has dropped off the bus. Requires
+// CIRCUITPY_ESP_USB_SERIAL_JTAG = 0 in mpconfigboard.mk: the two consoles are
+// mutually exclusive (ports/espressif/supervisor/serial.c).
+#define CIRCUITPY_CONSOLE_UART_RX   DEFAULT_UART_BUS_RX
+#define CIRCUITPY_CONSOLE_UART_TX   DEFAULT_UART_BUS_TX
+#define CIRCUITPY_CONSOLE_UART_TIMESTAMP (1)
