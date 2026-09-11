@@ -6,3 +6,7 @@ IDF_TARGET = esp32c6
 CIRCUITPY_ESP_FLASH_MODE = qio
 CIRCUITPY_ESP_FLASH_FREQ = 80m
 CIRCUITPY_ESP_FLASH_SIZE = 8MB
+
+# Hand the console to UART0/CH343 instead of USB-Serial-JTAG; the port defaults
+# this to 1 for esp32c6 and the two cannot both be enabled.
+CIRCUITPY_ESP_USB_SERIAL_JTAG = 0
