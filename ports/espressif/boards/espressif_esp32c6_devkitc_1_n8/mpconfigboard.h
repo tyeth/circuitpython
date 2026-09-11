@@ -15,3 +15,17 @@
 
 #define DEFAULT_UART_BUS_RX         (&pin_GPIO17)
 #define DEFAULT_UART_BUS_TX         (&pin_GPIO16)
+
+// Move the console onto UART0, which reaches the on-board CH343 bridge. The
+// bridge stays enumerated across a reset, so a fault is still recorded after
+// USB-Serial-JTAG has dropped off the bus. Requires
+// CIRCUITPY_ESP_USB_SERIAL_JTAG = 0 in mpconfigboard.mk: the two consoles are
+// mutually exclusive (ports/espressif/supervisor/serial.c).
+#define CIRCUITPY_CONSOLE_UART_RX   DEFAULT_UART_BUS_RX
+#define CIRCUITPY_CONSOLE_UART_TX   DEFAULT_UART_BUS_TX
+#define CIRCUITPY_CONSOLE_UART_TIMESTAMP (1)
+
+// Bench finding: 32 KB of IDF headroom is not enough for a softAP that also
+// serves TLS -- handshakes hit MemoryError and DHCP replies fail while the
+// Python heap still reports free space. 40 KB is what the C6 hub needed.
+#define CIRCUITPY_ESP_RADIO_HEAP_RESERVE (40 * 1024)

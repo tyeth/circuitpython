@@ -24,6 +24,7 @@
 wifi_radio_obj_t common_hal_wifi_radio_obj;
 
 #include "components/log/include/esp_log.h"
+#include "esp_mac.h" /* CP-WIFI-DEBUG */
 
 #include "supervisor/port.h"
 #include "supervisor/workflow.h"
@@ -75,10 +76,16 @@ static void event_handler(void *arg, esp_event_base_t event_base,
             case WIFI_EVENT_AP_STOP:
                 ESP_LOGW(TAG, "ap stop");
                 break;
-            case WIFI_EVENT_AP_STACONNECTED:
+            case WIFI_EVENT_AP_STACONNECTED: { /* CP-WIFI-DEBUG */
+                wifi_event_ap_staconnected_t *e = (wifi_event_ap_staconnected_t *)event_data;
+                ESP_LOGW(TAG, "ap sta connected " MACSTR " aid=%d idf_free=%u largest=%u", MAC2STR(e->mac), e->aid, (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
                 break;
-            case WIFI_EVENT_AP_STADISCONNECTED:
+            }
+            case WIFI_EVENT_AP_STADISCONNECTED: { /* CP-WIFI-DEBUG */
+                wifi_event_ap_stadisconnected_t *e = (wifi_event_ap_stadisconnected_t *)event_data;
+                ESP_LOGW(TAG, "ap sta disconnected " MACSTR " aid=%d reason=%d", MAC2STR(e->mac), e->aid, e->reason);
                 break;
+            }
             case WIFI_EVENT_STA_START:
                 ESP_LOGW(TAG, "sta start");
                 break;
@@ -484,7 +491,28 @@ void common_hal_wifi_init(bool user_initiated) {
         &self->handler_instance_got_ip));
 
     wifi_init_config_t config = WIFI_INIT_CONFIG_DEFAULT();
+    { /* CP-WIFI-DEBUG */
+        // `import wifi` lands here, long before user code can reach a
+        // gc.mem_free() probe, so a failure here otherwise leaves no number
+        // anywhere in the log -- only the driver's bare "alloc eb fail".
+        // MALLOC_CAP_INTERNAL is the pool that actually runs out (WiFi buffers
+        // cannot live in PSRAM), and the largest free block matters as much as
+        // the total, because the esf_buf pool needs it contiguous.
+        ESP_LOGW(TAG, "esp_wifi_init: before idf_free=%u largest=%u internal_free=%u internal_largest=%u",
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    }
     esp_err_t result = esp_wifi_init(&config);
+    { /* CP-WIFI-DEBUG */
+        ESP_LOGW(TAG, "esp_wifi_init -> 0x%x: after idf_free=%u largest=%u internal_free=%u internal_largest=%u",
+            result,
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT),
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+            (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));
+    }
     #ifdef CONFIG_ESP32_WIFI_NVS_ENABLED
     // Generally we don't use this because we store ssid and passwords ourselves in the filesystem.
     esp_err_t err = nvs_flash_init();

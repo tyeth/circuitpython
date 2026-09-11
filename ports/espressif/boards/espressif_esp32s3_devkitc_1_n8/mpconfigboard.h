@@ -15,3 +15,15 @@
 
 #define DEFAULT_UART_BUS_RX         (&pin_GPIO44)
 #define DEFAULT_UART_BUS_TX         (&pin_GPIO43)
+
+// Mirror the console onto UART0, which reaches the on-board CP2102N bridge.
+// The bridge stays enumerated across a reset, so a fault is still recorded
+// after the native USB console has dropped off the bus.
+#define CIRCUITPY_CONSOLE_UART_RX   DEFAULT_UART_BUS_RX
+#define CIRCUITPY_CONSOLE_UART_TX   DEFAULT_UART_BUS_TX
+#define CIRCUITPY_CONSOLE_UART_TIMESTAMP (1)
+
+// Bench finding: 32 KB of IDF headroom is not enough for a softAP that also
+// serves TLS -- handshakes hit MemoryError and DHCP replies fail while the
+// Python heap still reports free space. 40 KB is what the C6 hub needed.
+#define CIRCUITPY_ESP_RADIO_HEAP_RESERVE (40 * 1024)

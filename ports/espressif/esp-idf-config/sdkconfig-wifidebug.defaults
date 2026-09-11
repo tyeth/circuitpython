@@ -1,0 +1,9 @@
+#
+# CP-WIFI-DEBUG: extra logging for softAP / DHCP / BLE coexistence investigation.
+# Use with: make BOARD=... DEBUG=1 EXTRA_SDKCONFIG=esp-idf-config/sdkconfig-wifidebug.defaults
+#
+# (LWIP_DEBUG / LOG_MAXIMUM_LEVEL_DEBUG / dynamic log control overflow the C6's 2MB
+#  firmware partition by ~186KB -- DHCP server logging comes from DHCPS_DEBUG=1 instead)
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+# CONFIG_BT_NIMBLE_LOG_LEVEL_NONE is not set
+CONFIG_BT_NIMBLE_LOG_LEVEL_INFO=y
