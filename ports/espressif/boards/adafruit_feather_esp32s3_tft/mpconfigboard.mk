@@ -17,6 +17,13 @@ CIRCUITPY_ESP_PSRAM_FREQ = 80m
 # Already have a display.
 CIRCUITPY_PARALLELDISPLAYBUS = 0
 
+# This project needs _bleio on this board: the hub serves its portal over
+# a Nordic UART service and the nodes take their config the same way. The
+# port already defaults CIRCUITPY_BLEIO_NATIVE to 1 and only forces it off
+# for 2MB flash, the S2 and the P4 -- stated here so a future flash-size
+# trim cannot take it away silently.
+CIRCUITPY_BLEIO_NATIVE = 1
+
 # --- environmental-collector frozen libraries -------------------------------
 # Frozen bytecode executes in place from flash; the same library imported
 # from lib/ is read into RAM and stays there. On a board without PSRAM that
