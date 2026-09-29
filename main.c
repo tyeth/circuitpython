@@ -398,7 +398,9 @@ static void cleanup_after_vm(mp_obj_t exception) {
     bleio_user_reset();
     #endif
 
-    #if CIRCUITPY_CANIO
+    #if CIRCUITPY_CANIO && CIRCUITPY_BULK_RESET
+    // Bulk-reset ports reset CAN controllers here. Finalizer ports rely on
+    // GC finalizers calling deinit on the CAN objects.
     common_hal_canio_reset();
     #endif
 

@@ -63,7 +63,7 @@ void common_hal_displayio_bitmap_construct_from_buffer(displayio_bitmap_t *self,
 }
 
 void common_hal_displayio_bitmap_deinit(displayio_bitmap_t *self) {
-    if (self->data_alloc) {
+    if (self->data_alloc && self->data != NULL) {
         gc_free(self->data);
     }
     self->data = NULL;
