@@ -131,11 +131,6 @@ static const char data_cdc_comm_interface_name[] = USB_INTERFACE_NAME " CDC2 con
 static const char console_cdc_data_interface_name[] = USB_INTERFACE_NAME " CDC data";
 static const char data_cdc_data_interface_name[] = USB_INTERFACE_NAME " CDC2 data";
 
-char *custom_usb_cdc_console_control_interface_name = NULL;
-char *custom_usb_cdc_console_data_interface_name = NULL;
-char *custom_usb_cdc_data_control_interface_name = NULL;
-char *custom_usb_cdc_data_data_interface_name = NULL;
-
 // .idx is set later.
 
 static usb_cdc_serial_obj_t usb_cdc_console_obj = {

@@ -18,11 +18,6 @@ void usb_cdc_set_defaults(void);
 size_t usb_cdc_descriptor_length(void);
 size_t usb_cdc_add_descriptor(uint8_t *descriptor_buf, descriptor_counts_t *descriptor_counts, uint8_t *current_interface_string, bool console);
 
-extern char *custom_usb_cdc_console_control_interface_name;
-extern char *custom_usb_cdc_console_data_interface_name;
-extern char *custom_usb_cdc_data_control_interface_name;
-extern char *custom_usb_cdc_data_data_interface_name;
-
 #if CIRCUITPY_USB_VENDOR
 bool usb_vendor_enabled(void);
 size_t usb_vendor_descriptor_length(void);

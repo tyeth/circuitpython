@@ -89,6 +89,11 @@ static mp_obj_t usb_cdc_enable(size_t n_args, const mp_obj_t *pos_args, mp_map_t
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(usb_cdc_enable_obj, 0, usb_cdc_enable);
 
+char *custom_usb_cdc_console_control_interface_name = NULL;
+char *custom_usb_cdc_console_data_interface_name = NULL;
+char *custom_usb_cdc_data_control_interface_name = NULL;
+char *custom_usb_cdc_data_data_interface_name = NULL;
+
 static void set_name(mp_obj_t name_obj, qstr arg_name_qstr, char **custom_name_p) {
     if (name_obj != mp_const_none) {
         mp_buffer_info_t name;

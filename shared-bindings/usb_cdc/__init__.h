@@ -12,6 +12,11 @@
 #include "shared-module/usb_cdc/__init__.h"
 #endif
 
+extern char *custom_usb_cdc_console_control_interface_name;
+extern char *custom_usb_cdc_console_data_interface_name;
+extern char *custom_usb_cdc_data_control_interface_name;
+extern char *custom_usb_cdc_data_data_interface_name;
+
 //  Set the module dict entries.
 void usb_cdc_set_console(mp_obj_t serial_obj);
 void usb_cdc_set_data(mp_obj_t serial_obj);
