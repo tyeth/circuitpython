@@ -89,6 +89,7 @@ static mp_obj_t usb_cdc_enable(size_t n_args, const mp_obj_t *pos_args, mp_map_t
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(usb_cdc_enable_obj, 0, usb_cdc_enable);
 
+#if CIRCUITPY_FULL_BUILD
 char *custom_usb_cdc_console_control_interface_name = NULL;
 char *custom_usb_cdc_console_data_interface_name = NULL;
 char *custom_usb_cdc_data_control_interface_name = NULL;
@@ -127,7 +128,7 @@ static void set_name(mp_obj_t name_obj, qstr arg_name_qstr, char **custom_name_p
 //|
 //|     This method must be called in ``boot.py`` to have any effect.
 //|
-//|     Not available on boards without native USB support.
+//|     Not available on boards without native USB support or on reduced builds.
 //|     """
 //|     ...
 //|
@@ -169,6 +170,8 @@ static mp_obj_t usb_cdc_set_names(size_t n_args, const mp_obj_t *pos_args, mp_ma
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(usb_cdc_set_names_obj, 0, usb_cdc_set_names);
 
+#endif
+
 // The usb_cdc module dict is mutable so that .console and .data may
 // be set to a Serial or to None depending on whether they are enabled or not.
 static mp_map_elem_t usb_cdc_module_globals_table[] = {
@@ -178,7 +181,9 @@ static mp_map_elem_t usb_cdc_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_data),     mp_const_none },
     { MP_ROM_QSTR(MP_QSTR_disable),  MP_OBJ_FROM_PTR(&usb_cdc_disable_obj) },
     { MP_ROM_QSTR(MP_QSTR_enable),   MP_OBJ_FROM_PTR(&usb_cdc_enable_obj) },
+    #if CIRCUITPY_FULL_BUILD
     { MP_ROM_QSTR(MP_QSTR_set_names), MP_OBJ_FROM_PTR(&usb_cdc_set_names_obj) },
+    #endif
 };
 
 static MP_DEFINE_MUTABLE_DICT(usb_cdc_module_globals, usb_cdc_module_globals_table);
