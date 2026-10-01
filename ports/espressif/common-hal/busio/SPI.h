@@ -7,7 +7,7 @@
 #pragma once
 
 #include "py/mpconfig.h"
-#include "py/circuitpy_async_flag.h"
+#include "supervisor/shared/async_flag.h"
 #include "driver/spi_master.h"
 #include "shared-bindings/microcontroller/Pin.h"
 

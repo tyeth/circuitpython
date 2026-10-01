@@ -9,7 +9,7 @@
 #include "common-hal/microcontroller/Pin.h"
 
 #include "py/obj.h"
-#include "py/circuitpy_async_flag.h"
+#include "supervisor/shared/async_flag.h"
 
 #include "hardware/spi.h"
 

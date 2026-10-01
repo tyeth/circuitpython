@@ -15,7 +15,7 @@
 #include "hal/include/hal_spi_m_sync.h"
 
 #include "py/obj.h"
-#include "py/circuitpy_async_flag.h"
+#include "supervisor/shared/async_flag.h"
 
 typedef struct {
     mp_obj_base_t base;
