@@ -38,13 +38,13 @@ extern bool common_hal_busio_spi_write(busio_spi_obj_t *self, const uint8_t *dat
 
 #if CIRCUITPY_BUSIO_SPI_ASYNC
 // Start writing data and return, possibly before it has been sent. *done is set once it has been
-// sent, at the latest by common_hal_busio_spi_write_end(). data must stay valid and unchanged, and
+// sent, at the latest by common_hal_busio_spi_end(). data must stay valid and unchanged, and
 // the bus must not be used, until then.
 extern void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data, size_t len,
     circuitpy_async_flag_t *done);
-// Finish a write started by common_hal_busio_spi_write_start(), waiting if needed. Returns at
-// once if there is none.
-extern void common_hal_busio_spi_write_end(busio_spi_obj_t *self);
+// Finish the transfer started by a common_hal_busio_spi_*_start(), waiting if needed. Returns
+// at once if there is none.
+extern void common_hal_busio_spi_end(busio_spi_obj_t *self);
 #endif
 
 // Reads in len bytes while outputting the byte write_value.

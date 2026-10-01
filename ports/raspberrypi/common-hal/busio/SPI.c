@@ -105,7 +105,7 @@ void common_hal_busio_spi_deinit(busio_spi_obj_t *self) {
     if (common_hal_busio_spi_deinited(self)) {
         return;
     }
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     if (self->dma_kept) {
         dma_channel_unclaim(self->dma_tx);
         dma_channel_unclaim(self->dma_rx);
@@ -284,7 +284,7 @@ bool common_hal_busio_spi_write(busio_spi_obj_t *self,
 
 void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data, size_t len,
     circuitpy_async_flag_t *done) {
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     CIRCUITPY_ASYNC_FLAG_INIT(done);
     self->async_done = done;
     self->async_active = _start(self, data, len, &self->discard, 1, true);
@@ -293,7 +293,7 @@ void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data
     }
 }
 
-void common_hal_busio_spi_write_end(busio_spi_obj_t *self) {
+void common_hal_busio_spi_end(busio_spi_obj_t *self) {
     if (self->async_active) {
         // No background tasks here: the caller holds the bus, and one of them may want it.
         _end(self, false);

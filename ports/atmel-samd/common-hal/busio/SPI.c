@@ -196,7 +196,7 @@ void common_hal_busio_spi_deinit(busio_spi_obj_t *self) {
         return;
     }
     #if CIRCUITPY_BUSIO_SPI_ASYNC
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     #endif
     allow_reset_sercom(self->spi_desc.dev.prvt);
 
@@ -294,7 +294,7 @@ bool common_hal_busio_spi_write(busio_spi_obj_t *self,
 #if CIRCUITPY_BUSIO_SPI_ASYNC
 void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data, size_t len,
     circuitpy_async_flag_t *done) {
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     CIRCUITPY_ASYNC_FLAG_INIT(done);
     self->async_done = done;
     // One descriptor holds at most 65535 beats; longer writes and short ones go the normal way.
@@ -311,7 +311,7 @@ void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data
     CIRCUITPY_ASYNC_FLAG_SET(done);
 }
 
-void common_hal_busio_spi_write_end(busio_spi_obj_t *self) {
+void common_hal_busio_spi_end(busio_spi_obj_t *self) {
     if (!self->async_active) {
         return;
     }

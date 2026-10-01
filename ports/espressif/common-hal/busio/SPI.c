@@ -180,7 +180,7 @@ void common_hal_busio_spi_deinit(busio_spi_obj_t *self) {
     }
 
     #if CIRCUITPY_BUSIO_SPI_ASYNC
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     #endif
 
     // Mark as deinit early in case we are used in an interrupt.
@@ -208,7 +208,7 @@ bool common_hal_busio_spi_configure(busio_spi_obj_t *self,
         return true;
     }
     #if CIRCUITPY_BUSIO_SPI_ASYNC
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     #endif
     spi_bus_remove_device(spi_handle[self->host_id]);
     set_spi_config(self, baudrate, polarity, phase, bits);
@@ -337,7 +337,7 @@ bool common_hal_busio_spi_transfer(busio_spi_obj_t *self,
 #if CIRCUITPY_BUSIO_SPI_ASYNC
 void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data, size_t len,
     circuitpy_async_flag_t *done) {
-    common_hal_busio_spi_write_end(self);
+    common_hal_busio_spi_end(self);
     CIRCUITPY_ASYNC_FLAG_INIT(done);
     self->async_done = done;
     size_t chunks = (len + SPI_MAX_DMA_LEN - 1) / SPI_MAX_DMA_LEN;
@@ -359,7 +359,7 @@ void common_hal_busio_spi_write_start(busio_spi_obj_t *self, const uint8_t *data
     self->async_count = chunks;
 }
 
-void common_hal_busio_spi_write_end(busio_spi_obj_t *self) {
+void common_hal_busio_spi_end(busio_spi_obj_t *self) {
     if (self->async_count == 0) {
         return;
     }

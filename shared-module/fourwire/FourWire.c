@@ -205,7 +205,7 @@ void common_hal_fourwire_fourwire_send_async(mp_obj_t obj, display_byte_type_t d
 
 void common_hal_fourwire_fourwire_flush(mp_obj_t obj) {
     fourwire_fourwire_obj_t *self = MP_OBJ_TO_PTR(obj);
-    common_hal_busio_spi_write_end(self->bus);
+    common_hal_busio_spi_end(self->bus);
 }
 #endif
 
