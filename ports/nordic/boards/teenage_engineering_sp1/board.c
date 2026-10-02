@@ -196,8 +196,7 @@ void board_early_init(void) {
     arm_wake_rtc();
     nrfx_rtc_enable(&wake_rtc);
 
-    // The old reset_all_pins() used to sweep every pin right after port_init();
-    // apply the board's resting state here instead, so nothing floats while we
+    // Apply the board's resting state here, so nothing floats while we
     // wait for code.py. The heartbeat LED is excluded by the guard in
     // board_reset_pin_number() because the blink is still lit.
     apply_all_pin_defaults();

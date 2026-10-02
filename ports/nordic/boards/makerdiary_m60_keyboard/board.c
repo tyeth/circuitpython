@@ -20,9 +20,5 @@ static void power_on(void) {
 }
 
 void board_init(void) {
-    // The battery is switched on with POWER_SWITCH_PIN, which the factory
-    // bootloader enables. There is no bulk pin reset anymore, so the pin's
-    // state simply persists across VM runs and user code may claim it from
-    // Python. Drive it high once at boot to guarantee we can run on battery.
     power_on();
 }
