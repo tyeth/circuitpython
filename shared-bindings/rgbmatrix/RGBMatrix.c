@@ -11,6 +11,7 @@
 
 #include "common-hal/rgbmatrix/RGBMatrix.h"
 #include "shared-bindings/rgbmatrix/RGBMatrix.h"
+#include "shared-bindings/rgbmatrix/RowAddressMode.h"
 #include "shared-bindings/microcontroller/Pin.h"
 #include "shared-bindings/microcontroller/__init__.h"
 #include "shared-bindings/util.h"
@@ -36,14 +37,14 @@
 //|         height: int = 0,
 //|         tile: int = 1,
 //|         serpentine: bool = True,
-//|         row_address_mode: str = "binary",
+//|         row_address_mode: RowAddressMode = RowAddressMode.BINARY,
 //|     ) -> None:
 //|         """Create a RGBMatrix object with the given attributes.  The height of
 //|         the display is determined by the number of rgb and address pins and the number of tiles:
 //|         ``len(rgb_pins) // 3 * 2 ** len(address_pins) * abs(tile)``.  With 6 RGB pins, 4
 //|         address lines, and a single matrix, the display will be 32 pixels tall.  If the optional height
 //|         parameter is specified and is not 0, it is checked against the calculated
-//|         height. With ``row_address_mode="abc"``, ``height`` must be specified.
+//|         height. With ``row_address_mode=RowAddressMode.ABC``, ``height`` must be specified.
 //|         Each panel must have a power-of-two height, from 2 through 64 pixels.
 //|         Supply exactly three ``addr_pins`` in A, B, C order: A is the row
 //|         clock, B enables shifting, and C is serial row-selection data.
@@ -103,7 +104,7 @@
 //|         :param bool doublebuffer: True if the output is double-buffered
 //|         :param Optional[WriteableBuffer] framebuffer: A pre-allocated framebuffer to use. If unspecified, a framebuffer is allocated
 //|         :param int height: The overall height of the whole matrix in pixels. Required for ABC addressing; otherwise optional and checked against the calculated height.
-//|         :param str row_address_mode: "binary" for parallel row addresses, or "abc" for serial row selection using A, B and C.
+//|         :param RowAddressMode row_address_mode: ``RowAddressMode.BINARY`` for parallel row addresses, or ``RowAddressMode.ABC`` for serial row selection using A, B and C.
 //|         """
 //|
 
@@ -123,7 +124,7 @@ static mp_obj_t rgbmatrix_rgbmatrix_make_new(const mp_obj_type_t *type, size_t n
         { MP_QSTR_height, MP_ARG_INT | MP_ARG_KW_ONLY, { .u_int = 0 } },
         { MP_QSTR_tile, MP_ARG_INT | MP_ARG_KW_ONLY, { .u_int = 1 } },
         { MP_QSTR_serpentine, MP_ARG_BOOL | MP_ARG_KW_ONLY, { .u_bool = true } },
-        { MP_QSTR_row_address_mode, MP_ARG_OBJ | MP_ARG_KW_ONLY, { .u_obj = MP_OBJ_NEW_QSTR(MP_QSTR_binary) } },
+        { MP_QSTR_row_address_mode, MP_ARG_OBJ | MP_ARG_KW_ONLY, { .u_obj = (void *)&rgbmatrix_row_address_mode_BINARY_obj } },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -148,11 +149,11 @@ static mp_obj_t rgbmatrix_rgbmatrix_make_new(const mp_obj_type_t *type, size_t n
 
     int tile = mp_arg_validate_int_min(args[ARG_tile].u_int, 1, MP_QSTR_tile);
 
-    ProtomatterRowAddressMode row_address_mode = PROTOMATTER_ROW_ADDRESS_BINARY;
-    qstr mode = mp_obj_str_get_qstr(args[ARG_row_address_mode].u_obj);
+    ProtomatterRowAddressMode row_address_mode =
+        (ProtomatterRowAddressMode)cp_enum_value(&rgbmatrix_row_address_mode_type,
+            args[ARG_row_address_mode].u_obj, MP_QSTR_row_address_mode);
     uint8_t row_addr_count = addr_count;
-    if (mode == MP_QSTR_abc) {
-        row_address_mode = PROTOMATTER_ROW_ADDRESS_ABC;
+    if (row_address_mode == PROTOMATTER_ROW_ADDRESS_ABC) {
         mp_arg_validate_length(addr_count, 3, MP_QSTR_addr_pins);
         mp_int_t height = mp_arg_validate_int_min(args[ARG_height].u_int, 1, MP_QSTR_height);
         // ABC has three physical pins regardless of the number of row pairs.
@@ -166,8 +167,6 @@ static mp_obj_t rgbmatrix_rgbmatrix_make_new(const mp_obj_type_t *type, size_t n
         if (row_addr_count > 5) {
             mp_arg_error_invalid(MP_QSTR_height);
         }
-    } else if (mode != MP_QSTR_binary) {
-        mp_arg_error_invalid(MP_QSTR_row_address_mode);
     }
 
     int computed_height = (rgb_count / 3) * (1 << row_addr_count) * tile;
