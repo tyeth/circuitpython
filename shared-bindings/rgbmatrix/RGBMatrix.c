@@ -129,8 +129,7 @@ static mp_obj_t rgbmatrix_rgbmatrix_make_new(const mp_obj_type_t *type, size_t n
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
-    rgbmatrix_rgbmatrix_obj_t *self = &allocate_display_bus_or_raise()->rgbmatrix;
-    self->base.type = &rgbmatrix_RGBMatrix_type;
+    rgbmatrix_rgbmatrix_obj_t *self;
 
     uint8_t rgb_count, addr_count;
     const mcu_pin_obj_t *rgb_pins[MP_ARRAY_SIZE(self->rgb_pins)];
@@ -178,6 +177,10 @@ static mp_obj_t rgbmatrix_rgbmatrix_make_new(const mp_obj_type_t *type, size_t n
     }
 
     mp_int_t width = mp_arg_validate_int_min(args[ARG_width].u_int, 1, MP_QSTR_width);
+
+    // Reserve a display bus only after validating constructor arguments.
+    self = &allocate_display_bus_or_raise()->rgbmatrix;
+    self->base.type = &rgbmatrix_RGBMatrix_type;
 
     common_hal_rgbmatrix_rgbmatrix_construct(self,
         width,
