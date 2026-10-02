@@ -14,7 +14,8 @@
 #define MICROPY_HW_BOARD_NAME "Waveshare ESP32-C5 LCD 1.47"
 #define MICROPY_HW_MCU_NAME "ESP32-C5"
 
-#define CIRCUITPY_BOOT_BUTTON (&pin_GPIO0)
+// For entering safe mode, use BOOT button
+#define CIRCUITPY_BOOT_BUTTON       (&pin_GPIO28)
 
 // Waveshare onboard NeoPixel on GPIO8
 #define CIRCUITPY_STATUS_LED_POWER (&pin_GPIO8)
