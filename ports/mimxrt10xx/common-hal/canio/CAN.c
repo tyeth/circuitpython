@@ -446,7 +446,3 @@ void common_hal_canio_can_deinit(canio_can_obj_t *self) {
     self->rx_pin = NULL;
     self->tx_pin = NULL;
 }
-
-
-    }
-}
