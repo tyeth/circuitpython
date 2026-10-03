@@ -1,4 +1,5 @@
 # Called by the Makefile before calling out to `west`.
+import os
 import pathlib
 import subprocess
 import sys
@@ -19,6 +20,14 @@ blob_fetch_args = mpconfigboard.get("blob_fetch_args", {})
 for blob in blobs:
     args = blob_fetch_args.get(blob, [])
     subprocess.run(["west", "blobs", "fetch", blob, *args], check=True)
+
+# Frozen modules need the host mpy-cross; build it up front, where make is
+# already in use, rather than from inside the CMake-driven CircuitPython step.
+if mpconfigboard.get("FROZEN_MPY_DIRS") and "MICROPY_MPYCROSS" not in os.environ:
+    subprocess.run(
+        ["make", "-C", str(portdir.parent.parent / "mpy-cross"), "USER_C_MODULES="],
+        check=True,
+    )
 
 if board.endswith("bsim"):
     subprocess.run(
