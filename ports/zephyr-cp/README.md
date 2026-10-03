@@ -230,3 +230,75 @@ here uses, so a board from one of them needs its entry removed from the
 west update
 west build -b esp32s3_devkitc/esp32s3/procpu
 ```
+
+## Board overlay pitfalls
+
+A board's devicetree overlay and Kconfig fragment live in its own folder as
+`boards/<vendor>/<board>/board.overlay` and `board.conf`. The Makefile passes
+them to Zephyr explicitly, and the overlay *replaces* `app.overlay`, which is why
+every board overlay ends with `#include "../../../app.overlay"`.
+
+Flash partition layouts are owned by the adaboot fork (`bootloader/mcuboot`,
+`dts/<vendor>/<board>.dtsi`), which sysbuild prepends to the board overlay, so a
+board overlay that changes a partition overrides the layout. Two things about
+flash layouts, in either place, are easy to get wrong and fail in ways that point
+away from the cause.
+
+### Keep `ranges;` when replacing the partitions node
+
+The RP2040 layouts do `/delete-node/ partitions;` and rebuild the node, and each
+one declares `ranges;` on it. That property is not decoration: it is what lets
+devicetree address translation walk from a partition up through the flash node's
+`ranges = <0x0 0x10000000 ...>` into the SoC address space. Drop it and every
+partition resolves to a bare offset instead of an absolute address:
+
+```
+code_partition REG_IDX_0_VAL_ADDRESS = 256          /* 0x100, wrong  */
+                                     = 268435712    /* 0x10000100    */
+```
+
+On a SoC whose flash base is not `0x0` that produces an unbootable image, and the
+symptom is remote from the cause. With `CONFIG_FLASH_USES_MAPPED_PARTITION=y` the
+linker takes `ROM_ADDR` straight from the partition address, so the whole image
+is mis-linked. On RP2040 it also silently disables the second-stage bootloader:
+`soc/raspberrypi/rpi_pico/rp2040/Kconfig` gates `RP2_REQUIRES_SECOND_STAGE_BOOT`
+on the address being *exactly* `0x10000100`, so `.boot2` is omitted from the ELF
+altogether and the chip drops back to BOOTSEL when flashed. The RP2040 and
+STM32WBA boards here shipped that way for a while before it was caught, so when
+copying an existing layout for a new board, copy `ranges;` with it. Merging into
+the board DTS's existing `partitions` node instead of deleting it, as the Pico 2
+layouts do, avoids the question entirely.
+
+Overlays whose flash base is `0x0` (the nRF boards, `native_sim`) are unaffected,
+because the untranslated offset happens to equal the absolute address.
+
+`cptools/check_partitions.py` catches this after a build: a partition that
+resolves outside its flash device is reported with a pointer at `ranges;`. Point
+it at the build directory, or run it with no arguments to check every `build-*`.
+
+### Size the settings partition for the flash geometry
+
+Any board with Bluetooth stores bond keys through `CONFIG_BT_SETTINGS` (on by
+default in this port), and that backend needs the `storage` partition to hold at
+least **two erase sectors**, aligned to an erase-sector boundary. `nvs_mount()`
+refuses fewer than two sectors with `-EINVAL`; a partition too small or misaligned
+to hold even one makes `flash_area_get_sectors()` report zero sectors and
+`settings_subsys_init()` fail with `-EDOM`. Either way `bt_enable()` returns
+before it ever opens the HCI driver, which surfaces to Python as a bare `OSError`
+from `import _bleio` with nothing pointing at flash layout. On a part with 4K
+sectors that means 8K aligned to 4K; the nRF boards give it 32K, while the
+adaboot layouts for the Raspberry Pi Pico boards give it a single 4K sector.
+
+If the sectors still hold data from an earlier layout, NVS reads them as "all
+sectors closed" and refuses to mount with `-EDEADLK`.
+`CONFIG_NVS_INIT_BAD_MEMORY_REGION=y` lets it reclaim a region it does not
+recognise, so the first boot after a layout change recovers without a manual
+erase.
+
+Boards that declare a `counterpart` in `circuitpython.toml` (the same board built
+from another port, such as `raspberrypi/raspberry_pi_pico_w`) must also keep
+`nvm` and the CIRCUITPY filesystem partition exactly where that build has them,
+so that switching firmware between the two ports keeps the user's data.
+`check_partitions.py` enforces this too. When `storage` needs to grow on such a
+board, take the space from the code partition below it, not from the CIRCUITPY
+drive above it.
