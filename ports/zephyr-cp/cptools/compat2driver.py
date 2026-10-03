@@ -166,6 +166,7 @@ COMPAT_TO_DRIVER = {
     "infineon_bless_hci": "bluetooth/hci",
     "infineon_bt_hci_uart": "bluetooth/hci",
     "infineon_cyw208xx_hci": "bluetooth/hci",
+    "infineon_cyw43_bt_hci": "bluetooth/hci",
     "nxp_bt_hci_uart": "bluetooth/hci",
     "nxp_hci_ble": "bluetooth/hci",
     "renesas_bt_hci_da1453x": "bluetooth/hci",
