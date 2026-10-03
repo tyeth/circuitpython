@@ -9,6 +9,7 @@
 #include "shared/runtime/interrupt_char.h"
 #include "py/mperrno.h"
 #include "py/runtime.h"
+#include "bindings/zephyr_kernel/__init__.h"
 #include "shared-bindings/socketpool/SocketPool.h"
 #include "common-hal/socketpool/__init__.h"
 #include "common-hal/wifi/__init__.h"
@@ -156,6 +157,13 @@ static bool _socketpool_socket(socketpool_socketpool_obj_t *self,
     sock->ipproto = ipproto;
     sock->pool = self;
     sock->timeout_ms = (uint)-1;
+    // The object was allocated with a finaliser and zeroed, so until a socket
+    // exists it must read as closed (num < 0). Left at 0 after a failed
+    // zsock_socket(), the finaliser later called zsock_shutdown(0) -- fd 0
+    // belongs to the socket service's eventfd, whose shorter vtable has no
+    // shutdown slot -- and the CPU branched into cdc_acm_1's data (usage
+    // fault, halt).
+    sock->num = -1;
 
     int socknum = zsock_socket(sock->family, sock->type, sock->ipproto);
     if (socknum < 0) {
@@ -205,6 +213,11 @@ socketpool_socket_obj_t *common_hal_socketpool_socket(socketpool_socketpool_obj_
     socketpool_socket_obj_t *sock = mp_obj_malloc_with_finaliser(socketpool_socket_obj_t, &socketpool_socket_type);
 
     if (!_socketpool_socket(self, family, type, proto, sock)) {
+        // Say which limit was hit (ENOMEM: net_contexts, ENFILE/EMFILE: the
+        // fd table) rather than a generic message.
+        if (errno != 0) {
+            raise_zephyr_error(-errno);
+        }
         mp_raise_RuntimeError(MP_ERROR_TEXT("Out of sockets"));
     }
     return sock;
@@ -255,6 +268,13 @@ int socketpool_socket_accept(socketpool_socket_obj_t *self, mp_obj_t *peer_out, 
         accepted->pool = self->pool;
         accepted->connected = true;
         accepted->type = self->type;
+        accepted->family = self->family;
+        accepted->ipproto = self->ipproto;
+        // Inherit the listener's timeout, as the other ports do. A freshly
+        // allocated socket object reads as timeout 0 (non-blocking), which made
+        // the first ssl recv on an accepted connection raise EAGAIN before the
+        // TLS handshake had a chance to complete.
+        accepted->timeout_ms = self->timeout_ms;
     }
 
     if (peer_out) {
@@ -277,6 +297,14 @@ socketpool_socket_obj_t *common_hal_socketpool_socket_accept(socketpool_socket_o
         sock->pool = self->pool;
         sock->connected = true;
         sock->type = self->type;
+        sock->family = self->family;
+        sock->ipproto = self->ipproto;
+        // Inherit the listener's timeout, as the other ports do. A freshly
+        // allocated object reads as timeout 0 (non-blocking), and ssl's
+        // recv_into relies on the plain socket's recv blocking for it: the
+        // first read on an accepted TLS connection raised EAGAIN before the
+        // handshake could complete.
+        sock->timeout_ms = self->timeout_ms;
 
         return sock;
     } else {
