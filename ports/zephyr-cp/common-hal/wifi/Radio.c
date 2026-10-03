@@ -14,6 +14,7 @@
 #include "shared/runtime/interrupt_char.h"
 #include "py/gc.h"
 #include "py/obj.h"
+#include "py/objnamedtuple.h"
 #include "py/runtime.h"
 #include "shared-bindings/ipaddress/IPv4Address.h"
 #include "shared-bindings/wifi/ScannedNetworks.h"
@@ -27,6 +28,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net/dhcpv4.h>
+#if defined(CONFIG_NET_DHCPV4_SERVER)
+#include <zephyr/net/dhcpv4_server.h>
+#endif
 // dns_resolve_get_default() for radio.ipv4_dns.
 #include <zephyr/net/dns_resolve.h>
 #include <zephyr/net/hostname.h>
@@ -283,86 +287,255 @@ void common_hal_wifi_radio_stop_station(wifi_radio_obj_t *self) {
     // set_mode_station(self, false);
 }
 
+// ------------------------------------------------------------- access point
+//
+// The AIROC (CYW43439) driver runs the access point on the same net_if as the
+// station and refuses NET_REQUEST_WIFI_AP_ENABLE with -EBUSY while the station
+// is associated, so unlike ESP32 there is no simultaneous AP+STA here: a
+// program that wants the portal must disconnect() first. The AP's IPv4
+// configuration, DHCPv4 server and station list are kept in the radio object
+// beside sta_netif.
+
+#define WIFI_AP_DEFAULT_ADDRESS "192.168.4.1"
+#define WIFI_AP_DEFAULT_NETMASK "255.255.255.0"
+
+static void ipv4address_to_net_in_addr(mp_obj_t obj, struct net_in_addr *out) {
+    if (!mp_obj_is_type(obj, &ipaddress_ipv4address_type)) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Only IPv4 addresses supported"));
+    }
+    mp_buffer_info_t buf;
+    mp_get_buffer_raise(common_hal_ipaddress_ipv4address_get_packed(MP_OBJ_TO_PTR(obj)), &buf, MP_BUFFER_READ);
+    memset(out, 0, sizeof(*out));
+    memcpy(out->s4_addr, buf.buf, MIN(buf.len, sizeof(out->s4_addr)));
+}
+
+static void wifi_radio_ap_address_defaults(wifi_radio_obj_t *self) {
+    if (self->ap_addr_configured) {
+        return;
+    }
+    net_addr_pton(NET_AF_INET, WIFI_AP_DEFAULT_ADDRESS, &self->ap_addr);
+    net_addr_pton(NET_AF_INET, WIFI_AP_DEFAULT_NETMASK, &self->ap_netmask);
+    self->ap_gw = self->ap_addr;
+}
+
+// Put self->ap_addr on the interface. It has CONFIG_NET_IF_MAX_IPV4_COUNT (one)
+// unicast slot, so anything a station lease left behind has to go first.
+static void wifi_radio_ap_apply_address(wifi_radio_obj_t *self) {
+    struct net_if *iface = self->sta_netif;
+
+    wifi_radio_ap_address_defaults(self);
+
+    struct net_in_addr *old = net_if_ipv4_get_global_addr(iface, NET_ADDR_ANY_STATE);
+    if (old != NULL && old->s_addr != self->ap_addr.s_addr) {
+        struct net_in_addr stale = *old;
+        net_if_ipv4_addr_rm(iface, &stale);
+    }
+    if (net_if_ipv4_addr_add(iface, &self->ap_addr, NET_ADDR_MANUAL, 0) == NULL) {
+        raise_zephyr_error(-ENOMEM);
+    }
+    net_if_ipv4_set_netmask_by_addr(iface, &self->ap_addr, &self->ap_netmask);
+    net_if_ipv4_set_gw(iface, &self->ap_gw);
+}
+
+static void wifi_radio_ap_remove_address(wifi_radio_obj_t *self) {
+    struct net_in_addr none = { 0 };
+
+    net_if_ipv4_addr_rm(self->sta_netif, &self->ap_addr);
+    net_if_ipv4_set_gw(self->sta_netif, &none);
+}
+
 void common_hal_wifi_radio_start_ap(wifi_radio_obj_t *self, uint8_t *ssid, size_t ssid_len, uint8_t *password, size_t password_len, uint8_t channel, uint32_t authmode, uint8_t max_connections) {
-    // set_mode_ap(self, true);
+    if (!common_hal_wifi_radio_get_enabled(self)) {
+        mp_raise_RuntimeError(MP_ERROR_TEXT("WiFi is not enabled"));
+    }
 
-    // uint8_t esp_authmode = 0;
-    // switch (authmode) {
-    //     case AUTHMODE_OPEN:
-    //         esp_authmode = WIFI_AUTH_OPEN;
-    //         break;
-    //     case AUTHMODE_WPA | AUTHMODE_PSK:
-    //         esp_authmode = WIFI_AUTH_WPA_PSK;
-    //         break;
-    //     case AUTHMODE_WPA2 | AUTHMODE_PSK:
-    //         esp_authmode = WIFI_AUTH_WPA2_PSK;
-    //         break;
-    //     case AUTHMODE_WPA | AUTHMODE_WPA2 | AUTHMODE_PSK:
-    //         esp_authmode = WIFI_AUTH_WPA_WPA2_PSK;
-    //         break;
-    //     default:
-    //         mp_arg_error_invalid(MP_QSTR_authmode);
-    //         break;
-    // }
+    enum wifi_security_type security = WIFI_SECURITY_TYPE_NONE;
+    switch (authmode) {
+        case AUTHMODE_OPEN:
+            security = WIFI_SECURITY_TYPE_NONE;
+            break;
+        // The driver brings every PSK mode up as WPA2-AES-PSK; it does not
+        // offer WPA1/TKIP on its own, so all three CircuitPython spellings map
+        // to the one the controller does.
+        case AUTHMODE_WPA | AUTHMODE_PSK:
+        case AUTHMODE_WPA2 | AUTHMODE_PSK:
+        case AUTHMODE_WPA | AUTHMODE_WPA2 | AUTHMODE_PSK:
+            security = WIFI_SECURITY_TYPE_PSK;
+            break;
+        case AUTHMODE_WPA3 | AUTHMODE_PSK:
+        case AUTHMODE_WPA2 | AUTHMODE_WPA3 | AUTHMODE_PSK:
+            security = WIFI_SECURITY_TYPE_SAE;
+            break;
+        default:
+            mp_arg_error_invalid(MP_QSTR_authmode);
+            break;
+    }
 
-    // wifi_config_t *config = &self->ap_config;
-    // memcpy(&config->ap.ssid, ssid, ssid_len);
-    // config->ap.ssid[ssid_len] = 0;
-    // memcpy(&config->ap.password, password, password_len);
-    // config->ap.password[password_len] = 0;
-    // config->ap.channel = channel;
-    // config->ap.authmode = esp_authmode;
+    // wifi_mgmt has no per-AP association limit and the CYW43439's is fixed in
+    // the controller (WHD only exposes whd_wifi_ap_get_max_assoc), so the
+    // argument gets the same range check as on ESP32 and is otherwise unused.
+    mp_arg_validate_int_range(max_connections, 0, 10, MP_QSTR_max_connections);
 
-    // mp_arg_validate_int_range(max_connections, 0, 10, MP_QSTR_max_connections);
+    // Take a running AP down first -- ours, or one the driver still reports
+    // after a failed teardown (a soft reboot has been seen to leave the two
+    // out of step). ap_enable refuses with -EAGAIN while its is_ap_up is set.
+    struct wifi_iface_status status = { 0 };
+    bool driver_ap_up = net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, self->sta_netif, &status,
+        sizeof(status)) == 0 && status.iface_mode == WIFI_MODE_AP;
+    if (self->ap_mode) {
+        common_hal_wifi_radio_stop_ap(self);
+    } else if (driver_ap_up) {
+        int res = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, self->sta_netif, NULL, 0);
+        if (res < 0 && res != -EALREADY) {
+            raise_zephyr_error(res);
+        }
+    }
 
-    // config->ap.max_connection = max_connections;
+    struct wifi_connect_req_params params = { 0 };
+    params.ssid = ssid;
+    params.ssid_length = ssid_len;
+    if (security != WIFI_SECURITY_TYPE_NONE) {
+        params.psk = password;
+        params.psk_length = password_len;
+    }
+    if (security == WIFI_SECURITY_TYPE_SAE) {
+        params.sae_password = password;
+        params.sae_password_length = password_len;
+    }
+    params.band = WIFI_FREQ_BAND_2_4_GHZ;
+    params.channel = channel;
+    params.security = security;
+    params.mfp = WIFI_MFP_OPTIONAL;
+    params.bandwidth = WIFI_FREQ_BANDWIDTH_20MHZ;
 
-    // esp_wifi_set_config(WIFI_IF_AP, config);
+    #if defined(CONFIG_NET_DHCPV4)
+    // A station DHCP client left running would keep renewing into the
+    // interface's single IPv4 slot underneath the AP's address.
+    net_dhcpv4_stop(self->sta_netif);
+    #endif
+
+    self->ap_station_count = 0;
+    CHECK_ZEPHYR_RESULT(net_mgmt(NET_REQUEST_WIFI_AP_ENABLE, self->sta_netif, &params, sizeof(params)));
+    self->ap_mode = true;
+
+    wifi_radio_ap_apply_address(self);
+
+    #if defined(CONFIG_NET_DHCPV4_SERVER)
+    // As on ESP32, where the AP netif's DHCP server is on by default; a program
+    // that wants static clients calls stop_dhcp_ap().
+    common_hal_wifi_radio_start_dhcp_server(self);
+    #endif
+}
+
+// Soft-reboot / wifi_reset() path: take the AP down without raising, so the
+// next program starts from a station-only interface with no stale address,
+// DHCP server or station table.
+void wifi_radio_ap_reset(wifi_radio_obj_t *self) {
+    if (!self->ap_mode || self->sta_netif == NULL) {
+        return;
+    }
+    #if defined(CONFIG_NET_DHCPV4_SERVER)
+    if (self->dhcp_server_running) {
+        net_dhcpv4_server_stop(self->sta_netif);
+        self->dhcp_server_running = false;
+    }
+    #endif
+    int res = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, self->sta_netif, NULL, 0);
+    wifi_radio_ap_remove_address(self);
+    self->ap_station_count = 0;
+    if (res == 0 || res == -EALREADY) {
+        self->ap_mode = false;
+    } else {
+        // The driver still believes the AP is up (its next ap_enable would
+        // fail with "Already AP is on"); keep our flag in step so the next
+        // start_ap() retries the disable instead of trusting it.
+        LOG_ERR("AP disable at reset failed: %d", res);
+    }
 }
 
 bool common_hal_wifi_radio_get_ap_active(wifi_radio_obj_t *self) {
-    // return self->ap_mode && esp_netif_is_netif_up(self->ap_netif);
-    return false;
+    if (!self->ap_mode || self->sta_netif == NULL) {
+        return false;
+    }
+    // Ask the driver rather than trusting our own flag: the AIROC driver
+    // reports WIFI_MODE_AP only while its AP interface is really up.
+    struct wifi_iface_status status = { 0 };
+    if (net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, self->sta_netif, &status, sizeof(status)) != 0) {
+        return false;
+    }
+    return status.iface_mode == WIFI_MODE_AP && net_if_is_up(self->sta_netif);
 }
 
 void common_hal_wifi_radio_stop_ap(wifi_radio_obj_t *self) {
-    // set_mode_ap(self, false);
+    if (!self->ap_mode) {
+        return;
+    }
+    common_hal_wifi_radio_stop_dhcp_server(self);
+    int res = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, self->sta_netif, NULL, 0);
+    wifi_radio_ap_remove_address(self);
+    self->ap_mode = false;
+    self->ap_station_count = 0;
+    if (res < 0 && res != -EALREADY) {
+        raise_zephyr_error(res);
+    }
 }
 
+#if defined(CONFIG_NET_DHCPV4_SERVER)
+typedef struct {
+    const uint8_t *mac;
+    uint32_t addr;
+} wifi_radio_lease_lookup_t;
+
+static void wifi_radio_lease_cb(struct net_if *iface, struct dhcpv4_addr_slot *lease, void *user_data) {
+    wifi_radio_lease_lookup_t *lookup = user_data;
+    (void)iface;
+    if (lease->state != DHCPV4_SERVER_ADDR_ALLOCATED) {
+        return;
+    }
+    // The server keeps the client's chaddr beside the client-identifier
+    // option, but a lease created through its address-probe path only carries
+    // the option (RFC 2132 type 1 + MAC for every client seen so far), so
+    // accept either form.
+    const struct dhcpv4_client_id *id = &lease->client_id;
+    bool hw_match = id->hw_addr_len == MAC_ADDRESS_LENGTH &&
+        memcmp(id->hw_addr_buf, lookup->mac, MAC_ADDRESS_LENGTH) == 0;
+    bool opt_match = id->len == MAC_ADDRESS_LENGTH + 1 && id->buf[0] == 1 &&
+        memcmp(&id->buf[1], lookup->mac, MAC_ADDRESS_LENGTH) == 0;
+    if (hw_match || opt_match) {
+        lookup->addr = lease->addr.s_addr;
+    }
+}
+#endif
+
 mp_obj_t common_hal_wifi_radio_get_stations_ap(wifi_radio_obj_t *self) {
-    // wifi_sta_list_t esp_sta_list;
-    // esp_err_t result;
-
-    // result = esp_wifi_ap_get_sta_list(&esp_sta_list);
-    // if (result != ESP_OK) {
-    //     return mp_const_none;
-    // }
-
-    // esp_netif_pair_mac_ip_t mac_ip_pair[esp_sta_list.num];
-    // for (int i = 0; i < esp_sta_list.num; i++) {
-    //     memcpy(mac_ip_pair[i].mac, esp_sta_list.sta[i].mac, MAC_ADDRESS_LENGTH);
-    //     mac_ip_pair[i].ip.addr = 0;
-    // }
-
-    // result = esp_netif_dhcps_get_clients_by_mac(self->ap_netif, esp_sta_list.num, mac_ip_pair);
-    // if (result != ESP_OK) {
-    //     return mp_const_none;
-    // }
-
     mp_obj_t mp_sta_list = mp_obj_new_list(0, NULL);
-    // for (int i = 0; i < esp_sta_list.num; i++) {
-    //     mp_obj_t elems[3] = {
-    //         mp_obj_new_bytes(esp_sta_list.sta[i].mac, MAC_ADDRESS_LENGTH),
-    //         MP_OBJ_NEW_SMALL_INT(esp_sta_list.sta[i].rssi),
-    //         mp_const_none
-    //     };
+    if (!self->ap_mode) {
+        return mp_sta_list;
+    }
 
-    //     if (mac_ip_pair[i].ip.addr) {
-    //         elems[2] = common_hal_ipaddress_new_ipv4address(mac_ip_pair[i].ip.addr);
-    //     }
+    // Snapshot the table; the net_mgmt event thread rewrites it.
+    uint8_t macs[WIFI_AP_MAX_STATIONS][MAC_ADDRESS_LENGTH];
+    unsigned int key = irq_lock();
+    size_t count = self->ap_station_count;
+    memcpy(macs, self->ap_stations, sizeof(macs));
+    irq_unlock(key);
 
-    //     mp_obj_list_append(mp_sta_list, namedtuple_make_new((const mp_obj_type_t *)&wifi_radio_station_type, 3, 0, elems));
-    // }
+    for (size_t i = 0; i < count; i++) {
+        // wifi_mgmt's AP station events carry no RSSI, so that field is None.
+        mp_obj_t elems[3] = {
+            mp_obj_new_bytes(macs[i], MAC_ADDRESS_LENGTH),
+            mp_const_none,
+            mp_const_none
+        };
+        #if defined(CONFIG_NET_DHCPV4_SERVER)
+        wifi_radio_lease_lookup_t lookup = { .mac = macs[i], .addr = 0 };
+        net_dhcpv4_server_foreach_lease(self->sta_netif, wifi_radio_lease_cb, &lookup);
+        if (lookup.addr != 0) {
+            elems[2] = common_hal_ipaddress_new_ipv4address(lookup.addr);
+        }
+        #endif
+        mp_obj_list_append(mp_sta_list, namedtuple_make_new((const mp_obj_type_t *)&wifi_radio_station_type, 3, 0, elems));
+    }
 
     return mp_sta_list;
 }
@@ -686,11 +859,10 @@ mp_obj_t common_hal_wifi_radio_get_ipv4_gateway(wifi_radio_obj_t *self) {
 }
 
 mp_obj_t common_hal_wifi_radio_get_ipv4_gateway_ap(wifi_radio_obj_t *self) {
-    // if (!esp_netif_is_netif_up(self->ap_netif)) {
-    return mp_const_none;
-    // }
-    // esp_netif_get_ip_info(self->ap_netif, &self->ap_ip_info);
-    // return common_hal_ipaddress_new_ipv4address(self->ap_ip_info.gw.addr);
+    if (!common_hal_wifi_radio_get_ap_active(self)) {
+        return mp_const_none;
+    }
+    return common_hal_ipaddress_new_ipv4address(self->ap_gw.s_addr);
 }
 
 mp_obj_t common_hal_wifi_radio_get_ipv4_subnet(wifi_radio_obj_t *self) {
@@ -715,11 +887,10 @@ mp_obj_t common_hal_wifi_radio_get_ipv4_subnet(wifi_radio_obj_t *self) {
 }
 
 mp_obj_t common_hal_wifi_radio_get_ipv4_subnet_ap(wifi_radio_obj_t *self) {
-    // if (!esp_netif_is_netif_up(self->ap_netif)) {
-    return mp_const_none;
-    // }
-    // esp_netif_get_ip_info(self->ap_netif, &self->ap_ip_info);
-    // return common_hal_ipaddress_new_ipv4address(self->ap_ip_info.netmask.addr);
+    if (!common_hal_wifi_radio_get_ap_active(self)) {
+        return mp_const_none;
+    }
+    return common_hal_ipaddress_new_ipv4address(self->ap_netmask.s_addr);
 }
 
 // static mp_obj_t common_hal_wifi_radio_get_addresses_netif(wifi_radio_obj_t *self, esp_netif_t *netif) {
@@ -799,12 +970,10 @@ mp_obj_t common_hal_wifi_radio_get_ipv4_address(wifi_radio_obj_t *self) {
 }
 
 mp_obj_t common_hal_wifi_radio_get_ipv4_address_ap(wifi_radio_obj_t *self) {
-    // if (!esp_netif_is_netif_up(self->ap_netif)) {
-    //     return mp_const_none;
-    // }
-    // esp_netif_get_ip_info(self->ap_netif, &self->ap_ip_info);
-    // return common_hal_ipaddress_new_ipv4address(self->ap_ip_info.ip.addr);
-    return mp_const_none;
+    if (!common_hal_wifi_radio_get_ap_active(self)) {
+        return mp_const_none;
+    }
+    return common_hal_ipaddress_new_ipv4address(self->ap_addr.s_addr);
 }
 
 mp_obj_t common_hal_wifi_radio_get_ipv4_dns(wifi_radio_obj_t *self) {
@@ -838,66 +1007,113 @@ void common_hal_wifi_radio_set_ipv4_dns(wifi_radio_obj_t *self, mp_obj_t ipv4_dn
 }
 
 void common_hal_wifi_radio_start_dhcp_client(wifi_radio_obj_t *self, bool ipv4, bool ipv6) {
-    // if (ipv4) {
-    //     esp_netif_dhcpc_start(self->netif);
-    // } else {
-    //     esp_netif_dhcpc_stop(self->netif);
-    // }
-    // #if LWIP_IPV6_DHCP6
-    // if (ipv6) {
-    //     esp_netif_create_ip6_linklocal(self->netif);
-    //     dhcp6_enable_stateless(esp_netif_get_netif_impl(self->netif));
-    // } else {
-    //     dhcp6_disable(esp_netif_get_netif_impl(self->netif));
-    // }
-    // #else
-    // if (ipv6) {
-    //     mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_ipv6);
-    // }
-    // #endif
+    if (ipv6) {
+        mp_raise_NotImplementedError_varg(MP_ERROR_TEXT("%q"), MP_QSTR_ipv6);
+    }
+    #if defined(CONFIG_NET_DHCPV4)
+    if (self->sta_netif == NULL) {
+        return;
+    }
+    if (ipv4) {
+        net_dhcpv4_start(self->sta_netif);
+    } else {
+        net_dhcpv4_stop(self->sta_netif);
+    }
+    #endif
 }
 
 void common_hal_wifi_radio_stop_dhcp_client(wifi_radio_obj_t *self) {
-    // esp_netif_dhcpc_stop(self->netif);
-    // #if LWIP_IPV6_DHCP6
-    // dhcp6_disable(esp_netif_get_netif_impl(self->netif));
-    // #endif
+    #if defined(CONFIG_NET_DHCPV4)
+    if (self->sta_netif != NULL) {
+        net_dhcpv4_stop(self->sta_netif);
+    }
+    #endif
 }
 
 void common_hal_wifi_radio_start_dhcp_server(wifi_radio_obj_t *self) {
-    // esp_netif_dhcps_start(self->ap_netif);
+    #if defined(CONFIG_NET_DHCPV4_SERVER)
+    if (self->dhcp_server_running) {
+        return;
+    }
+    if (!self->ap_mode) {
+        raise_zephyr_error(-ENETDOWN);
+    }
+    // The pool starts just above the AP's own address and holds
+    // CONFIG_NET_DHCPV4_SERVER_ADDR_COUNT consecutive addresses.
+    struct net_in_addr base = self->ap_addr;
+    base.s4_addr[3] += 1;
+    int res = net_dhcpv4_server_start(self->sta_netif, &base);
+    if (res != 0 && res != -EALREADY) {
+        raise_zephyr_error(res);
+    }
+    self->dhcp_server_running = true;
+    #else
+    mp_raise_NotImplementedError(NULL);
+    #endif
 }
 
 void common_hal_wifi_radio_stop_dhcp_server(wifi_radio_obj_t *self) {
-    // esp_netif_dhcps_stop(self->ap_netif);
+    #if defined(CONFIG_NET_DHCPV4_SERVER)
+    if (!self->dhcp_server_running) {
+        return;
+    }
+    net_dhcpv4_server_stop(self->sta_netif);
+    self->dhcp_server_running = false;
+    #endif
 }
 
 void common_hal_wifi_radio_set_ipv4_address(wifi_radio_obj_t *self, mp_obj_t ipv4, mp_obj_t netmask, mp_obj_t gateway, mp_obj_t ipv4_dns) {
-    // common_hal_wifi_radio_stop_dhcp_client(self); // Must stop station DHCP to set a manual address
+    struct net_in_addr addr, mask, gw;
+    ipv4address_to_net_in_addr(ipv4, &addr);
+    ipv4address_to_net_in_addr(netmask, &mask);
+    ipv4address_to_net_in_addr(gateway, &gw);
 
-    // esp_netif_ip_info_t ip_info;
-    // ipaddress_ipaddress_to_esp_idf_ip4(ipv4, &ip_info.ip);
-    // ipaddress_ipaddress_to_esp_idf_ip4(netmask, &ip_info.netmask);
-    // ipaddress_ipaddress_to_esp_idf_ip4(gateway, &ip_info.gw);
+    // Must stop station DHCP to set a manual address, or the next renewal
+    // replaces it.
+    common_hal_wifi_radio_stop_dhcp_client(self);
 
-    // esp_netif_set_ip_info(self->netif, &ip_info);
+    struct net_in_addr *old = net_if_ipv4_get_global_addr(self->sta_netif, NET_ADDR_ANY_STATE);
+    if (old != NULL) {
+        struct net_in_addr stale = *old;
+        net_if_ipv4_addr_rm(self->sta_netif, &stale);
+    }
+    if (net_if_ipv4_addr_add(self->sta_netif, &addr, NET_ADDR_MANUAL, 0) == NULL) {
+        raise_zephyr_error(-ENOMEM);
+    }
+    net_if_ipv4_set_netmask_by_addr(self->sta_netif, &addr, &mask);
+    net_if_ipv4_set_gw(self->sta_netif, &gw);
 
-    // if (ipv4_dns != MP_OBJ_NULL) {
-    //     common_hal_wifi_radio_set_ipv4_dns(self, ipv4_dns);
-    // }
+    if (ipv4_dns != MP_OBJ_NULL && ipv4_dns != mp_const_none) {
+        common_hal_wifi_radio_set_ipv4_dns(self, ipv4_dns);
+    }
 }
 
 void common_hal_wifi_radio_set_ipv4_address_ap(wifi_radio_obj_t *self, mp_obj_t ipv4, mp_obj_t netmask, mp_obj_t gateway) {
-    // common_hal_wifi_radio_stop_dhcp_server(self); // Must stop access point DHCP to set a manual address
+    struct net_in_addr addr, mask, gw;
+    ipv4address_to_net_in_addr(ipv4, &addr);
+    ipv4address_to_net_in_addr(netmask, &mask);
+    ipv4address_to_net_in_addr(gateway, &gw);
 
-    // esp_netif_ip_info_t ip_info;
-    // ipaddress_ipaddress_to_esp_idf_ip4(ipv4, &ip_info.ip);
-    // ipaddress_ipaddress_to_esp_idf_ip4(netmask, &ip_info.netmask);
-    // ipaddress_ipaddress_to_esp_idf_ip4(gateway, &ip_info.gw);
+    bool restart_dhcp = false;
+    if (self->ap_mode) {
+        // Must stop access point DHCP to move its address: the pool is derived
+        // from it. Drop the old address before the new one is recorded.
+        restart_dhcp = self->dhcp_server_running;
+        common_hal_wifi_radio_stop_dhcp_server(self);
+        wifi_radio_ap_remove_address(self);
+    }
 
-    // esp_netif_set_ip_info(self->ap_netif, &ip_info);
+    self->ap_addr = addr;
+    self->ap_netmask = mask;
+    self->ap_gw = gw;
+    self->ap_addr_configured = true;
 
-    // common_hal_wifi_radio_start_dhcp_server(self); // restart access point DHCP
+    if (self->ap_mode) {
+        wifi_radio_ap_apply_address(self);
+        if (restart_dhcp) {
+            common_hal_wifi_radio_start_dhcp_server(self);
+        }
+    }
 }
 
 #if CIRCUITPY_WIFI_PING
