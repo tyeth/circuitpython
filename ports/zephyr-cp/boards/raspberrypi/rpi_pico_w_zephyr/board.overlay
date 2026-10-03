@@ -1,3 +1,58 @@
 /* Partition layout is owned by the mcuboot fork (dts/raspberrypi/rpi_pico.dtsi)
  * and applied to this image by sysbuild. This overlay only adds board/app config. */
+
+/*
+ * Settings partition: one exception to the layout above. sysbuild prepends the
+ * adaboot layout (dts/raspberrypi/rpi_pico_w.dtsi) to this overlay, so what
+ * is set here wins.
+ *
+ * The settings partition backs Bluetooth bond keys via NVS, so it must be
+ * erase-sector aligned and hold at least two of the RP2040's 4K sectors.
+ * The layout gives it one (0x17f000, 4K); nvs_mount() rejects a single sector
+ * with -EINVAL, which makes bt_enable() fail before ever opening the HCI
+ * driver and surfaces as a bare OSError from "import _bleio".
+ *
+ * nvm and the filesystem must stay where ports/raspberrypi puts them
+ * (cptools/check_partitions.py enforces this), so the second sector comes out
+ * of the code partition, not out of the CIRCUITPY drive. The code partition
+ * still starts at 0x100, after the second stage bootloader.
+ */
+&code_partition {
+	reg = <0x100 (0x17e000 - 0x100)>;
+};
+
+/delete-node/ &storage_partition;
+
+&flash0 {
+	partitions {
+		storage_partition: partition@17e000 {
+			compatible = "zephyr,mapped-partition";
+			label = "storage";
+			reg = <0x17e000 0x2000>;
+		};
+	};
+};
+
+/*
+ * Bluetooth. Same CYW43439 as the Pico 2 W: HCI is not on a UART, it shares
+ * the WiFi gSPI bus, so hang the shared-bus HCI transport off the board's
+ * stock infineon,airoc-wifi node and point the host at it. CONFIG_BT then
+ * enables itself via the zephyr,bt-hci chosen (see
+ * ../../../internal-modules/circuitpython-kconfig/Kconfig).
+ */
+&pio0_spi0 {
+	airoc-wifi@0 {
+		cyw43_bt_hci: cyw43_bt_hci {
+			compatible = "infineon,cyw43-bt-hci";
+			status = "okay";
+		};
+	};
+};
+
+/ {
+	chosen {
+		zephyr,bt-hci = &cyw43_bt_hci;
+	};
+};
+
 #include "../../../app.overlay"
