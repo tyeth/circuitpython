@@ -52,14 +52,33 @@ void check_gatt_status(uint16_t gatt_status) {
         return;
     }
     switch (gatt_status) {
+        case BLE_GATT_STATUS_ATTERR_READ_NOT_PERMITTED:
+            mp_raise_bleio_BluetoothError(MP_ERROR_TEXT("%q not permitted"), MP_QSTR_read);
+            return;
+        case BLE_GATT_STATUS_ATTERR_WRITE_NOT_PERMITTED:
+            mp_raise_bleio_BluetoothError(MP_ERROR_TEXT("%q not permitted"), MP_QSTR_write);
+            return;
         case BLE_GATT_STATUS_ATTERR_INSUF_AUTHENTICATION:
             mp_raise_bleio_SecurityError(MP_ERROR_TEXT("Insufficient authentication"));
             return;
+        case BLE_GATT_STATUS_ATTERR_INSUF_AUTHORIZATION:
+            mp_raise_bleio_SecurityError(MP_ERROR_TEXT("Insufficient authorization"));
+            return;
         case BLE_GATT_STATUS_ATTERR_INSUF_ENCRYPTION:
+        case BLE_GATT_STATUS_ATTERR_INSUF_ENC_KEY_SIZE:
             mp_raise_bleio_SecurityError(MP_ERROR_TEXT("Insufficient encryption"));
             return;
+        case BLE_GATT_STATUS_ATTERR_INVALID_ATT_VAL_LENGTH:
+            mp_arg_error_invalid(MP_QSTR_length);
+            return;
         default:
-            mp_raise_bleio_BluetoothError(MP_ERROR_TEXT("Unknown gatt error: 0x%04x"), gatt_status);
+            if (gatt_status > BLE_GATT_STATUS_ATTERR_INVALID &&
+                gatt_status <= BLE_GATT_STATUS_ATTERR_CPS_OUT_OF_RANGE) {
+                // Some other ATT error from the peer.
+                mp_raise_bleio_BluetoothError(MP_ERROR_TEXT("Unknown gatt error: 0x%04x"), gatt_status);
+            }
+            // Not an ATT error, e.g. BLE_GATT_STATUS_UNKNOWN.
+            mp_raise_bleio_BluetoothError(MP_ERROR_TEXT("Unknown BLE error: 0x%04x"), gatt_status);
     }
 }
 
