@@ -50,9 +50,9 @@ static void serial_cb(const struct device *dev, void *user_data) {
         return;
     }
 
-    /* read until FIFO empty or msgq full */
+    /* read until FIFO empty, or until msgq full if flow_control */
     while (true) {
-        if (k_msgq_num_free_get(&self->msgq) == 0) {
+        if (self->flow_control && k_msgq_num_free_get(&self->msgq) == 0) {
             // Leave the remaining bytes in the driver instead of dropping
             // them. USB CDC then stops accepting packets, so the host
             // waits. read() calls resume_rx() after taking bytes out of
@@ -74,8 +74,7 @@ static void serial_cb(const struct device *dev, void *user_data) {
             common_hal_busio_uart_clear_rx_buffer(self);
             mp_sched_keyboard_interrupt();
             port_wake_main_task_from_isr();
-        } else {
-            k_msgq_put(&self->msgq, &c, K_NO_WAIT);
+        } else if (k_msgq_put(&self->msgq, &c, K_NO_WAIT) == 0) {
             // Wake the main task so it can service the new RX data
             // instead of sleeping out its full timeout.
             port_wake_main_task_from_isr();
@@ -104,6 +103,7 @@ mp_obj_t common_hal_busio_uart_construct_from_device(busio_uart_obj_t *self, con
     self->timeout = K_FOREVER;
     self->write_timeout = K_FOREVER;
     self->rx_paused = false;
+    self->flow_control = false;
     uart_irq_rx_enable(uart_device);
 
     return MP_OBJ_FROM_PTR(self);
