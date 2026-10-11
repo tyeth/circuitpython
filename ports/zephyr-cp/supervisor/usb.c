@@ -49,6 +49,10 @@ USBD_DEVICE_DEFINE(main_usbd,
 USBD_DESC_LANG_DEFINE(main_lang);
 USBD_DESC_MANUFACTURER_DEFINE(main_mfr, USB_MANUFACTURER);
 USBD_DESC_PRODUCT_DEFINE(main_product, USB_PRODUCT);
+// The stack fills this from hwinfo and fails the request without a driver.
+#if defined(CONFIG_HWINFO_HAS_DRIVER)
+USBD_DESC_SERIAL_NUMBER_DEFINE(main_sn);
+#endif
 
 USBD_DESC_CONFIG_DEFINE(fs_cfg_desc, "FS Configuration");
 USBD_DESC_CONFIG_DEFINE(hs_cfg_desc, "HS Configuration");
@@ -267,6 +271,14 @@ void usb_init(void) {
         LOG_ERR("Failed to initialize product descriptor (%d)", err);
         return;
     }
+
+    #if defined(CONFIG_HWINFO_HAS_DRIVER)
+    err = usbd_add_descriptor(&main_usbd, &main_sn);
+    if (err) {
+        LOG_ERR("Failed to initialize serial number descriptor (%d)", err);
+        return;
+    }
+    #endif
 
     bool console = usb_cdc_console_enabled();
     if (console) {
