@@ -268,10 +268,11 @@ size_t bleio_gattc_read(uint16_t handle, uint16_t conn_handle, uint8_t *buf, siz
     while (!read_info.done) {
         RUN_BACKGROUND_TASKS;
     }
+    // Remove the handler before anything can raise: it points at read_info on this stack frame.
+    ble_drv_remove_event_handler(_on_gattc_read_rsp_evt, &read_info);
+
     // Test if we were disconnected while reading
     bleio_check_connected(read_info.conn_handle);
-
-    ble_drv_remove_event_handler(_on_gattc_read_rsp_evt, &read_info);
     check_gatt_status(read_info.status);
     return read_info.final_len;
 }
