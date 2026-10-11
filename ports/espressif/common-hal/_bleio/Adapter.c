@@ -408,7 +408,12 @@ static void _new_connection(uint16_t conn_handle, bool user_owned) {
     connection->user_owned = user_owned;
 
     if (ble_gattc_exchange_mtu(conn_handle, _mtu_reply, connection) != 0) {
-        // _mtu_reply() won't be called, so report that the connection is established here.
+        // _mtu_reply() won't be called, so do its work here.
+        // This is the usual case with a peer that starts the MTU exchange itself,
+        // such as Zephyr: NimBLE answers that before this runs, and then refuses
+        // to start a second exchange. The BLE_GAP_EVENT_MTU it sent went to
+        // _connect_event(), not to the connection's event callback, so get the MTU now.
+        connection->mtu = ble_att_mtu(conn_handle);
         _connection_status = conn_handle;
     }
 
