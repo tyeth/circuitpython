@@ -1414,12 +1414,16 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error at %s:%d: %d"
+msgid "Unknown BLE error at %s:%d: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error: %d"
+msgid "Unknown BLE error: 0x%04x"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+msgid "%q not permitted"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
@@ -1428,18 +1432,18 @@ msgid "Insufficient authentication"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+msgid "Insufficient authorization"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
 msgid "Insufficient encryption"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown BLE error at %s:%d: %d"
-msgstr ""
-
-#: ports/espressif/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: %d"
+msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
@@ -1889,11 +1893,6 @@ msgstr ""
 #: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
 msgid "Unknown system firmware error: %04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
