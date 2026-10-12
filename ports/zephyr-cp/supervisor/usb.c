@@ -17,6 +17,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/disk.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/usb/usbd.h>
 #include <zephyr/usb/class/usbd_msc.h>
@@ -26,6 +27,7 @@
 
 #include "shared-module/storage/__init__.h"
 #include "supervisor/filesystem.h"
+#include "supervisor/port.h"
 #include "supervisor/shared/reload.h"
 
 #include <zephyr/logging/log.h>
@@ -217,6 +219,31 @@ int _zephyr_disk_ioctl(struct disk_info *disk, uint8_t cmd, void *buff) {
 // volatile to avoid the compiler caching stale values.
 static volatile bool usb_configured = false;
 
+// First enabled CDC, as on TinyUSB ports.
+static const struct device *touch_cdc;
+
+static bool touch_requested(void) {
+    uint32_t baudrate = 0;
+    uint32_t dtr = 1;
+    if (uart_line_ctrl_get(touch_cdc, UART_LINE_CTRL_BAUD_RATE, &baudrate) != 0 ||
+        uart_line_ctrl_get(touch_cdc, UART_LINE_CTRL_DTR, &dtr) != 0) {
+        return false;
+    }
+    return baudrate == 1200 && dtr == 0;
+}
+
+static void touch_work_handler(struct k_work *work) {
+    // Host may have reopened the port.
+    if (!touch_requested()) {
+        return;
+    }
+    // Detach so the host sees a disconnect.
+    usbd_disable(&main_usbd);
+    reset_to_bootloader();
+}
+
+static K_WORK_DELAYABLE_DEFINE(touch_work, touch_work_handler);
+
 static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) {
     LOG_INF("USBD message: %s", usbd_msg_type_string(msg->type));
 
@@ -242,6 +269,17 @@ static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) 
         usb_configured = (msg->status != 0);
     } else if (msg->type == USBD_MSG_RESET) {
         usb_configured = false;
+    }
+
+    // 1200 baud + DTR low, in either order; recheck in 100 ms.
+    if ((msg->type == USBD_MSG_CDC_ACM_LINE_CODING ||
+         msg->type == USBD_MSG_CDC_ACM_CONTROL_LINE_STATE) &&
+        msg->dev == touch_cdc) {
+        if (touch_requested()) {
+            k_work_schedule(&touch_work, K_MSEC(100));
+        } else {
+            k_work_cancel_delayable(&touch_work);
+        }
     }
 }
 
@@ -398,6 +436,12 @@ void usb_init(void) {
         USB_BCC_MISCELLANEOUS, 0x02, 0x01);
     printk("Setting self powered\n");
     usbd_self_powered(&main_usbd, attributes & USB_SCD_SELF_POWERED);
+
+    if (usb_cdc_console_enabled()) {
+        touch_cdc = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_console));
+    } else if (usb_cdc_data_enabled()) {
+        touch_cdc = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_data));
+    }
 
     printk("Registering callback\n");
     err = usbd_msg_register_cb(&main_usbd, _msg_cb);
