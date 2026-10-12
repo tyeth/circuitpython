@@ -764,6 +764,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     config_adc_enabled = False
     config_dac_enabled = False
     config_rtc_enabled = False
+    config_soc = None
     config_present = True
     config = zephyrbuilddir / ".config"
     if not config.exists():
@@ -782,6 +783,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 config_dac_enabled = line.strip().endswith("=y")
             elif line.startswith("CONFIG_RTC="):
                 config_rtc_enabled = line.strip().endswith("=y")
+            elif line.startswith("CONFIG_SOC="):
+                config_soc = line.split("=", 1)[1].strip().strip('"')
 
     runners = zephyrbuilddir / "runners.yaml"
     runners = yaml.safe_load(runners.read_text())
@@ -812,7 +815,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     else:
         vendor_name = board_info["vendor_id"]
     board_info["vendor"] = vendor_name
-    soc_name = board_yaml["socs"][0]["name"]
+    soc_names = [soc["name"] for soc in board_yaml["socs"]]
+    soc_name = config_soc if config_soc in soc_names else soc_names[0]
     board_info["soc"] = soc_name
     board_name = board_yaml["full_name"]
     if mpconfigboard and "NAME" in mpconfigboard:
