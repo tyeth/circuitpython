@@ -1910,8 +1910,21 @@ msgid "Unknown system firmware error: %04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
+msgid "%q not permitted"
+msgstr ""
+
+#: ports/nordic/common-hal/_bleio/__init__.c
+msgid "Insufficient authorization"
+msgstr ""
+
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
 msgid "Unknown gatt error: 0x%04x"
+msgstr ""
+
+#: ports/nordic/common-hal/_bleio/__init__.c
+#, c-format
+msgid "Unknown BLE error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
