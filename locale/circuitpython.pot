@@ -1067,7 +1067,7 @@ msgstr ""
 msgid "No pull up found on SDA or SCL; check your wiring"
 msgstr ""
 
-#: ports/atmel-samd/common-hal/busio/UART.c shared-bindings/usb/core/Device.c
+#: ports/atmel-samd/common-hal/busio/UART.c
 #: shared-bindings/usb_host_bulk/InStream.c
 msgid "%q must be power of 2"
 msgstr ""
@@ -1301,6 +1301,12 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Adapter.c
 #: ports/nordic/common-hal/_bleio/Adapter.c
 #: ports/zephyr-cp/common-hal/_bleio/Adapter.c
+msgid "Failed to connect: timeout"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/Adapter.c
+#: ports/nordic/common-hal/_bleio/Adapter.c
+#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
 msgid "Failed to connect: internal error"
 msgstr ""
 
@@ -1346,6 +1352,7 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 #: ports/espressif/common-hal/_bleio/Service.c
 #: ports/raspberrypi/common-hal/alarm/pin/PinAlarm.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
 msgid "Too many %q"
 msgstr ""
 
@@ -1414,12 +1421,18 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error at %s:%d: %d"
+msgid "Unknown BLE error at %s:%d: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error: %d"
+msgid "Unknown BLE error: 0x%04x"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+msgid "%q not permitted"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
@@ -1429,17 +1442,18 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+msgid "Insufficient authorization"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 msgid "Insufficient encryption"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown BLE error at %s:%d: %d"
-msgstr ""
-
-#: ports/espressif/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: %d"
+msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
@@ -1873,11 +1887,6 @@ msgstr ""
 msgid "non-zero timeout must be > 0.01"
 msgstr ""
 
-#: ports/nordic/common-hal/_bleio/Adapter.c
-#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
-msgid "Failed to connect: timeout"
-msgstr ""
-
 #: ports/nordic/common-hal/_bleio/UUID.c
 msgid "Unexpected nrfx uuid type"
 msgstr ""
@@ -1889,24 +1898,6 @@ msgstr ""
 #: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
 msgid "Unknown system firmware error: %04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-msgid "%q not permitted"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-msgid "Insufficient authorization"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown gatt error: 0x%04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
