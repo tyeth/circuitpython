@@ -1082,7 +1082,7 @@ msgstr "Все каналы событий уже используются"
 msgid "No pull up found on SDA or SCL; check your wiring"
 msgstr "На SDA или SCL не обнаружено подтягивания; проверь свою проводку"
 
-#: ports/atmel-samd/common-hal/busio/UART.c shared-bindings/usb/core/Device.c
+#: ports/atmel-samd/common-hal/busio/UART.c
 #: shared-bindings/usb_host_bulk/InStream.c
 msgid "%q must be power of 2"
 msgstr "%q должен быть во 2-й степени"
@@ -1316,6 +1316,12 @@ msgstr "Сканирование уже выполняется. Останови
 #: ports/espressif/common-hal/_bleio/Adapter.c
 #: ports/nordic/common-hal/_bleio/Adapter.c
 #: ports/zephyr-cp/common-hal/_bleio/Adapter.c
+msgid "Failed to connect: timeout"
+msgstr "Не удалось подключиться: таймаут"
+
+#: ports/espressif/common-hal/_bleio/Adapter.c
+#: ports/nordic/common-hal/_bleio/Adapter.c
+#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
 msgid "Failed to connect: internal error"
 msgstr "Не удалось подключиться: внутренняя ошибка"
 
@@ -1361,6 +1367,7 @@ msgstr "Длина значения > максимальная_длина"
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 #: ports/espressif/common-hal/_bleio/Service.c
 #: ports/raspberrypi/common-hal/alarm/pin/PinAlarm.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
 msgid "Too many %q"
 msgstr ""
 
@@ -1429,13 +1436,19 @@ msgstr "Уже в процессе"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error at %s:%d: %d"
-msgstr "Неизвестная системная ошибка прошивки на %s:%d: %d"
+msgid "Unknown BLE error at %s:%d: 0x%04x"
+msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error: %d"
-msgstr "Неизвестная ошибка прошивки системы: %d"
+msgid "Unknown BLE error: 0x%04x"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+msgid "%q not permitted"
+msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
@@ -1444,18 +1457,19 @@ msgstr "Неполная аутентификация"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+msgid "Insufficient authorization"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 msgid "Insufficient encryption"
 msgstr "Недостаточное шифрование"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown BLE error at %s:%d: %d"
-msgstr "Неизвестная ошибка BLE в %s:%d: %d"
-
-#: ports/espressif/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: %d"
-msgstr "Неизвестная ошибка BLE: %d"
+msgid "Unknown gatt error: 0x%04x"
+msgstr "Неизвестная ошибка gatt: 0x%04x"
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
 msgid "Cannot wake on pin edge. Only level."
@@ -1895,11 +1909,6 @@ msgstr "таймаут должен быть < 655.35 сек"
 msgid "non-zero timeout must be > 0.01"
 msgstr "Ненулевое время ожидания должно быть > 0,01"
 
-#: ports/nordic/common-hal/_bleio/Adapter.c
-#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
-msgid "Failed to connect: timeout"
-msgstr "Не удалось подключиться: таймаут"
-
 #: ports/nordic/common-hal/_bleio/UUID.c
 msgid "Unexpected nrfx uuid type"
 msgstr "Неожиданный тип nrfx uuid"
@@ -1912,24 +1921,6 @@ msgstr "Скандинавская система прошивки из памя
 #, c-format
 msgid "Unknown system firmware error: %04x"
 msgstr "Неизвестная системная ошибка прошивки: %04x"
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-msgid "%q not permitted"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-msgid "Insufficient authorization"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown gatt error: 0x%04x"
-msgstr "Неизвестная ошибка gatt: 0x%04x"
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: 0x%04x"
-msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
 #: ports/zephyr-cp/common-hal/_bleio/Connection.c
@@ -4990,6 +4981,22 @@ msgstr "выключить"
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "No IP"
 msgstr "Нет IP"
+
+#, c-format
+#~ msgid "Unknown system firmware error at %s:%d: %d"
+#~ msgstr "Неизвестная системная ошибка прошивки на %s:%d: %d"
+
+#, c-format
+#~ msgid "Unknown system firmware error: %d"
+#~ msgstr "Неизвестная ошибка прошивки системы: %d"
+
+#, c-format
+#~ msgid "Unknown BLE error at %s:%d: %d"
+#~ msgstr "Неизвестная ошибка BLE в %s:%d: %d"
+
+#, c-format
+#~ msgid "Unknown BLE error: %d"
+#~ msgstr "Неизвестная ошибка BLE: %d"
 
 #~ msgid "shape must be None, and integer or a tuple of integers"
 #~ msgstr "форма должна быть None, целым числом или кортежем целых чисел"

@@ -1077,7 +1077,7 @@ msgstr "모든 이벤트 채널이 사용 중입니다"
 msgid "No pull up found on SDA or SCL; check your wiring"
 msgstr "SDA 또는 SCL에서 풀업을 찾을 수 없습니다; 케이블 연결을 확인하십시오"
 
-#: ports/atmel-samd/common-hal/busio/UART.c shared-bindings/usb/core/Device.c
+#: ports/atmel-samd/common-hal/busio/UART.c
 #: shared-bindings/usb_host_bulk/InStream.c
 msgid "%q must be power of 2"
 msgstr "%q는 2의 거듭제곱이어야 합니다"
@@ -1314,6 +1314,12 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Adapter.c
 #: ports/nordic/common-hal/_bleio/Adapter.c
 #: ports/zephyr-cp/common-hal/_bleio/Adapter.c
+msgid "Failed to connect: timeout"
+msgstr "연결에 실패했습니다: 시간 초과"
+
+#: ports/espressif/common-hal/_bleio/Adapter.c
+#: ports/nordic/common-hal/_bleio/Adapter.c
+#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
 msgid "Failed to connect: internal error"
 msgstr "연결에 실패했습니다: 내부 오류"
 
@@ -1361,6 +1367,7 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 #: ports/espressif/common-hal/_bleio/Service.c
 #: ports/raspberrypi/common-hal/alarm/pin/PinAlarm.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
 msgid "Too many %q"
 msgstr ""
 
@@ -1430,12 +1437,18 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error at %s:%d: %d"
+msgid "Unknown BLE error at %s:%d: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error: %d"
+msgid "Unknown BLE error: 0x%04x"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+msgid "%q not permitted"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
@@ -1445,17 +1458,18 @@ msgstr "불충분한 인증"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+msgid "Insufficient authorization"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 msgid "Insufficient encryption"
 msgstr "불충분한 암호화"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown BLE error at %s:%d: %d"
-msgstr ""
-
-#: ports/espressif/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: %d"
+msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
@@ -1900,11 +1914,6 @@ msgstr ""
 msgid "non-zero timeout must be > 0.01"
 msgstr ""
 
-#: ports/nordic/common-hal/_bleio/Adapter.c
-#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
-msgid "Failed to connect: timeout"
-msgstr "연결에 실패했습니다: 시간 초과"
-
 #: ports/nordic/common-hal/_bleio/UUID.c
 msgid "Unexpected nrfx uuid type"
 msgstr ""
@@ -1916,24 +1925,6 @@ msgstr "Nordic 시스템 펌웨어에 메모리가 부족합니다"
 #: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
 msgid "Unknown system firmware error: %04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-msgid "%q not permitted"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-msgid "Insufficient authorization"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown gatt error: 0x%04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/_bleio/__init__.c
