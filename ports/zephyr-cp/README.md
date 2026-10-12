@@ -201,6 +201,9 @@ boards like `nrf54l15dk`). Boards that boot the stock Adafruit nRF52
 bootloader (the Adafruit boards) read the request from the raw GPREGRET
 register instead and need no bootloader-side changes.
 
+RP2 boards keep the request in SRAM, and Zephyr reboots them into the ROM
+UF2 bootloader.
+
 `nordic_nrf54l15dk` is the first board with this enabled.
 
 ## Testing other boards
