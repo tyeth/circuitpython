@@ -78,8 +78,8 @@ void port_serial_write_substring(const char *text, uint32_t length) {
     if (usb_console == NULL) {
         return;
     }
-    common_hal_usb_cdc_serial_write(usb_console, text, length, NULL);
+    common_hal_busio_uart_write_poll(usb_console, (const uint8_t *)text, length);
     #else
-    common_hal_busio_uart_write(&uart_console, text, length, NULL);
+    common_hal_busio_uart_write_poll(&uart_console, (const uint8_t *)text, length);
     #endif
 }
