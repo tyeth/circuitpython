@@ -14,7 +14,7 @@ usb_cdc_serial_obj_t *usb_console;
 #else
 #include "shared-bindings/busio/UART.h"
 static busio_uart_obj_t uart_console;
-static uint8_t buffer[64];
+static uint8_t buffer[1024];
 #endif
 
 void port_serial_early_init(void) {
