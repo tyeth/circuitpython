@@ -20,7 +20,7 @@ static uint8_t buffer[1024];
 void port_serial_early_init(void) {
     #if CIRCUITPY_USB_DEVICE == 0
     uart_console.base.type = &busio_uart_type;
-    common_hal_busio_uart_construct_from_device(&uart_console, DEVICE_DT_GET(DT_CHOSEN(zephyr_console)), sizeof(buffer), buffer);
+    common_hal_busio_uart_construct_from_device(&uart_console, DEVICE_DT_GET(DT_CHOSEN(zephyr_console)), sizeof(buffer), buffer, true);
     #endif
 }
 
