@@ -8,6 +8,7 @@
 
 #include "py/obj.h"
 
+#include "common-hal/mii/MDIO.h"
 #include "common-hal/microcontroller/Pin.h"
 
 typedef struct {
@@ -17,7 +18,7 @@ typedef struct {
 // Zephyr pulls its RMII wiring from the devicetree; constructing the bus is
 // not supported and raises NotImplementedError.
 void common_hal_mii_rmii_construct(mii_rmii_obj_t *self,
-    const mcu_pin_obj_t *mdc, const mcu_pin_obj_t *mdio,
+    mii_mdio_obj_t *mdio, uint32_t device,
     const mcu_pin_obj_t *rxd0, const mcu_pin_obj_t *rxd1, const mcu_pin_obj_t *rx_dv,
     const mcu_pin_obj_t *txd0, const mcu_pin_obj_t *txd1, const mcu_pin_obj_t *tx_en,
     const mcu_pin_obj_t *refclk, const mcu_pin_obj_t *reset);

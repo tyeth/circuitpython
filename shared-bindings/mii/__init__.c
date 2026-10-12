@@ -5,17 +5,16 @@
 // SPDX-License-Identifier: MIT
 
 #include "shared-bindings/mii/__init__.h"
+#include "shared-bindings/mii/MDIO.h"
 #include "shared-bindings/mii/Ethernet.h"
 #include "shared-bindings/mii/RMII.h"
 
 //| """
-//| The `mii` module provides necessary low-level functionality for managing
-//| wired ethernet connections through a Media-indepentent interface (MII)
-//| bus. Use `socketpool` for communicating over the network.
+//| Media-independent interface (MII) is a family of standards to connect an Ethernet medium access control (MAC) peripheral to an Ethernet physical transceiver (PHY). Different versions have different pinouts depending on the pin count and Ethernet speed. Reduced pin count variants like reduced media-independent interface (RMII) and reduced gigabit media-independent interface (RGMII) are often used in microcontrollers to save pin count.
 //|
-//| The `mii.Ethernet` object(s) are available as ``board.ETHERNET`` on boards
-//| with onboard ethernet. The interface is enabled and DHCP is started
-//| automatically.
+//| A portion of the pins in MII are for the Management Data Input/Output (MDIO) which is used to configure the PHY. Like I2C, multiple PHYs can share an MDIO because the commands include an address. This module splits the Management Data Input/Output (MDIO) definition from the MII portion because the MDIO bus can be shared between PHYs.
+//|
+//| See: https://en.wikipedia.org/wiki/Media-independent_interface
 //| """
 //|
 
@@ -24,6 +23,7 @@ static const mp_rom_map_elem_t mii_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_mii) },
 
     // Classes
+    { MP_ROM_QSTR(MP_QSTR_MDIO),        MP_ROM_PTR(&mii_mdio_type) },
     { MP_ROM_QSTR(MP_QSTR_Ethernet),    MP_ROM_PTR(&mii_ethernet_type) },
     { MP_ROM_QSTR(MP_QSTR_RMII),        MP_ROM_PTR(&mii_rmii_type) },
 };

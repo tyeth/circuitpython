@@ -329,11 +329,10 @@ static void _eth_event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt
 }
 
 void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
-    mii_rmii_obj_t *rmii, uint32_t device) {
+    mii_rmii_obj_t *rmii) {
     self->base.type = &mii_ethernet_type;
     self->started = false;
     self->netif = NULL;
-    (void)device;
     if (rmii != NULL) {
         mp_raise_NotImplementedError(
             MP_ERROR_TEXT("cannot construct ethernet interfaces; use board.ETHERNET"));

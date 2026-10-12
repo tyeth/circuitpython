@@ -557,6 +557,7 @@ SRC_COMMON_HAL_ALL = \
 	dualbank/__init__.c \
 	emmcio/EMMC.c \
 	emmcio/__init__.c \
+	mii/MDIO.c \
 	mii/Ethernet.c \
 	mii/RMII.c \
 	mii/__init__.c \

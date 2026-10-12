@@ -88,7 +88,7 @@ static void _eth_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
-    mii_rmii_obj_t *rmii, uint32_t device) {
+    mii_rmii_obj_t *rmii) {
     self->base.type = &mii_ethernet_type;
     self->started = false;
     self->connected = false;
@@ -111,8 +111,8 @@ void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
 
     eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
     eth_esp32_emac_config_t esp32_emac_config = ETH_ESP32_EMAC_DEFAULT_CONFIG();
-    esp32_emac_config.smi_gpio.mdc_num = rmii->mdc;
-    esp32_emac_config.smi_gpio.mdio_num = rmii->mdio;
+    esp32_emac_config.smi_gpio.mdc_num = rmii->mdio->mdc;
+    esp32_emac_config.smi_gpio.mdio_num = rmii->mdio->mdio;
     #if (defined(SOC_EMAC_USE_MULTI_IO_MUX) && SOC_EMAC_USE_MULTI_IO_MUX) || (defined(SOC_EMAC_MII_USE_GPIO_MATRIX) && SOC_EMAC_MII_USE_GPIO_MATRIX)
     esp32_emac_config.emac_dataif_gpio.rmii.crs_dv_num = rmii->rx_dv;
     esp32_emac_config.emac_dataif_gpio.rmii.rxd0_num = rmii->rxd0;
@@ -133,7 +133,7 @@ void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
     rmii->mac = mac;
 
     eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG();
-    phy_config.phy_addr = device;
+    phy_config.phy_addr = rmii->device;
     phy_config.reset_gpio_num = rmii->reset;
 
     esp_eth_phy_t *phy = esp_eth_phy_new_generic(&phy_config);
@@ -141,8 +141,8 @@ void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
     // Probe the PHY's ID registers through the MAC's MDIO master so that a
     // wrong device number fails here instead of silently never linking.
     uint32_t id1 = 0, id2 = 0;
-    esp_err_t r1 = mac->read_phy_reg(mac, device, 2, &id1);
-    esp_err_t r2 = mac->read_phy_reg(mac, device, 3, &id2);
+    esp_err_t r1 = mac->read_phy_reg(mac, rmii->device, 2, &id1);
+    esp_err_t r2 = mac->read_phy_reg(mac, rmii->device, 3, &id2);
     if (r1 != ESP_OK || r2 != ESP_OK || id1 == 0xffff || (id1 == 0 && id2 == 0)) {
         mac->del(mac);
         mp_raise_OSError_msg_varg(MP_ERROR_TEXT("%q failure: %d"), MP_QSTR_device, ENODEV);

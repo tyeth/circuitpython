@@ -48,20 +48,18 @@ static bool hostname_valid(const char *ptr, size_t len) {
 //| class Ethernet:
 //|     """Wired ethernet interface.
 //|
-//|     Boards with onboard ethernet provide it as ``board.ETHERNET``. On
-//|     Espressif ports, further interfaces can be created by wiring an external
-//|     RMII PHY and constructing `mii.RMII` from its wiring. The interface
-//|     is enabled and DHCP is started automatically.
+//|     Boards with onboard ethernet PHYs provide it as ``board.ETHERNET`` or another distinguishing name.
+//|
+//|     Further interfaces can be created by wiring an external
+//|     PHY over a variant of the media independent interface (MII) bus. See other classes in this module for supported MII variants.
+//|     The interface is enabled and DHCP is started automatically.
 //|     """
 //|
 //|     def __init__(
 //|         self,
 //|         rmii: mii.RMII,
-//|         device: int,
 //|     ) -> None:
-//|         """Create another ethernet interface driving the PHY wired to
-//|         ``rmii``. ``device`` selects the PHY's MDIO address (0-31) so that
-//|         multiple interfaces can share one bus.
+//|         """Create another ethernet interface driving the PHY wired to ``rmii``.
 //|
 //|         Only Espressif ports support this; Zephyr ports only serve the
 //|         interface from the devicetree, available as ``board.ETHERNET``,
@@ -221,6 +219,7 @@ MP_PROPERTY_GETTER(mii_ethernet_addresses_obj,
 
 //|     dns: Sequence[str]
 //|     """Address of the DNS server to be used."""
+//|
 static mp_obj_t mii_ethernet_get_dns(mp_obj_t self) {
     return common_hal_mii_ethernet_get_dns(self);
 }
@@ -308,6 +307,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(mii_ethernet_stop_dhcp_client_obj, mii_ethernet_stop_d
 //|         Returns None when it times out."""
 //|         ...
 //|
+//|
 static mp_obj_t mii_ethernet_ping(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_ip, ARG_timeout };
     static const mp_arg_t allowed_args[] = {
@@ -334,20 +334,13 @@ static mp_obj_t mii_ethernet_ping(size_t n_args, const mp_obj_t *pos_args, mp_ma
 static MP_DEFINE_CONST_FUN_OBJ_KW(mii_ethernet_ping_obj, 1, mii_ethernet_ping);
 
 static mp_obj_t mii_ethernet_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    enum { ARG_rmii, ARG_device };
-    static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_rmii, MP_ARG_REQUIRED | MP_ARG_OBJ },
-        { MP_QSTR_device, MP_ARG_REQUIRED | MP_ARG_KW_ONLY | MP_ARG_INT },
-    };
-    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    mp_arg_check_num(n_args, n_kw, 1, 1, false);
 
-    mp_arg_validate_type(args[ARG_rmii].u_obj, &mii_rmii_type, MP_QSTR_rmii);
-    mii_rmii_obj_t *rmii = MP_OBJ_TO_PTR(args[ARG_rmii].u_obj);
-    (void)mp_arg_validate_int_range(args[ARG_device].u_int, 0, 31, MP_QSTR_device);
+    mp_arg_validate_type(all_args[0], &mii_rmii_type, MP_QSTR_rmii);
+    mii_rmii_obj_t *rmii = MP_OBJ_TO_PTR(all_args[0]);
 
     mii_ethernet_obj_t *self = mp_obj_malloc(mii_ethernet_obj_t, &mii_ethernet_type);
-    common_hal_mii_ethernet_construct(self, rmii, (uint32_t)args[ARG_device].u_int);
+    common_hal_mii_ethernet_construct(self, rmii);
     return MP_OBJ_FROM_PTR(self);
 }
 

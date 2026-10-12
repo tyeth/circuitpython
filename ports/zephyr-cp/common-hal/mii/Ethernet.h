@@ -22,6 +22,6 @@ typedef struct {
 // Brings up the devicetree ethernet interface, enables DHCP and starts it.
 // Constructing with an RMII bus is not supported (the wiring comes from the
 // devicetree) and raises NotImplementedError; the board's generated code
-// passes NULL/0.
+// passes NULL.
 void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
-    mii_rmii_obj_t *rmii, uint32_t device);
+    mii_rmii_obj_t *rmii);

@@ -1614,7 +1614,7 @@ void i2sout_reset(void) {{
     if board_info.get("ethernet", False):
         ethernet_init = """
 #if CIRCUITPY_MII
-    common_hal_mii_ethernet_construct(&ethernet_obj, NULL, 0);
+    common_hal_mii_ethernet_construct(&ethernet_obj, NULL);
     mii_set_default_instance(&ethernet_obj);
 #endif
         """.strip()

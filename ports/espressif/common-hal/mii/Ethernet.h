@@ -27,7 +27,7 @@ typedef struct {
 } mii_ethernet_obj_t;
 
 // Brings up the built-in RMII MAC on the given bus and the 802.3 PHY at MDIO
-// address device, and starts the interface with DHCP. Raises when bring-up
+// bus, and starts the interface with DHCP. Raises when bring-up
 // fails.
 void common_hal_mii_ethernet_construct(mii_ethernet_obj_t *self,
-    mii_rmii_obj_t *rmii, uint32_t device);
+    mii_rmii_obj_t *rmii);
