@@ -52,3 +52,21 @@ LED = 8
 RED_LED = 8
 D3 = 8
 BLUE_LED = 3
+
+# Board buses, as on the ports/ counterpart: board.I2C(), board.SPI() and
+# board.UART(), constructed on these pins when first used.
+[[board_i2c]]
+names = ["I2C"]
+scl = "SCL"
+sda = "SDA"
+
+[[board_spi]]
+names = ["SPI"]
+clock = "SCK"
+mosi = "MOSI"
+miso = "MISO"
+
+[[board_uart]]
+names = ["UART"]
+tx = "TX"
+rx = "RX"
