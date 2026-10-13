@@ -16,7 +16,7 @@
 #include "py/runtime.h"
 #include "supervisor/port_heap.h"
 
-#if CIRCUITPY_PICODVI_AUDIOOUT && CIRCUITPY_BOARD_DVI_AUDIO
+#if CIRCUITPY_PICODVI_AUDIOOUT && defined(DEFAULT_DVI_BUS_CLK_DP)
 #include "common-hal/picodvi/AudioOut.h"
 #endif
 
@@ -105,7 +105,7 @@ void picodvi_autoconstruct(void) {
         return;
     }
 
-    #if CIRCUITPY_PICODVI_AUDIOOUT && CIRCUITPY_BOARD_DVI_AUDIO
+    #if CIRCUITPY_PICODVI_AUDIOOUT
     bool audio = true;
     (void)settings_get_bool("CIRCUITPY_PICODVI_AUDIO", &audio);
     #endif
@@ -172,7 +172,7 @@ void picodvi_autoconstruct(void) {
         rotation,
         true);
 
-    #if CIRCUITPY_PICODVI_AUDIOOUT && CIRCUITPY_BOARD_DVI_AUDIO
+    #if CIRCUITPY_PICODVI_AUDIOOUT
     // Before the VM heap exists, so the audio buffers get internal RAM. On
     // failure there is no board.DVI_AUDIO, and the display still works.
     if (audio) {

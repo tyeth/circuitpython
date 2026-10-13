@@ -111,7 +111,7 @@ typedef struct dvi_audio_state {
 // Static so it can never be freed while it is queued.
 static background_callback_t dvi_audio_refill_callback;
 
-#if CIRCUITPY_BOARD_DVI_AUDIO
+#if defined(DEFAULT_DVI_BUS_CLK_DP)
 // board.DVI_AUDIO. Static so it outlives the VM, like the boot display.
 picodvi_audioout_obj_t picodvi_board_audioout = {
     .base = { .type = &mp_type_NoneType },
@@ -836,7 +836,7 @@ void picodvi_audioout_collect_ptrs(picodvi_framebuffer_obj_t *framebuffer) {
     gc_collect_ptr(self->sample);
 }
 
-#if CIRCUITPY_BOARD_DVI_AUDIO
+#if defined(DEFAULT_DVI_BUS_CLK_DP)
 bool picodvi_audioout_construct_board(picodvi_framebuffer_obj_t *framebuffer) {
     picodvi_audioout_obj_t *self = &picodvi_board_audioout;
     if (framebuffer->output_width != 640 || framebuffer->audioout != MP_OBJ_NULL) {

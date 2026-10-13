@@ -50,7 +50,7 @@ void picodvi_audioout_reset(void);
 // Marks the AudioOut of each framebuffer, and its sample, as in use for the GC.
 void picodvi_audioout_collect_ptrs(picodvi_framebuffer_obj_t *framebuffer);
 
-#if CIRCUITPY_BOARD_DVI_AUDIO
+#if defined(DEFAULT_DVI_BUS_CLK_DP)
 // board.DVI_AUDIO. Its type is NoneType until picodvi_audioout_construct_board
 // succeeds, and again after it or its framebuffer is deinitialized, as with
 // board.DISPLAY.

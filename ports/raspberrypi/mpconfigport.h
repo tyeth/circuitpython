@@ -64,12 +64,6 @@
 #define CIRCUITPY_I2C_ALLOW_INTERNAL_PULL_UP (0)
 #endif
 
-// Boards set this to 1 to put a picodvi.AudioOut for the boot display on
-// board.DVI_AUDIO.
-#ifndef CIRCUITPY_BOARD_DVI_AUDIO
-#define CIRCUITPY_BOARD_DVI_AUDIO (0)
-#endif
-
 #if CIRCUITPY_CYW43
 #define MICROPY_PY_LWIP_ENTER   cyw43_arch_lwip_begin();
 #define MICROPY_PY_LWIP_REENTER MICROPY_PY_LWIP_ENTER

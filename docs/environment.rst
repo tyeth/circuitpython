@@ -252,7 +252,9 @@ next to a 640x480 display. Set this to false to keep that RAM free.
 the display is released by ``displayio.release_displays()`` or when it is
 deinitialized, and stays ``None`` until the next reset.
 
+`Adafruit Feather RP2350 <https://circuitpython.org/board/adafruit_feather_rp2350/>`_
 `Adafruit Fruit Jam <https://circuitpython.org/board/adafruit_fruit_jam/>`_
+`Adafruit Metro RP2350 <https://circuitpython.org/board/adafruit_metro_rp2350/>`_
 
 CIRCUITPY_SAFEMODE_DELAY (float)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

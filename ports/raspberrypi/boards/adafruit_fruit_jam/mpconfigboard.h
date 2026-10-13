@@ -33,9 +33,6 @@
 #define DEFAULT_DVI_BUS_BLUE_DN (&pin_GPIO18)
 #define DEFAULT_DVI_BUS_BLUE_DP (&pin_GPIO19)
 
-// Sound through the DVI cable of the boot display, on board.DVI_AUDIO.
-#define CIRCUITPY_BOARD_DVI_AUDIO (1)
-
 #define DEFAULT_SD_SCK (&pin_GPIO34)
 #define DEFAULT_SD_MOSI (&pin_GPIO35)
 #define DEFAULT_SD_MISO (&pin_GPIO36)

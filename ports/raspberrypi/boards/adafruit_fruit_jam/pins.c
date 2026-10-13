@@ -122,7 +122,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     // Shared with ESP TX/RX.
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&board_uart_obj) },
 
-    #if CIRCUITPY_PICODVI_AUDIOOUT && CIRCUITPY_BOARD_DVI_AUDIO
+    #if CIRCUITPY_PICODVI_AUDIOOUT
     { MP_ROM_QSTR(MP_QSTR_DVI_AUDIO), MP_ROM_PTR(&picodvi_board_audioout) },
     #endif
 };
