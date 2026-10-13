@@ -204,8 +204,11 @@ size_t bleio_gattc_read_sync(struct bt_conn *conn, uint16_t handle,
 
     // `bt_conn_ref()` holds a reference to the connection, so conn stays valid until
     // its state is checked below, even if a disconnect drops the connection's own
-    // reference meanwhile.
-    bt_conn_ref(conn);
+    // reference meanwhile. It returns NULL if the peer has already disconnected.
+    if (bt_conn_ref(conn) == NULL) {
+        active_read_ctx = NULL;
+        mp_raise_ConnectionError(MP_ERROR_TEXT("Not connected"));
+    }
     int err = bt_gatt_read(conn, &read_params);
     if (err != 0) {
         active_read_ctx = NULL;
@@ -242,8 +245,11 @@ void bleio_gattc_write_sync(struct bt_conn *conn, uint16_t handle,
 
     // `bt_conn_ref()` holds a reference to the connection, so conn stays valid until
     // its state is checked below, even if a disconnect drops the connection's own
-    // reference meanwhile.
-    bt_conn_ref(conn);
+    // reference meanwhile. It returns NULL if the peer has already disconnected.
+    if (bt_conn_ref(conn) == NULL) {
+        active_write_ctx = NULL;
+        mp_raise_ConnectionError(MP_ERROR_TEXT("Not connected"));
+    }
     int err = bt_gatt_write(conn, &write_params);
     if (err != 0) {
         active_write_ctx = NULL;
