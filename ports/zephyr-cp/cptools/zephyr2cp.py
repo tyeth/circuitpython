@@ -525,6 +525,21 @@ def _reg_addr_expr(device_tree, label):
     return f"DT_REG_ADDR(DT_NODELABEL({label}))"
 
 
+def _fastest_first(nodes):
+    """Order bus instance nodes by their ``max-frequency``, highest first.
+
+    iobroker hands out the first free instance in a pool, so this gives
+    busio the fastest one first, such as the nRF52840's 32 MHz SPIM3. The
+    sort is stable: nodes with equal or no ``max-frequency`` keep their order.
+    """
+
+    def max_frequency(node):
+        prop = node.props.get("max-frequency")
+        return prop.to_num() if prop is not None else 0
+
+    return sorted(nodes, key=max_frequency, reverse=True)
+
+
 def _pinctrl_default_psels(node):
     """Return the raw nRF psel entries of a node's "default" pinctrl state.
 
@@ -1552,8 +1567,9 @@ const size_t iobroker_gpio_port_count = {count};
             instances = (
                 active_zephyr_devices.get(driver, []) if driver != "pwm" or pwm_nrfx else []
             )
-            for labels in instances:
-                node = device_tree.label2node[labels[0]]
+            nodes = _fastest_first(device_tree.label2node[labels[0]] for labels in instances)
+            for node in nodes:
+                label = node.labels[0]
                 if node in path2chosen:
                     # Console and other system devices are not allocatable.
                     continue
@@ -1561,9 +1577,9 @@ const size_t iobroker_gpio_port_count = {count};
                 if psels is None or len(psels) > 4:
                     continue
                 if all((value & NRF_PIN_FIELD_MASK) == NRF_PIN_FIELD_MASK for value in psels):
-                    dynamic_entries.append((labels[0], None, 0))
+                    dynamic_entries.append((label, None, 0))
                 else:
-                    fixed_entries.append((labels[0], psels, len(psels)))
+                    fixed_entries.append((label, psels, len(psels)))
 
             entries = dynamic_entries + fixed_entries
 
