@@ -241,6 +241,19 @@ Example: Configure the display to 640x480 black and white (1 bit per pixel):
 `Adafruit Feather RP2350 <https://circuitpython.org/board/adafruit_feather_rp2350/>`_
 `Adafruit Metro RP2350 <https://circuitpython.org/board/adafruit_metro_rp2350/>`_
 
+CIRCUITPY_PICODVI_AUDIO (boolean)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Whether the display configured at board initialization also sends sound through
+the DVI cable, as ``board.DVI_AUDIO``. Defaults to true. It needs a 640-wide
+output: 640x480, 320x240 or 160x120. Audio uses about 37 KB of internal RAM
+next to a 640x480 display. Set this to false to keep that RAM free.
+
+``board.DVI_AUDIO`` is a :py:class:`picodvi.AudioOut`. It becomes ``None`` when
+the display is released by ``displayio.release_displays()`` or when it is
+deinitialized, and stays ``None`` until the next reset.
+
+`Adafruit Fruit Jam <https://circuitpython.org/board/adafruit_fruit_jam/>`_
+
 CIRCUITPY_SAFEMODE_DELAY (float)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Wait for the specified amount of time, in seconds, for the user to press the reset button
