@@ -72,7 +72,7 @@
 #include "soc/lp_aon_reg.h"
 #define CP_SAVED_WORD_REGISTER LP_AON_STORE0_REG
 #else
-#ifdef CONFIG_IDF_TARGET_ESP32P4
+#if defined(CONFIG_IDF_TARGET_ESP32P4) || defined(CONFIG_IDF_TARGET_ESP32S31)
 #include "soc/lp_system_reg.h"
 #define CP_SAVED_WORD_REGISTER LP_SYSTEM_REG_LP_STORE15_REG
 
