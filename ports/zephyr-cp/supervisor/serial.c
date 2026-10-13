@@ -78,8 +78,8 @@ void port_serial_write_substring(const char *text, uint32_t length) {
     if (usb_console == NULL) {
         return;
     }
-    common_hal_busio_uart_write_poll(usb_console, (const uint8_t *)text, length);
+    zephyr_uart_write_blocking(usb_console, (const uint8_t *)text, length);
     #else
-    common_hal_busio_uart_write_poll(&uart_console, (const uint8_t *)text, length);
+    zephyr_uart_write_blocking(&uart_console, (const uint8_t *)text, length);
     #endif
 }

@@ -273,7 +273,7 @@ size_t common_hal_busio_uart_write(busio_uart_obj_t *self, const uint8_t *data, 
     return len - not_sent;
 }
 
-void common_hal_busio_uart_write_poll(busio_uart_obj_t *self, const uint8_t *data, size_t len) {
+void zephyr_uart_write_blocking(busio_uart_obj_t *self, const uint8_t *data, size_t len) {
     for (size_t i = 0; i < len; i++) {
         uart_poll_out(self->uart_device, data[i]);
     }
