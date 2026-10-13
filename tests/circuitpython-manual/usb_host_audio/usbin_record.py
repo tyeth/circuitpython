@@ -36,5 +36,4 @@ with usb_host_audio.USBIn(device, ENDPOINT, sample_rate=SAMPLE_RATE, max_packet_
         mean = sum(samples) / count
         rms = math.sqrt(sum((s - mean) ** 2 for s in samples) / count)
         print("#" * int(rms / 100), "overflow:", mic.overflow)
-    # Stop the stream before the object lets go of it.
-    device.ctrl_transfer(0x01, 11, 0, INTERFACE, None)
+# Leaving the with block stops the stream, also on an exception.

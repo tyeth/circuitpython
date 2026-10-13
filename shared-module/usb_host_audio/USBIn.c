@@ -28,6 +28,9 @@
 #define USBIN_LEVEL_SHIFT (6)
 // record() gives up when the microphone sends nothing for this long.
 #define USBIN_RECORD_TIMEOUT_MS (1000)
+// deinit() waits this long for the device to stop streaming. A request without
+// a data stage takes at most 50 ms.
+#define USBIN_STOP_TIMEOUT_MS (100)
 
 // The host controller receives one isochronous IN stream at a time, so there is
 // one streaming object at most. TinyUSB copies the transfer and calls back with
@@ -126,6 +129,42 @@ static void _transfer_done_cb(tuh_xfer_t *xfer) {
     _queue_transfer(self);
 }
 
+// The number of the interface whose alternate setting has endpoint.
+static uint8_t _endpoint_interface(usb_core_device_obj_t *device, uint8_t endpoint) {
+    const uint8_t *desc = device->configuration_descriptor;
+    if (desc == NULL) {
+        return USBIN_NO_INTERFACE;
+    }
+    const uint8_t *end = desc + tu_le16toh(((const tusb_desc_configuration_t *)desc)->wTotalLength);
+    uint8_t interface = USBIN_NO_INTERFACE;
+    for (const uint8_t *p = tu_desc_next(desc); p < end; p = tu_desc_next(p)) {
+        if (tu_desc_type(p) == TUSB_DESC_INTERFACE) {
+            interface = ((const tusb_desc_interface_t *)p)->bInterfaceNumber;
+        } else if (tu_desc_type(p) == TUSB_DESC_ENDPOINT &&
+                   ((const tusb_desc_endpoint_t *)p)->bEndpointAddress == endpoint) {
+            return interface;
+        }
+    }
+    return USBIN_NO_INTERFACE;
+}
+
+// Select alternate setting 0, which stops the microphone sending. usb.core
+// ends the transfer first, as it does for the same request from Python. This
+// runs when unwinding from an exception and in the finaliser, so it neither
+// raises nor waits long.
+static void _stop_device(usb_host_audio_usbin_obj_t *self) {
+    if (self->interface == USBIN_NO_INTERFACE || common_hal_usb_core_device_deinited(self->device)) {
+        return;
+    }
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        common_hal_usb_core_device_ctrl_transfer(self->device,
+            TUSB_DIR_OUT | (TUSB_REQ_TYPE_STANDARD << 5) | TUSB_REQ_RCPT_INTERFACE,
+            TUSB_REQ_SET_INTERFACE, 0, self->interface, NULL, 0, USBIN_STOP_TIMEOUT_MS);
+        nlr_pop();
+    }
+}
+
 void common_hal_usb_host_audio_usbin_construct(usb_host_audio_usbin_obj_t *self,
     usb_core_device_obj_t *device, uint8_t endpoint, uint32_t sample_rate,
     uint8_t channel_count, uint8_t bit_depth, bool samples_signed,
@@ -171,6 +210,7 @@ void common_hal_usb_host_audio_usbin_construct(usb_host_audio_usbin_obj_t *self,
     if (!common_hal_usb_core_device_open_endpoint(device, endpoint)) {
         mp_raise_usb_core_USBError(NULL);
     }
+    self->interface = _endpoint_interface(device, endpoint);
 
     // A record that doesn't fit in the transfer buffer is dropped by the host
     // controller, so leave room for the largest packet and its length.
@@ -202,6 +242,12 @@ bool common_hal_usb_host_audio_usbin_deinited(usb_host_audio_usbin_obj_t *self) 
 void common_hal_usb_host_audio_usbin_deinit(usb_host_audio_usbin_obj_t *self) {
     if (common_hal_usb_host_audio_usbin_deinited(self)) {
         return;
+    }
+    if (common_hal_usb_host_audio_usbin_get_streaming(self)) {
+        // Don't leave the microphone sending to an endpoint that is no longer
+        // polled. A stream that already ended was stopped by whoever ended it,
+        // and its interface may be streaming for someone else by now.
+        _stop_device(self);
     }
     if (_active == self) {
         if (self->streaming) {

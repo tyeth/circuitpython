@@ -51,5 +51,5 @@ try:
         time.sleep(1)
 finally:
     mixer.voice[0].stop()
-    device.ctrl_transfer(0x01, 11, 0, INTERFACE, None)
+    # Stops the stream too.
     mic.deinit()

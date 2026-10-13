@@ -15,6 +15,7 @@
 // restarts after an underrun, once USBIN_TARGET_BUFFERS of them are waiting.
 #define USBIN_RING_BUFFERS (8)
 #define USBIN_TARGET_BUFFERS (2)
+#define USBIN_NO_INTERFACE (0xff)
 
 typedef struct {
     // so USBIn can be used directly as an audiosample source.
@@ -23,6 +24,8 @@ typedef struct {
     usb_core_device_obj_t *device;
     uint8_t device_address;
     uint8_t endpoint;
+    // The streaming interface that has endpoint, or USBIN_NO_INTERFACE.
+    uint8_t interface;
     uint8_t bit_depth; // on the wire; base.bits_per_sample is what we produce
     uint8_t wire_frame_bytes;
     uint8_t frame_bytes;

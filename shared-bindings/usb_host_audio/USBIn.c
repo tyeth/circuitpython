@@ -42,8 +42,10 @@
 //|         The constructor does no control transfers. Before calling it, select
 //|         the alternate setting of the streaming interface that has ``endpoint``
 //|         and set the sample rate; the arguments describe the format chosen
-//|         that way. To stop, select alternate setting 0 and then call `deinit`.
-//|         Do not create a `USBIn` for an interface that is in alternate setting 0.
+//|         that way. Do not create a `USBIn` for an interface that is in
+//|         alternate setting 0. `deinit` selects alternate setting 0 again, so
+//|         the microphone stops also when a ``with`` block is left by an
+//|         exception, or when the program ends.
 //|
 //|         The host controller buffers the stream between reads, in a buffer
 //|         sized by ``CIRCUITPY_USB_HOST_ISO_BUFFER_SIZE`` in ``settings.toml``.
@@ -91,10 +93,9 @@
 //|           device.ctrl_transfer(0x22, 0x01, 0x0100, 0x86, (16000).to_bytes(3, "little"))
 //|
 //|           samples = array.array("h", [0] * 16000)
+//|           # Leaving the with block stops the stream.
 //|           with usb_host_audio.USBIn(device, 0x86, sample_rate=16000, max_packet_size=68) as mic:
 //|               count = mic.record(samples, len(samples))
-//|               # Alternate setting 0 stops the stream.
-//|               device.ctrl_transfer(0x01, 11, 0, 3, None)
 //|           print("recorded", count, "samples, peak", max(abs(s) for s in samples))
 //|
 //|         """
@@ -147,7 +148,9 @@ static mp_obj_t usb_host_audio_usbin_make_new(const mp_obj_type_t *type, size_t 
 }
 
 //|     def deinit(self) -> None:
-//|         """Stops receiving the stream and releases the buffers."""
+//|         """Stops the stream and releases the buffers. While the stream is still
+//|         `streaming`, this selects alternate setting 0 of the endpoint's
+//|         interface first, which stops the microphone sending."""
 //|         ...
 //|
 static mp_obj_t usb_host_audio_usbin_deinit(mp_obj_t self_in) {
