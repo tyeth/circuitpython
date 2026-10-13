@@ -982,6 +982,7 @@ msgstr "Všechny časovače jsou používány"
 #: ports/atmel-samd/common-hal/pulseio/PulseIn.c
 #: ports/atmel-samd/common-hal/rotaryio/IncrementalEncoder.c
 #: ports/cxd56/common-hal/pulseio/PulseIn.c
+#: ports/espressif/common-hal/mii/RMII.c
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2350.c
 #: ports/zephyr-cp/common-hal/busio/I2C.c
 #: ports/zephyr-cp/common-hal/busio/SPI.c
@@ -1832,14 +1833,12 @@ msgstr ""
 
 #: ports/espressif/common-hal/socketpool/Socket.c
 #: ports/raspberrypi/common-hal/socketpool/Socket.c
-#: ports/zephyr-cp/common-hal/socketpool/Socket.c
 msgid "Out of sockets"
 msgstr "Došly sockety"
 
 #: ports/espressif/common-hal/socketpool/SocketPool.c
-#: ports/raspberrypi/common-hal/socketpool/SocketPool.c
-msgid "SocketPool can only be used with wifi.radio"
-msgstr "SocketPool je možné použít pouze s wifi.radio"
+msgid "SocketPool can only be used with %q.%q or any %q.%q"
+msgstr ""
 
 #: ports/espressif/common-hal/watchdog/WatchDogTimer.c
 msgid "%q must be <= %u"
@@ -2263,6 +2262,10 @@ msgstr ""
 msgid "Only IPv4 sockets supported"
 msgstr "Pouze IPv4 sokety podporovány"
 
+#: ports/raspberrypi/common-hal/socketpool/SocketPool.c
+msgid "SocketPool can only be used with wifi.radio"
+msgstr "SocketPool je možné použít pouze s wifi.radio"
+
 #: ports/raspberrypi/common-hal/usb_host/Port.c
 msgid "All dma channels in use"
 msgstr "Všechny DMA kanály jsou používány"
@@ -2445,8 +2448,12 @@ msgstr ""
 msgid "Use device tree to define %q devices"
 msgstr ""
 
+#: ports/zephyr-cp/common-hal/mii/Ethernet.c
+msgid "cannot construct ethernet interfaces; use board.ETHERNET"
+msgstr ""
+
 #: ports/zephyr-cp/common-hal/socketpool/SocketPool.c
-msgid "SocketPool can only be used with wifi.radio or hostnetwork.HostNetwork"
+msgid "SocketPool can only be used with %q.%q, %q.%q, or %q.%q"
 msgstr ""
 
 #: ports/zephyr-cp/common-hal/usb_hid/Device.c shared-module/usb_hid/Device.c
@@ -4309,6 +4316,10 @@ msgstr "%q obsahuje duplicitní piny"
 msgid "%q and %q contain duplicate pins"
 msgstr "%q a %q obsahují duplicitní piny"
 
+#: shared-bindings/mii/Ethernet.c shared-bindings/wifi/Radio.c
+msgid "invalid hostname"
+msgstr "špatný hostname"
+
 #: shared-bindings/msgpack/ExtType.c
 msgid "code outside range 0~127"
 msgstr "kód mimo rozsah 0~127"
@@ -4448,10 +4459,6 @@ msgstr ""
 #: shared-bindings/wifi/Radio.c
 msgid "Invalid hex password"
 msgstr "Špatné heslo v hex"
-
-#: shared-bindings/wifi/Radio.c
-msgid "invalid hostname"
-msgstr "špatný hostname"
 
 #: shared-bindings/wifi/Radio.c
 msgid "Invalid MAC address"
@@ -4719,10 +4726,6 @@ msgid "Invalid socket for TLS"
 msgstr "Chybný soket pro TLS"
 
 #: shared-module/ssl/SSLSocket.c
-msgid "invalid key"
-msgstr "špatný klíč"
-
-#: shared-module/ssl/SSLSocket.c
 msgid "invalid cert"
 msgstr "špatný certifikár"
 
@@ -4925,6 +4928,9 @@ msgstr "vypnuto"
 #: supervisor/shared/web_workflow/web_workflow.c
 msgid "No IP"
 msgstr "Není IP"
+
+#~ msgid "invalid key"
+#~ msgstr "špatný klíč"
 
 #, c-format
 #~ msgid "Unknown system firmware error at %s:%d: %d"
