@@ -82,6 +82,7 @@ INC += \
 	-isystem esp-idf/components/esp_hw_support/port/$(IDF_TARGET)/private_include \
 	-isystem esp-idf/components/esp_hw_support/etm/include \
 	-isystem esp-idf/components/esp_mm/include \
+	-isystem esp-idf/components/esp_eth/include \
 	-isystem esp-idf/components/esp_netif/include \
 	-isystem esp-idf/components/esp_blockdev/include \
 	-isystem esp-idf/components/esp_partition/include \
@@ -128,6 +129,8 @@ INC += \
 	-isystem esp-idf/components/esp_hal_gpspi/$(IDF_TARGET)/include \
 	-isystem esp-idf/components/esp_hal_dma/include \
 	-isystem esp-idf/components/esp_hal_dma/$(IDF_TARGET)/include \
+	-isystem esp-idf/components/esp_hal_emac/include \
+	-isystem esp-idf/components/esp_hal_emac/$(IDF_TARGET)/include \
 	-isystem esp-idf/components/esp_hal_lcd/include \
 	-isystem esp-idf/components/esp_hal_lcd/$(IDF_TARGET)/include \
 	-isystem esp-idf/components/esp_hal_sd/include \
@@ -241,7 +244,7 @@ endif
 # Chips with PAU + TOP power-down (SOC_PAU_SUPPORTED && SOC_PM_SUPPORT_TOP_PD):
 # C5, C6, C61, H2, H21, H4, P4. These pull in sleep_gpio + system-peripheral
 # retention, and the SW-driven RISC-V CPU register save/restore path.
-ifneq ($(filter $(IDF_TARGET),esp32c5 esp32c6 esp32c61 esp32h2 esp32h21 esp32h4 esp32p4),)
+ifneq ($(filter $(IDF_TARGET),esp32c5 esp32c6 esp32c61 esp32h2 esp32h21 esp32h4 esp32p4 esp32s31),)
 REGISTRATION_FUNCTIONS += \
 	-u esp_sleep_gpio_include \
 	-u sleep_system_peripheral_dummy \
@@ -249,9 +252,9 @@ REGISTRATION_FUNCTIONS += \
 	-u rv_core_critical_regs_restore
 endif
 
-# RISC-V chips with a hardware FPU (H4, P4) need FPU register save/restore
+# RISC-V chips with a hardware FPU (H4, P4, S31) need FPU register save/restore
 # alongside the CPU retention path.
-ifneq ($(filter $(IDF_TARGET),esp32h4 esp32p4),)
+ifneq ($(filter $(IDF_TARGET),esp32h4 esp32p4 esp32s31),)
 REGISTRATION_FUNCTIONS += \
 	-u rv_core_fpu_save \
 	-u rv_core_fpu_restore
@@ -320,7 +323,7 @@ endif
 	SRC_C += shared/runtime/gchelper_generic.c
 else ifeq ($(IDF_TARGET_ARCH),riscv)
 
-	ifeq ($(IDF_TARGET),esp32p4)
+	ifneq ($(filter $(IDF_TARGET),esp32p4 esp32s31),)
 		CFLAGS += -march=rv32imafc_zicsr_zifencei_zaamo_zalrsc -mabi=ilp32f
 	else ifeq ($(IDF_TARGET),$(filter $(IDF_TARGET),esp32c2 esp32c3))
 		CFLAGS += -march=rv32imc_zicsr_zifencei
@@ -367,6 +370,7 @@ CFLAGS += -isystem esp-idf/components/esp_driver_touch_sens/hw_ver1/include
 CHIP_COMPONENTS = \
 	esp_driver_dac \
 	esp_driver_touch_sens \
+	esp_hal_emac \
 	esp_hal_i2s \
 	esp_hal_lcd \
 	esp_hal_pcnt \
@@ -505,8 +509,32 @@ CHIP_COMPONENTS = \
 	esp_driver_tsens \
 	esp_driver_usb_serial_jtag \
 	esp_hal_dma \
+	esp_hal_emac \
 	esp_hal_i2s \
 	esp_hal_lcd \
+	esp_hal_pcnt \
+	esp_hal_pmu \
+	esp_hal_rmt \
+	esp_hal_touch_sens \
+	esp_hal_twai \
+	esp_hal_usb
+
+else ifeq ($(IDF_TARGET),esp32s31)
+CFLAGS += -isystem esp-idf/components/esp_hw_support/ldo/include
+
+IDF_TARGET_ROM_FLOAT_LD = esp32s31.rom.rvfp.ld
+LDFLAGS += \
+	-Tesp32s31.rom.heap.ld \
+	-Trom.systimer.ld \
+	-Tesp32s31.rom.libc.ld \
+	-Tesp32s31.rom.version.ld \
+	-Trom.wdt.ld
+
+CHIP_COMPONENTS = \
+	esp_driver_tsens \
+	esp_driver_usb_serial_jtag \
+	esp_hal_dma \
+	esp_hal_i2s \
 	esp_hal_pcnt \
 	esp_hal_pmu \
 	esp_hal_rmt \
@@ -602,6 +630,8 @@ else ifeq ($(IDF_TARGET),esp32c61)
 CFLAGS += -DCFG_TUSB_MCU=OPT_MCU_ESP32C61
 else ifeq ($(IDF_TARGET),esp32p4)
 CFLAGS += -DCFG_TUSB_MCU=OPT_MCU_ESP32P4
+else ifeq ($(IDF_TARGET),esp32s31)
+CFLAGS += -DCFG_TUSB_MCU=OPT_MCU_ESP32S31
 else ifeq ($(IDF_TARGET),esp32h2)
 CFLAGS += -DCFG_TUSB_MCU=OPT_MCU_ESP32H2
 else ifeq ($(IDF_TARGET),esp32s2)
@@ -957,8 +987,24 @@ LDFLAGS += -Trom.regi2c.ld
 else
 ESP_IDF_COMPONENTS_LINK += esp_hal_regi2c
 endif
+# Only targets with EMAC support (per SOC_EMAC_SUPPORTED in soc_caps.h) build
+# libesp_hal_emac.a; those targets list it in their CHIP_COMPONENTS above. The
+# component is interface-only elsewhere, so it must not appear in the list of
+# components to link.
 ifneq ($(CIRCUITPY_WIFI),0)
 	ESP_IDF_COMPONENTS_LINK += esp_coex esp_netif esp_security esp-tls esp_wifi lwip mdns wpa_supplicant esp_phy
+endif
+# mdns registers handlers on ETH_EVENT, which is defined by esp_eth. On EMAC-capable
+# targets, esp_eth's compiled EMAC sources reference the esp_hal_emac symbols; that
+# library comes via CHIP_COMPONENTS.
+ifneq ($(CIRCUITPY_MDNS),0)
+	ESP_IDF_COMPONENTS_LINK += esp_eth
+endif
+ifneq ($(CIRCUITPY_MII),0)
+	ESP_IDF_COMPONENTS_LINK += esp_eth
+  ifeq ($(CIRCUITPY_WIFI),0)
+	ESP_IDF_COMPONENTS_LINK += esp_netif lwip mbedtls
+  endif
 endif
 ifneq ($(CIRCUITPY_BLEIO_NATIVE),0)
 	BLE_IMPL_esp32 := esp32
@@ -991,7 +1037,7 @@ ifneq ($(CIRCUITPY_BLEIO_NATIVE),0)
 	BINARY_BLOBS += $(firstword $(wildcard $(BLE_LIB_DIR)/libble_app.a) $(BLE_LIB_DIR)/$(IDF_TARGET)/libble_app.a)
 	endif
 endif
-ifeq ($(IDF_TARGET),esp32p4)
+ifneq ($(filter $(IDF_TARGET),esp32p4 esp32s31),)
     ESP_IDF_COMPONENTS_LINK += esp_security
 endif
 ifneq ($(CIRCUITPY_ESPULP),0)
@@ -1069,6 +1115,8 @@ BOOTLOADER_OFFSET = 0x0
 else ifeq ($(IDF_TARGET),esp32c61)
 BOOTLOADER_OFFSET = 0x0
 else ifeq ($(IDF_TARGET),esp32p4)
+BOOTLOADER_OFFSET = 0x2000
+else ifeq ($(IDF_TARGET),esp32s31)
 BOOTLOADER_OFFSET = 0x2000
 else ifeq ($(IDF_TARGET),esp32s3)
 BOOTLOADER_OFFSET = 0x0
