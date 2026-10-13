@@ -22,6 +22,9 @@
 // initializes and routes a device to arbitrary pins when a busio object is
 // constructed, and de-initializes it on release: I2C0, I2C1, SPI2, SPI3,
 // UART0 and UART1.
+//
+// See "nRF serial instances" in internal-modules/iobroker/README.md for how
+// the instances are shared and allocated.
 
 &pinctrl {
 	i2c0_dyn_default: i2c0_dyn_default {
