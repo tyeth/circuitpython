@@ -63,13 +63,16 @@ DEBUG_CONF_FILE ?= $(CURDIR)/debug.conf
 ifeq ($(DEBUG),1)
 CP_BOARD_CONF := $(strip $(CP_BOARD_CONF) $(DEBUG_CONF_FILE))
 endif
-# When CONSOLE=1 (implied by DEBUG=1), apply the board's console.conf and console.overlay if it
-# has them. Boards whose console pins are also user pins enable the Zephyr UART console only then.
+# When CONSOLE=1 (implied by DEBUG=1), apply the board's console.overlay, if it has one, and the
+# port's console.conf. Boards whose console pins are also user pins enable the Zephyr UART console
+# only then.
 CONSOLE ?= $(DEBUG)
 CP_BOARD_CONSOLE_OVERLAY :=
 ifeq ($(CONSOLE),1)
-CP_BOARD_CONF := $(strip $(CP_BOARD_CONF) $(wildcard $(CP_BOARD_DIR)/console.conf))
 CP_BOARD_CONSOLE_OVERLAY := $(wildcard $(CP_BOARD_DIR)/console.overlay)
+ifneq ($(CP_BOARD_CONSOLE_OVERLAY),)
+CP_BOARD_CONF := $(strip $(CP_BOARD_CONF) $(CURDIR)/console.conf)
+endif
 endif
 CP_BOARD_CONF := $(subst $(eval) ,;,$(CP_BOARD_CONF))
 # Always pass the conf and console overlay files, even if empty. This undoes DEBUG=1 or CONSOLE=1
