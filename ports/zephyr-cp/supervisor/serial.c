@@ -78,7 +78,7 @@ void port_serial_write_substring(const char *text, uint32_t length) {
     if (usb_console == NULL) {
         return;
     }
-    zephyr_uart_write_blocking(usb_console, (const uint8_t *)text, length);
+    common_hal_usb_cdc_serial_write(usb_console, text, length, NULL);
     #else
     zephyr_uart_write_blocking(&uart_console, (const uint8_t *)text, length);
     #endif
