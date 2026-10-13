@@ -41,7 +41,8 @@
 // While a sample is waiting for data, silence is only written this close
 // ahead of DMA.
 #define DVI_AUDIO_LOW_WATER (DVI_AUDIO_SLOTS / 4)
-// How often a timer queues the refill, besides once per frame.
+// The sample pool holds about 13 ms, less than one 20 ms frame, so a timer
+// queues the refill this often as well as once per frame.
 #define DVI_AUDIO_REFILL_US 2500
 #define DVI_AUDIO_PREFIX_WORDS 9
 #define DVI_AUDIO_SUFFIX_BLANK_WORDS 9
