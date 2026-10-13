@@ -1381,9 +1381,25 @@ msgstr "Nelze nastavit CCCD na místní charakteristiku"
 #: ports/zephyr-cp/common-hal/_bleio/Characteristic.c
 #: ports/zephyr-cp/common-hal/_bleio/Connection.c
 #: ports/zephyr-cp/common-hal/_bleio/Descriptor.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 #: shared-bindings/_bleio/CharacteristicBuffer.c
 msgid "Not connected"
 msgstr "Nepřipojený"
+
+#: ports/espressif/common-hal/_bleio/Connection.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
+msgid ""
+"Unspecified issue. The pairing request on the other device may have been "
+"declined or ignored."
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/Connection.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
+#, c-format
+msgid "Unknown security error: 0x%04x"
+msgstr "Neznámá bezpečnostní chyba: 0x%04x"
 
 #: ports/espressif/common-hal/_bleio/Connection.c
 msgid "No pairing in progress"
@@ -1440,26 +1456,31 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 msgid "%q not permitted"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 msgid "Insufficient authentication"
 msgstr "Nedostatečná autentizace"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 msgid "Insufficient authorization"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 msgid "Insufficient encryption"
 msgstr "Nedostatečné šifrování"
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 #, c-format
 msgid "Unknown gatt error: 0x%04x"
 msgstr ""
@@ -1912,19 +1933,6 @@ msgstr "Nordic system firmware - nedostatek paměti"
 #, c-format
 msgid "Unknown system firmware error: %04x"
 msgstr "Neznámá chyba firmwaru: %04x"
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#: ports/zephyr-cp/common-hal/_bleio/Connection.c
-msgid ""
-"Unspecified issue. The pairing request on the other device may have been "
-"declined or ignored."
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#: ports/zephyr-cp/common-hal/_bleio/Connection.c
-#, c-format
-msgid "Unknown security error: 0x%04x"
-msgstr "Neznámá bezpečnostní chyba: 0x%04x"
 
 #: ports/nordic/common-hal/alarm/pin/PinAlarm.c
 msgid "Cannot wake on pin edge, only level"
