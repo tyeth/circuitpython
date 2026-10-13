@@ -25,9 +25,14 @@
 
 #define BUNDLE_HEADER_OFFSET 2
 #define CRT_HEADER_OFFSET 4
-// Each certificate is stored with the first NAME_HASH_LEN bytes of the SHA-256 of its DER subject
-// name instead of the name itself (tools/gen_crt_bundle.py). The hash only selects the candidate
-// root; the signature check decides.
+/* Bundle format (tools/gen_crt_bundle.py): a certificate count, then for each root a 4-byte
+ * header with the name hash length and the public key length, the name hash and the DER public
+ * key. The name hash is the first NAME_HASH_LEN bytes of the SHA-256 of the root's DER subject
+ * name, and the roots are sorted by it for the binary search below. Storing the hash instead of
+ * the name saves about 13 KB. The hash only chooses which root to try: a certificate is trusted
+ * when its signature verifies with that root's public key, or when it is itself a bundled root
+ * (same subject and public key). Two roots can share a hash, so all roots with the same hash are
+ * tried. */
 #define NAME_HASH_LEN 8
 
 /* a dummy certificate so that
@@ -94,22 +99,20 @@ cleanup:
 }
 
 
-static unsigned char s_name_hash[32];
-
-/* Index of the first bundled root whose name hash matches `name`, or -1. Leaves the hash in
- * s_name_hash for crt_name_hash_equal(). */
-static int crt_bundle_find(const mbedtls_x509_buf *name) {
-    if (mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), name->p, name->len, s_name_hash) != 0) {
+/* Index of the first bundled root whose name hash matches `name`, or -1. The hash is left in
+ * `hash` (32 bytes) for crt_name_hash_equal(). */
+static int crt_bundle_find(const mbedtls_x509_buf *name, unsigned char *hash) {
+    if (mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256), name->p, name->len, hash) != 0) {
         return -1;
     }
     int start = 0;
     int end = s_crt_bundle.num_certs - 1;
     while (start <= end) {
         int middle = (start + end) / 2;
-        int cmp_res = memcmp(s_name_hash, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET, NAME_HASH_LEN);
+        int cmp_res = memcmp(hash, s_crt_bundle.crts[middle] + CRT_HEADER_OFFSET, NAME_HASH_LEN);
         if (cmp_res == 0) {
             while (middle > 0 &&
-                   memcmp(s_name_hash, s_crt_bundle.crts[middle - 1] + CRT_HEADER_OFFSET, NAME_HASH_LEN) == 0) {
+                   memcmp(hash, s_crt_bundle.crts[middle - 1] + CRT_HEADER_OFFSET, NAME_HASH_LEN) == 0) {
                 middle--;
             }
             return middle;
@@ -122,8 +125,8 @@ static int crt_bundle_find(const mbedtls_x509_buf *name) {
     return -1;
 }
 
-static bool crt_name_hash_equal(int i) {
-    return memcmp(s_name_hash, s_crt_bundle.crts[i] + CRT_HEADER_OFFSET, NAME_HASH_LEN) == 0;
+static bool crt_name_hash_equal(const unsigned char *hash, int i) {
+    return memcmp(hash, s_crt_bundle.crts[i] + CRT_HEADER_OFFSET, NAME_HASH_LEN) == 0;
 }
 
 /* This callback is called for every certificate in the chain. If the chain
@@ -154,8 +157,9 @@ static int crt_verify_callback(void *buf, mbedtls_x509_crt *crt, int depth, uint
     /* A chain can carry a cross-signed copy of a root that is in the bundle, issued by a root
      * that is not (GTS Root R4 signed by the retired GlobalSign Root CA). Trust that copy when
      * its subject and public key match the bundled root. */
-    int i = crt_bundle_find(&child->subject_raw);
-    for (; i >= 0 && i < s_crt_bundle.num_certs && crt_name_hash_equal(i); i++) {
+    unsigned char name_hash[32];
+    int i = crt_bundle_find(&child->subject_raw, name_hash);
+    for (; i >= 0 && i < s_crt_bundle.num_certs && crt_name_hash_equal(name_hash, i); i++) {
         size_t key_len = s_crt_bundle.crts[i][2] << 8 | s_crt_bundle.crts[i][3];
         if (key_len == child->pk_raw.len &&
             memcmp(s_crt_bundle.crts[i] + CRT_HEADER_OFFSET + NAME_HASH_LEN, child->pk_raw.p, key_len) == 0) {
@@ -166,8 +170,8 @@ static int crt_verify_callback(void *buf, mbedtls_x509_crt *crt, int depth, uint
 
     /* Otherwise the root that issued this certificate must verify its signature */
     int ret = MBEDTLS_ERR_X509_FATAL_ERROR;
-    i = crt_bundle_find(&child->issuer_raw);
-    for (; i >= 0 && i < s_crt_bundle.num_certs && ret != 0 && crt_name_hash_equal(i); i++) {
+    i = crt_bundle_find(&child->issuer_raw, name_hash);
+    for (; i >= 0 && i < s_crt_bundle.num_certs && ret != 0 && crt_name_hash_equal(name_hash, i); i++) {
         size_t key_len = s_crt_bundle.crts[i][2] << 8 | s_crt_bundle.crts[i][3];
         ret = crt_check_signature(child, s_crt_bundle.crts[i] + CRT_HEADER_OFFSET + NAME_HASH_LEN, key_len);
     }

@@ -52,6 +52,15 @@ except ImportError:
 ca_bundle_bin_file = "x509_crt_bundle"
 NAME_HASH_LEN = 8  # must match NAME_HASH_LEN in lib/mbedtls_config/crt_bundle.c
 
+
+def name_hash(cert):
+    """The bundle's key for a root: the first NAME_HASH_LEN bytes of the SHA-256 of its DER
+    subject name. The firmware hashes a certificate's issuer name the same way and looks the
+    result up with a binary search, so the bundle must be sorted by this value. Two roots can
+    share a hash; the firmware then tries each of them, and the signature check decides."""
+    return hashlib.sha256(cert.subject.public_bytes(default_backend())).digest()[:NAME_HASH_LEN]
+
+
 quiet = False
 
 
@@ -137,12 +146,7 @@ class CertificateBundle:
         status("Successfully added 1 certificate")
 
     def create_bundle(self):
-        def name_hash(cert):
-            return hashlib.sha256(cert.subject.public_bytes(default_backend())).digest()[
-                :NAME_HASH_LEN
-            ]
-
-        # Sort certificates in order to do binary search when looking up certificates
+        # Sorted by name hash, so the firmware can find a root with a binary search
         self.certificates = sorted(self.certificates, key=name_hash)
 
         bundle = struct.pack(">H", len(self.certificates))
@@ -154,6 +158,7 @@ class CertificateBundle:
                 serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo
             )
 
+            # The hash stands in for the subject name; see name_hash()
             sub_name_hash = name_hash(crt)
 
             name_len = len(sub_name_hash)

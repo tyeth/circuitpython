@@ -648,6 +648,8 @@ SRC_C += \
 ifeq ($(CIRCUITPY_SSL),1)
 # The same root certificate bundle and lookup code as the other ports, not ESP-IDF's.
 # A board short of flash can set CIRCUITPY_SSL_ROOTS to roots-filtered.pem.
+# The generated bundle holds a hash of each root's subject name, not the name itself;
+# the format is described in lib/mbedtls_config/crt_bundle.c.
 CIRCUITPY_SSL_ROOTS ?= $(TOP)/lib/certificates/data/roots-full.pem
 SRC_C += lib/mbedtls_config/crt_bundle.c
 $(BUILD)/x509_crt_bundle.S: $(CIRCUITPY_SSL_ROOTS) $(TOP)/tools/gen_crt_bundle.py
