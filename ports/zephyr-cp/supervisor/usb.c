@@ -17,6 +17,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/disk.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/usb/usbd.h>
 #include <zephyr/usb/class/usbd_msc.h>
@@ -221,6 +222,21 @@ int _zephyr_disk_ioctl(struct disk_info *disk, uint8_t cmd, void *buff) {
 // volatile to avoid the compiler caching stale values.
 static volatile bool usb_configured = false;
 
+static const struct device *const console_dev = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_console));
+static bool console_dtr = false;
+static bool usb_suspended = false;
+
+// With flow control on, the CDC ACM driver's poll_out waits for room in its
+// TX buffer instead of dropping output. Use it for the console only while
+// the host is connected, awake and holds DTR, as TinyUSB does.
+static void update_console_flow_control(void) {
+    bool on = usb_configured && !usb_suspended && console_dtr;
+    struct uart_config config = {
+        .flow_ctrl = on ? UART_CFG_FLOW_CTRL_RTS_CTS : UART_CFG_FLOW_CTRL_NONE,
+    };
+    uart_configure(console_dev, &config);
+}
+
 static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) {
     LOG_INF("USBD message: %s", usbd_msg_type_string(msg->type));
 
@@ -247,6 +263,20 @@ static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) 
     } else if (msg->type == USBD_MSG_RESET) {
         usb_configured = false;
     }
+
+    if (msg->type == USBD_MSG_SUSPEND) {
+        usb_suspended = true;
+    } else if (msg->type == USBD_MSG_RESUME || msg->type == USBD_MSG_RESET) {
+        usb_suspended = false;
+    }
+    if (msg->type == USBD_MSG_RESET) {
+        console_dtr = false;
+    } else if (msg->type == USBD_MSG_CDC_ACM_CONTROL_LINE_STATE && msg->dev == console_dev) {
+        uint32_t dtr = 0;
+        uart_line_ctrl_get(console_dev, UART_LINE_CTRL_DTR, &dtr);
+        console_dtr = dtr != 0;
+    }
+    update_console_flow_control();
 }
 
 void usb_init(void) {
