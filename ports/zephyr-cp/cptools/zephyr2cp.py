@@ -813,6 +813,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
     board_info = {
         "wifi": False,
+        "ethernet": False,
         "usb_device": False,
         "_bleio": False,
         "hostnetwork": board_id in ["native_sim"],
@@ -825,6 +826,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     config_adc_enabled = False
     config_dac_enabled = False
     config_rtc_enabled = False
+    config_soc = None
     config_present = True
     config = zephyrbuilddir / ".config"
     if not config.exists():
@@ -843,6 +845,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 config_dac_enabled = line.strip().endswith("=y")
             elif line.startswith("CONFIG_RTC="):
                 config_rtc_enabled = line.strip().endswith("=y")
+            elif line.startswith("CONFIG_SOC="):
+                config_soc = line.split("=", 1)[1].strip().strip('"')
 
     runners = zephyrbuilddir / "runners.yaml"
     runners = yaml.safe_load(runners.read_text())
@@ -873,7 +877,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     else:
         vendor_name = board_info["vendor_id"]
     board_info["vendor"] = vendor_name
-    soc_name = board_yaml["socs"][0]["name"]
+    soc_names = [soc["name"] for soc in board_yaml["socs"]]
+    soc_name = config_soc if config_soc in soc_names else soc_names[0]
     board_info["soc"] = soc_name
     board_name = board_yaml["full_name"]
     if mpconfigboard and "NAME" in mpconfigboard:
@@ -972,6 +977,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 usb_num_endpoint_pairs += min(single_direction_endpoints)
             elif driver.startswith("wifi"):
                 board_info["wifi"] = True
+            elif driver.startswith("ethernet"):
+                board_info["ethernet"] = True
             elif driver == "bluetooth/hci":
                 ble_hardware_present = True
             elif driver in AUDIOBUSIO_CLASSES:
@@ -1692,7 +1699,7 @@ void i2sout_reset(void) {{
         i2sout_reset_func = ""
 
     zephyr_display_header = ""
-    zephyr_display_object = ""
+    zephyr_display_init = ""
     zephyr_display_board_entry = ""
     if board_info.get("zephyr_display", False):
         zephyr_display_header = """
@@ -1701,32 +1708,43 @@ void i2sout_reset(void) {{
 #include "shared-module/displayio/__init__.h"
 #include "bindings/zephyr_display/Display.h"
         """.strip()
-        zephyr_display_object = """
-void board_init(void) {
+        zephyr_display_init = """
 #if CIRCUITPY_ZEPHYR_DISPLAY && DT_HAS_CHOSEN(zephyr_display)
     // Always allocate a display slot so board.DISPLAY is at least a valid
     // NoneType object even if the underlying Zephyr display is unavailable.
     primary_display_t *display_obj = allocate_display();
-    if (display_obj == NULL) {
-        return;
+    if (display_obj != NULL) {
+        zephyr_display_display_obj_t *display = &display_obj->zephyr_display;
+        display->base.type = &mp_type_NoneType;
+
+        const struct device *display_dev = device_get_binding(DEVICE_DT_NAME(DT_CHOSEN(zephyr_display)));
+        if (display_dev != NULL && device_is_ready(display_dev)) {
+            display->base.type = &zephyr_display_display_type;
+            common_hal_zephyr_display_display_construct_from_device(display, display_dev, 0, true);
+        }
     }
-
-    zephyr_display_display_obj_t *display = &display_obj->zephyr_display;
-    display->base.type = &mp_type_NoneType;
-
-    const struct device *display_dev = device_get_binding(DEVICE_DT_NAME(DT_CHOSEN(zephyr_display)));
-    if (display_dev == NULL || !device_is_ready(display_dev)) {
-        return;
-    }
-
-    display->base.type = &zephyr_display_display_type;
-    common_hal_zephyr_display_display_construct_from_device(display, display_dev, 0, true);
 #endif
-}
         """.strip()
         zephyr_display_board_entry = (
             "{ MP_ROM_QSTR(MP_QSTR_DISPLAY), MP_ROM_PTR(&displays[0].zephyr_display) },"
         )
+
+    ethernet_init = ""
+    ethernet_static_obj = ""
+    if board_info.get("ethernet", False):
+        ethernet_init = """
+#if CIRCUITPY_MII
+    common_hal_mii_ethernet_construct(&ethernet_obj, NULL);
+    mii_set_default_instance(&ethernet_obj);
+#endif
+        """.strip()
+
+        ethernet_static_obj = """#if CIRCUITPY_MII
+// The board owns this instance; the supervisor reaches the default instance
+// that board_init registers.
+static mii_ethernet_obj_t ethernet_obj;
+#endif
+"""
 
     board_dir.mkdir(exist_ok=True, parents=True)
     header = board_dir / "mpconfigboard.h"
@@ -1812,12 +1830,23 @@ void board_init(void) {
             "#endif\n"
         )
 
+    ethernet_include = ""
+    ethernet_entry = ""
+    if board_info.get("ethernet", False):
+        ethernet_include = '#if CIRCUITPY_MII\n#include "common-hal/mii/__init__.h"\n#endif\n'
+        ethernet_entry = (
+            "#if CIRCUITPY_MII\n"
+            "    { MP_ROM_QSTR(MP_QSTR_ETHERNET), MP_ROM_PTR(&ethernet_obj) },\n"
+            "#endif\n"
+        )
+
     new_board_c_content = f"""
     // This file is autogenerated by build_circuitpython.py
 
 #include "shared-bindings/board/__init__.h"
 
 {hostnetwork_include}
+{ethernet_include}
 
 #include <stdint.h>
 
@@ -1837,12 +1866,18 @@ const uint32_t* const ram_bounds[] = {{
 }};
 const size_t circuitpy_max_ram_size = {max_size};
 
+{ethernet_static_obj}
 {pin_defs}
 
 {zephyr_binding_objects}
 {board_bus_objects}
 {iobroker_tables}
-{zephyr_display_object}
+
+void board_init(void) {{
+    {zephyr_display_init}
+    {ethernet_init}
+}}
+
 {i2sout_reset_func}
 
 static const mp_rom_map_elem_t mcu_pin_globals_table[] = {{
@@ -1854,6 +1889,7 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {{
 CIRCUITPYTHON_BOARD_DICT_STANDARD_ITEMS
 
 {hostnetwork_entry}
+{ethernet_entry}
 {zephyr_display_board_entry}
 {board_pin_mapping}
 
