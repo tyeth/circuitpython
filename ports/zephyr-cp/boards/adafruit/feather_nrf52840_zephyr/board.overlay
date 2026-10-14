@@ -17,6 +17,12 @@
 	/delete-node/ board_cdc_acm_uart;
 };
 
+// board.I2C(), board.SPI() and board.UART() are on the Feather header buses.
+// See BOARD_BUS_LABELS in cptools/zephyr2cp.py.
+board_i2c: &feather_i2c {};
+board_spi: &feather_spi {};
+board_serial: &feather_serial {};
+
 // Bus instances enabled with all pins disconnected and marked
 // zephyr,deferred-init so nothing is claimed at boot: the iobroker
 // initializes and routes a device to arbitrary pins when a busio object is

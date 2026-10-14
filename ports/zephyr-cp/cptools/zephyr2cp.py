@@ -765,10 +765,14 @@ def _toml_status_pin(mpconfigboard, board_names, key):
 # The field names match the CIRCUITPY_BOARD_*_PIN structs in
 # shared-module/board. The pin names come from the board's connector (see
 # CONNECTORS) or its [pins] table.
+#
+# These labels are ours, not upstream's. Each board adds them in its
+# board.overlay, as an alias of an upstream connector label when there is
+# one (board_i2c: &feather_i2c {};) or on the bus node otherwise.
 BOARD_BUS_LABELS = {
-    "feather_i2c": ("i2c", (("scl", "SCL"), ("sda", "SDA"))),
-    "feather_spi": ("spi", (("clock", "SCK"), ("mosi", "MOSI"), ("miso", "MISO"))),
-    "feather_serial": ("uart", (("tx", "TX"), ("rx", "RX"))),
+    "board_i2c": ("i2c", (("scl", "SCL"), ("sda", "SDA"))),
+    "board_spi": ("spi", (("clock", "SCK"), ("mosi", "MOSI"), ("miso", "MISO"))),
+    "board_serial": ("uart", (("tx", "TX"), ("rx", "RX"))),
 }
 # The board bus class each busio-capable devicetree driver provides.
 BOARD_BUS_OF_DRIVER = {"i2c": "i2c", "spi": "spi", "serial": "uart"}

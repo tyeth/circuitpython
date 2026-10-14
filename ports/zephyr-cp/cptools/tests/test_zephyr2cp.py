@@ -818,9 +818,9 @@ class TestDtBoardBuses:
     def _device_tree(*labels):
         return SimpleNamespace(label2node={label: object() for label in labels})
 
-    def test_feather_labels(self):
+    def test_board_labels(self):
         buses = _dt_board_buses(
-            self._device_tree("feather_i2c", "feather_spi", "feather_serial"), self.BOARD_NAMES
+            self._device_tree("board_i2c", "board_spi", "board_serial"), self.BOARD_NAMES
         )
         assert buses == {
             "i2c": {"scl": ("gpio0", 11), "sda": ("gpio0", 12)},
@@ -829,7 +829,9 @@ class TestDtBoardBuses:
         }
 
     def test_only_labeled_buses(self):
-        buses = _dt_board_buses(self._device_tree("feather_i2c", "i2c0"), self.BOARD_NAMES)
+        buses = _dt_board_buses(
+            self._device_tree("board_i2c", "feather_spi", "i2c0"), self.BOARD_NAMES
+        )
         assert list(buses) == ["i2c"]
 
     def test_no_labels(self):
@@ -838,13 +840,13 @@ class TestDtBoardBuses:
     def test_pin_names_ignore_case(self):
         names = dict(self.BOARD_NAMES)
         names[("gpio0", 11)] = ["scl"]
-        buses = _dt_board_buses(self._device_tree("feather_i2c"), names)
+        buses = _dt_board_buses(self._device_tree("board_i2c"), names)
         assert buses["i2c"]["scl"] == ("gpio0", 11)
 
     def test_missing_pin_name_raises(self):
         names = {key: value for key, value in self.BOARD_NAMES.items() if value != ["MISO"]}
-        with pytest.raises(RuntimeError, match="feather_spi needs a board pin named MISO"):
-            _dt_board_buses(self._device_tree("feather_spi"), names)
+        with pytest.raises(RuntimeError, match="board_spi needs a board pin named MISO"):
+            _dt_board_buses(self._device_tree("board_spi"), names)
 
 
 class TestFastestFirst:
