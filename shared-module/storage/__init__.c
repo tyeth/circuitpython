@@ -288,7 +288,8 @@ void common_hal_storage_erase_filesystem(bool extended) {
 }
 
 #if CIRCUITPY_STORAGE_MAP_FILE
-// Start clusters of the files mapped this run; a write to one of them is refused until reload.
+// Start clusters of the files mapped since the VM started; a write to one of them is refused
+// until reload.
 MP_REGISTER_ROOT_POINTER(mp_obj_t storage_mapped_files);
 
 void storage_map_file_reset(void) {
