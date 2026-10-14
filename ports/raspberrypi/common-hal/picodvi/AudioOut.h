@@ -51,9 +51,9 @@ void picodvi_audioout_reset(void);
 void picodvi_audioout_collect_ptrs(picodvi_framebuffer_obj_t *framebuffer);
 
 #if defined(DEFAULT_DVI_BUS_CLK_DP)
-// board.DVI_AUDIO. Its type is NoneType until picodvi_audioout_construct_board
-// succeeds, and again after it or its framebuffer is deinitialized, as with
-// board.DISPLAY.
+// supervisor.runtime.audio. Its type is NoneType until
+// picodvi_audioout_construct_board succeeds, and again after it or its
+// framebuffer is deinitialized. supervisor.runtime.audio returns None then.
 extern picodvi_audioout_obj_t picodvi_board_audioout;
 
 // Makes picodvi_board_audioout send audio with the boot framebuffer. Runs

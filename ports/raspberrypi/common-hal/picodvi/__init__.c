@@ -174,7 +174,7 @@ void picodvi_autoconstruct(void) {
 
     #if CIRCUITPY_PICODVI_AUDIOOUT
     // Before the VM heap exists, so the audio buffers get internal RAM. On
-    // failure there is no board.DVI_AUDIO, and the display still works.
+    // failure supervisor.runtime.audio is None, and the display still works.
     if (audio) {
         (void)picodvi_audioout_construct_board(fb);
     }

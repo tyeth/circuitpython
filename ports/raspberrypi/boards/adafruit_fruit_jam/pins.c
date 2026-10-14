@@ -7,10 +7,6 @@
 #include "py/objtuple.h"
 #include "shared-bindings/board/__init__.h"
 
-#if CIRCUITPY_PICODVI_AUDIOOUT
-#include "common-hal/picodvi/AudioOut.h"
-#endif
-
 // Four consecutive data GPIOs for the 4-bit SDIO interface (sdioio.SDCard).
 static const mp_rom_obj_tuple_t sdio_data_tuple = {
     {&mp_type_tuple},
@@ -121,9 +117,5 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SPI), MP_ROM_PTR(&board_spi_obj) },
     // Shared with ESP TX/RX.
     { MP_ROM_QSTR(MP_QSTR_UART), MP_ROM_PTR(&board_uart_obj) },
-
-    #if CIRCUITPY_PICODVI_AUDIOOUT
-    { MP_ROM_QSTR(MP_QSTR_DVI_AUDIO), MP_ROM_PTR(&picodvi_board_audioout) },
-    #endif
 };
 MP_DEFINE_CONST_DICT(board_module_globals, board_module_globals_table);

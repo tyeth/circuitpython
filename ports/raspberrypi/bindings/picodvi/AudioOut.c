@@ -18,7 +18,7 @@
 //|     that have speakers or an audio output. RP2350 only: elsewhere the
 //|     constructor raises `NotImplementedError`.
 //|
-//|     On boards with a default DVI display, ``board.DVI_AUDIO`` is an AudioOut
+//|     On boards with a default DVI display, `supervisor.runtime.audio` is an AudioOut
 //|     for the display configured at startup. It is ``None`` if that display
 //|     was not configured, its mode has no room for audio, or it was released.
 //|     Set ``CIRCUITPY_PICODVI_AUDIO = false`` in ``settings.toml`` to turn it

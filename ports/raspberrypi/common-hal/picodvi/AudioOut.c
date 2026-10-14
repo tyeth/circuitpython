@@ -20,6 +20,7 @@
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "shared-module/audiocore/__init__.h"
+#include "shared-bindings/supervisor/Runtime.h"
 #include "supervisor/background_callback.h"
 #include "supervisor/port.h"
 
@@ -113,7 +114,7 @@ typedef struct dvi_audio_state {
 static background_callback_t dvi_audio_refill_callback;
 
 #if defined(DEFAULT_DVI_BUS_CLK_DP)
-// board.DVI_AUDIO. Static so it outlives the VM, like the boot display.
+// supervisor.runtime.audio. Static so it outlives the VM, like the boot display.
 picodvi_audioout_obj_t picodvi_board_audioout = {
     .base = { .type = &mp_type_NoneType },
 };
@@ -350,7 +351,7 @@ void picodvi_audioout_framebuffer_deinit(picodvi_framebuffer_obj_t *self) {
         audioout->framebuffer = NULL;
         self->audioout = MP_OBJ_NULL;
         if (is_board_audioout(audioout)) {
-            // board.DVI_AUDIO goes back to None, as board.DISPLAY does.
+            // supervisor.runtime.audio goes back to None, as the display does.
             audioout->base.type = &mp_type_NoneType;
         }
     }
@@ -819,7 +820,7 @@ void picodvi_audioout_reset(void) {
     }
     picodvi_audioout_obj_t *self = MP_OBJ_TO_PTR(active_picodvi->audioout);
     if (is_board_audioout(self)) {
-        // Keep board.DVI_AUDIO for the next VM. Drop the sample, which is on
+        // Keep supervisor.runtime.audio for the next VM. Drop the sample, which is on
         // the VM heap.
         common_hal_picodvi_audioout_stop(self);
         return;
@@ -832,7 +833,7 @@ void picodvi_audioout_collect_ptrs(picodvi_framebuffer_obj_t *framebuffer) {
         return;
     }
     gc_collect_ptr(framebuffer->audioout);
-    // board.DVI_AUDIO is not on the heap, so the GC does not trace into it.
+    // supervisor.runtime.audio is not on the heap, so the GC does not trace into it.
     picodvi_audioout_obj_t *self = MP_OBJ_TO_PTR(framebuffer->audioout);
     gc_collect_ptr(self->sample);
 }
@@ -854,6 +855,13 @@ bool picodvi_audioout_construct_board(picodvi_framebuffer_obj_t *framebuffer) {
     // sample plays.
     framebuffer->audioout = MP_OBJ_FROM_PTR(self);
     return true;
+}
+
+mp_obj_t common_hal_supervisor_runtime_get_audio(void) {
+    if (picodvi_board_audioout.base.type != &picodvi_audioout_type) {
+        return mp_const_none;
+    }
+    return MP_OBJ_FROM_PTR(&picodvi_board_audioout);
 }
 #endif
 

@@ -3,23 +3,22 @@
 # SPDX-License-Identifier: MIT
 # A board with a default DVI display, a display attached and no display
 # settings in settings.toml.
-# Plays a tone on board.DVI_AUDIO, then checks it becomes
+# Plays a tone on supervisor.runtime.audio, then checks it becomes
 # None when the display is released.
 #
 # By hand: CIRCUITPY_PICODVI_AUDIO = false in settings.toml, then reset:
-# board.DVI_AUDIO is None and the display is 8-bit.
+# supervisor.runtime.audio is None and the display is 8-bit.
 import array
 import math
 import time
 
 import audiocore
-import board
 import displayio
 import picodvi
 import supervisor
 
-audio = board.DVI_AUDIO
-print("board.DVI_AUDIO", audio)
+audio = supervisor.runtime.audio
+print("supervisor.runtime.audio", audio)
 assert isinstance(audio, picodvi.AudioOut)
 fb = supervisor.runtime.display.framebuffer
 print("boot display", fb.width, fb.height, fb.color_depth)
@@ -41,7 +40,6 @@ except RuntimeError as e:
     print("second AudioOut refused:", e)
 
 displayio.release_displays()
-print("after release", board.DVI_AUDIO)
-# Like board.DISPLAY, it prints as None but is not the None singleton.
-assert type(board.DVI_AUDIO).__name__ == "NoneType"
+print("after release", supervisor.runtime.audio)
+assert supervisor.runtime.audio is None
 print("done")
