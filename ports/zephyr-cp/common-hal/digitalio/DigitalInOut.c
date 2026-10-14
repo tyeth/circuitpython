@@ -65,6 +65,8 @@ digitalinout_result_t common_hal_digitalio_digitalinout_switch_to_output(
     digitalio_drive_mode_t drive_mode) {
 
     self->direction = DIRECTION_OUTPUT;
+    // set_drive_mode() starts the output at self->value.
+    self->value = value;
     common_hal_digitalio_digitalinout_set_drive_mode(self, drive_mode);
     common_hal_digitalio_digitalinout_set_value(self, value);
     return DIGITALINOUT_OK;
@@ -101,8 +103,10 @@ bool common_hal_digitalio_digitalinout_get_value(
 digitalinout_result_t common_hal_digitalio_digitalinout_set_drive_mode(
     digitalio_digitalinout_obj_t *self,
     digitalio_drive_mode_t drive_mode) {
-    // Also INPUT so we can read the value back.
-    gpio_flags_t flags = GPIO_OUTPUT;
+    // Start the output at the cached value. Plain GPIO_OUTPUT would keep the
+    // pin's old output level, which is low after emulated open drain has
+    // driven it low, even if value has since been set to True.
+    gpio_flags_t flags = self->value ? GPIO_OUTPUT_HIGH : GPIO_OUTPUT_LOW;
     if (drive_mode == DRIVE_MODE_OPEN_DRAIN) {
         flags |= GPIO_OPEN_DRAIN;
     }
