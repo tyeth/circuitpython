@@ -248,7 +248,7 @@ MP_WEAK mp_obj_t common_hal_supervisor_runtime_get_audio(void) {
 }
 
 //|     audio: picodvi.AudioOut | None
-//|     """The audio output that comes with the boot display, if any.
+//|     """The default audio output for the supervisor and user code.
 //|
 //|     On boards with a default DVI display this is a `picodvi.AudioOut` that
 //|     sends sound over the DVI cable along with the picture. It is `None` when
