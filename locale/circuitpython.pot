@@ -4748,10 +4748,6 @@ msgstr ""
 msgid "USB busy"
 msgstr ""
 
-#: shared-module/usb_host_audio/USBIn.c
-msgid "%q not set in settings.toml"
-msgstr ""
-
 #: shared-module/vectorio/Circle.c shared-module/vectorio/Polygon.c
 #: shared-module/vectorio/Rectangle.c
 msgid "can only have one parent"

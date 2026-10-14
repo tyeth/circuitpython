@@ -20,7 +20,12 @@ extern const mp_obj_type_t usb_host_port_type;
 // to determine whether to return the singleton or raise an exception.
 usb_host_port_obj_t *common_hal_usb_host_port_construct(const mcu_pin_obj_t *dp, const mcu_pin_obj_t *dm);
 
-// True when the host controller buffers isochronous IN packets between
-// transfers and hands them over as length-prefixed records, as
-// usb_host_audio needs.
-bool common_hal_usb_host_port_iso_buffered(void);
+// Gives the host controller a buffer of at least size bytes for isochronous IN
+// packets, which it then keeps between transfers and hands over as
+// length-prefixed records, as usb_host_audio needs. Until it is released it
+// replaces the buffer set in settings.toml. False when another isochronous
+// stream holds the buffer; raises when out of memory.
+bool common_hal_usb_host_port_claim_iso_buffer(size_t size);
+// Frees the claimed buffer and puts back the one from settings.toml. Call after
+// the stream ended. Never raises.
+void common_hal_usb_host_port_release_iso_buffer(void);

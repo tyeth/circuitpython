@@ -13,7 +13,7 @@ extern const mp_obj_type_t usb_host_audio_usbin_type;
 void common_hal_usb_host_audio_usbin_construct(usb_host_audio_usbin_obj_t *self,
     usb_core_device_obj_t *device, uint8_t endpoint, uint32_t sample_rate,
     uint8_t channel_count, uint8_t bit_depth, bool samples_signed,
-    uint16_t max_packet_size, uint32_t buffer_frames);
+    uint16_t max_packet_size, uint32_t buffer_frames, uint32_t iso_buffer_size);
 void common_hal_usb_host_audio_usbin_deinit(usb_host_audio_usbin_obj_t *self);
 bool common_hal_usb_host_audio_usbin_deinited(usb_host_audio_usbin_obj_t *self);
 // length and the return value count samples; a stereo frame is two samples.

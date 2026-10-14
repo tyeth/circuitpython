@@ -13,7 +13,6 @@
 #include "py/runtime.h"
 #include "shared-bindings/audiocore/__init__.h"
 #include "shared-bindings/usb/core/Device.h"
-#include "shared-bindings/usb_host/Port.h"
 #include "shared-bindings/usb_host_audio/USBIn.h"
 #include "shared-bindings/util.h"
 //| import usb.core
@@ -33,6 +32,7 @@
 //|         samples_signed: bool = True,
 //|         max_packet_size: int = 0,
 //|         buffer_frames: int = 256,
+//|         iso_buffer_size: int = 16384,
 //|     ) -> None:
 //|         """Receive the PCM audio that a USB Audio Class microphone sends on an
 //|         isochronous IN endpoint. The object can be played like any other audio
@@ -47,9 +47,8 @@
 //|         the microphone stops also when a ``with`` block is left by an
 //|         exception, or when the program ends.
 //|
-//|         The host controller buffers the stream between reads, in a buffer
-//|         sized by ``CIRCUITPY_USB_HOST_ISO_BUFFER_SIZE`` in ``settings.toml``.
-//|         Without that setting the constructor raises ``RuntimeError``.
+//|         The host controller buffers the stream between reads, in a buffer of
+//|         ``iso_buffer_size`` bytes that `USBIn` allocates and `deinit` frees.
 //|
 //|         Only one isochronous IN endpoint is received at a time, so only one
 //|         `USBIn` can stream, and a USB camera cannot stream video meanwhile.
@@ -75,6 +74,11 @@
 //|           audio is signed, except for 8 bit PCM.
 //|         :param int max_packet_size: The endpoint's ``wMaxPacketSize``
 //|         :param int buffer_frames: The number of frames handed to the audio pipeline at a time
+//|         :param int iso_buffer_size: The size in bytes of the host controller's buffer for
+//|           the stream, from 2048 to 65536, rounded up to a power of two. It holds the
+//|           packets that arrive while background tasks don't run, each with 2 bytes of
+//|           overhead: 16384 is about half a second of 16 kHz mono audio or 80 ms of 48 kHz
+//|           stereo.
 //|
 //|         Example, recording a second from the microphone of a Logitech C270
 //|         webcam. It streams 16 bit mono on interface 3, alternate setting 1,
@@ -103,7 +107,7 @@
 //|
 static mp_obj_t usb_host_audio_usbin_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     enum { ARG_device, ARG_endpoint, ARG_sample_rate, ARG_channel_count, ARG_bit_depth,
-           ARG_samples_signed, ARG_max_packet_size, ARG_buffer_frames };
+           ARG_samples_signed, ARG_max_packet_size, ARG_buffer_frames, ARG_iso_buffer_size };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_device,          MP_ARG_REQUIRED | MP_ARG_OBJ },
         { MP_QSTR_endpoint,        MP_ARG_REQUIRED | MP_ARG_INT },
@@ -113,6 +117,7 @@ static mp_obj_t usb_host_audio_usbin_make_new(const mp_obj_type_t *type, size_t 
         { MP_QSTR_samples_signed,  MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = true} },
         { MP_QSTR_max_packet_size, MP_ARG_KW_ONLY | MP_ARG_INT,  {.u_int = 0} },
         { MP_QSTR_buffer_frames,   MP_ARG_KW_ONLY | MP_ARG_INT,  {.u_int = 256} },
+        { MP_QSTR_iso_buffer_size, MP_ARG_KW_ONLY | MP_ARG_INT,  {.u_int = 16384} },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -133,16 +138,11 @@ static mp_obj_t usb_host_audio_usbin_make_new(const mp_obj_type_t *type, size_t 
     }
     mp_int_t max_packet_size = mp_arg_validate_int_range(args[ARG_max_packet_size].u_int, 0, 1024, MP_QSTR_max_packet_size);
     mp_int_t buffer_frames = mp_arg_validate_int_range(args[ARG_buffer_frames].u_int, 32, 4096, MP_QSTR_buffer_frames);
-    if (!common_hal_usb_host_port_iso_buffered()) {
-        // Without the ring the host controller hands over bare packets, not
-        // the length prefixed records that USBIn reads.
-        mp_raise_RuntimeError_varg(MP_ERROR_TEXT("%q not set in settings.toml"),
-            MP_QSTR_CIRCUITPY_USB_HOST_ISO_BUFFER_SIZE);
-    }
+    mp_int_t iso_buffer_size = mp_arg_validate_int_range(args[ARG_iso_buffer_size].u_int, 2048, 65536, MP_QSTR_iso_buffer_size);
 
     usb_host_audio_usbin_obj_t *self = mp_obj_malloc_with_finaliser(usb_host_audio_usbin_obj_t, &usb_host_audio_usbin_type);
     common_hal_usb_host_audio_usbin_construct(self, device, endpoint, sample_rate, channel_count,
-        bit_depth, args[ARG_samples_signed].u_bool, max_packet_size, buffer_frames);
+        bit_depth, args[ARG_samples_signed].u_bool, max_packet_size, buffer_frames, iso_buffer_size);
 
     return MP_OBJ_FROM_PTR(self);
 }

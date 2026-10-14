@@ -15,6 +15,7 @@
 #include "shared/runtime/interrupt_char.h"
 #include "shared-bindings/usb/core/__init__.h"
 #include "shared-bindings/usb/core/Device.h"
+#include "shared-bindings/usb_host/Port.h"
 #include "supervisor/port.h"
 #include "supervisor/port_heap.h"
 #include "supervisor/shared/tick.h"
@@ -168,7 +169,7 @@ static void _stop_device(usb_host_audio_usbin_obj_t *self) {
 void common_hal_usb_host_audio_usbin_construct(usb_host_audio_usbin_obj_t *self,
     usb_core_device_obj_t *device, uint8_t endpoint, uint32_t sample_rate,
     uint8_t channel_count, uint8_t bit_depth, bool samples_signed,
-    uint16_t max_packet_size, uint32_t buffer_frames) {
+    uint16_t max_packet_size, uint32_t buffer_frames, uint32_t iso_buffer_size) {
     // The finaliser may run on an object that a raise below left half made.
     self->xfer_buffer = NULL;
     if (_active != NULL) {
@@ -212,6 +213,12 @@ void common_hal_usb_host_audio_usbin_construct(usb_host_audio_usbin_obj_t *self,
     }
     self->interface = _endpoint_interface(device, endpoint);
 
+    // The host controller keeps the packets that arrive between transfers in a
+    // ring of its own. Only one isochronous stream at a time can use it.
+    if (!common_hal_usb_host_port_claim_iso_buffer(iso_buffer_size)) {
+        mp_raise_RuntimeError_varg(MP_ERROR_TEXT("%q in use"), MP_QSTR_usb_host);
+    }
+
     // A record that doesn't fit in the transfer buffer is dropped by the host
     // controller, so leave room for the largest packet and its length.
     self->xfer_buffer_len = MAX(USBIN_MIN_XFER_BUFFER, max_packet_size + 2);
@@ -220,6 +227,7 @@ void common_hal_usb_host_audio_usbin_construct(usb_host_audio_usbin_obj_t *self,
     // The host controller writes the transfer buffer.
     self->xfer_buffer = port_malloc(self->xfer_buffer_len, true);
     if (self->ring == NULL || self->xfer_buffer == NULL) {
+        common_hal_usb_host_port_release_iso_buffer();
         port_free(self->ring);
         port_free(self->xfer_buffer);
         self->ring = NULL;
@@ -259,6 +267,9 @@ void common_hal_usb_host_audio_usbin_deinit(usb_host_audio_usbin_obj_t *self) {
         // Drop a completion that is queued already.
         _seq++;
         _active = NULL;
+        // Whatever ended the stream also stopped the host controller writing
+        // to its ring.
+        common_hal_usb_host_port_release_iso_buffer();
     }
     self->streaming = false;
     port_free(self->xfer_buffer);

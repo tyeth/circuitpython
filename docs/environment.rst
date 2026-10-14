@@ -101,9 +101,9 @@ Used to avoid "Pystack exhausted" errors when the code can't be reworked to avoi
 
 CIRCUITPY_USB_HOST_ISO_BUFFER_SIZE (integer)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Allocates a buffer for incoming isochronous USB data (USB camera, USB audio)
-on boards with a ``usb_host.Port``. Without it, isochronous IN transfers return at
-most one packet per USB frame, so data arriving while code is busy is lost.
+Allocates a buffer for incoming isochronous USB data, such as from a USB camera
+read with ``usb.core``, on boards with a ``usb_host.Port``. Without it, isochronous IN
+transfers return at most one packet per USB frame, so data arriving while code is busy is lost.
 The value is rounded up to the next power of two and limited to the range 2048
 to 65536. A typical value for a USB camera is 16384. The buffer is allocated when
 the USB host port is created and is never freed.
