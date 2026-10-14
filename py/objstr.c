@@ -252,29 +252,12 @@ static mp_obj_t str_from_invalid(mp_encoding_t encoding, const mp_obj_type_t *ty
 #endif // MICROPY_PY_BUILTINS_STR_UNICODE_CHECK && MICROPY_PY_BUILTINS_BYTES_DECODE_ERRORS
 
 #if MICROPY_PY_BUILTINS_STR_UNICODE_CHECK
-// CPython accepts encoding names case-insensitively (codecs.lookup).
-static bool encoding_name_matches(qstr encoding, const char *name) {
-    const char *s = qstr_str(encoding);
-    for (; *s != '\0' && *name != '\0'; s++, name++) {
-        char a = *s;
-        if (a >= 'A' && a <= 'Z') {
-            a = (char)(a - 'A' + 'a');
-        }
-        if (a != *name) {
-            return false;
-        }
-    }
-    return *s == '\0' && *name == '\0';
-}
-
 static mp_encoding_t parse_encoding_arg(qstr encoding) {
-    // Fast path for the common interned lowercase names.
-    if (encoding == MP_QSTR_utf_hyphen_8 || encoding == MP_QSTR_utf8
-        || encoding_name_matches(encoding, "utf-8")
-        || encoding_name_matches(encoding, "utf8")) {
+    // CIRCUITPY-CHANGE: also accept "UTF-8", which is commonly used.
+    if (encoding == MP_QSTR_utf_hyphen_8 || encoding == MP_QSTR_UTF_hyphen_8 || encoding == MP_QSTR_utf8) {
         return MP_ENCODING_UTF8;
     }
-    if (encoding == MP_QSTR_ascii || encoding_name_matches(encoding, "ascii")) {
+    if (encoding == MP_QSTR_ascii) {
         return MP_ENCODING_ASCII;
     }
     #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
