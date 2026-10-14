@@ -760,49 +760,51 @@ def _toml_status_pin(mpconfigboard, board_names, key):
     raise RuntimeError(f"circuitpython.toml {key} = {name!r} is not a board pin name")
 
 
-# Pin fields of the circuitpython.toml [[board_i2c]], [[board_spi]] and
-# [[board_uart]] tables, as (field, required). The field names match the
-# CIRCUITPY_BOARD_*_PIN structs in shared-module/board.
-BOARD_BUS_PINS = {
-    "i2c": (("scl", True), ("sda", True)),
-    "spi": (("clock", True), ("mosi", False), ("miso", False)),
-    "uart": (("tx", False), ("rx", False)),
+# Devicetree labels that mark a board's standard header buses, mapped to the
+# bus class and the board pin names its signals use, as (field, pin name).
+# The field names match the CIRCUITPY_BOARD_*_PIN structs in
+# shared-module/board. The pin names come from the board's connector (see
+# CONNECTORS) or its [pins] table.
+BOARD_BUS_LABELS = {
+    "feather_i2c": ("i2c", (("scl", "SCL"), ("sda", "SDA"))),
+    "feather_spi": ("spi", (("clock", "SCK"), ("mosi", "MOSI"), ("miso", "MISO"))),
+    "feather_serial": ("uart", (("tx", "TX"), ("rx", "RX"))),
 }
 # The board bus class each busio-capable devicetree driver provides.
 BOARD_BUS_OF_DRIVER = {"i2c": "i2c", "spi": "spi", "serial": "uart"}
 
 
-def _toml_board_buses(mpconfigboard, board_names):
-    """Resolve the circuitpython.toml board bus tables to pins.
+def _board_pin_named(board_names, name):
+    """Return the ``(ioport, num)`` of the board pin called ``name``, or None."""
+    for pin_key, names in board_names.items():
+        if any(existing.upper() == name for existing in names):
+            return pin_key
+    return None
 
-    Each ``[[board_i2c]]``, ``[[board_spi]]`` or ``[[board_uart]]`` table is
-    one board bus, in instance order: ``names`` lists its board names and the
-    other keys name its pins. Returns ``{bus: [(names, {field: pin}), ...]}``
-    for the bus classes the toml defines.
+
+def _dt_board_buses(device_tree, board_names):
+    """Find the board buses that devicetree labels mark.
+
+    Each BOARD_BUS_LABELS label in the devicetree gives one board bus, named
+    after its class (``board.I2C``, ``board.SPI`` or ``board.UART``), on the
+    board pins with the label's pin names. The labeled node only says that
+    the board has the bus. It may be dynamic or disabled, because iobroker
+    picks the instance when the bus is constructed. Returns
+    ``{bus: {field: pin}}``.
     """
     buses = {}
-    for bus, fields in BOARD_BUS_PINS.items():
-        key = f"board_{bus}"
-        resolved = []
-        for table in (mpconfigboard or {}).get(key, []):
-            field_names = {field for field, _ in fields}
-            unknown = sorted(set(table) - field_names - {"names"})
-            if unknown:
-                raise RuntimeError(f"circuitpython.toml [[{key}]] has unknown keys {unknown}")
-            names = table.get("names")
-            if not names:
-                raise RuntimeError(f"circuitpython.toml [[{key}]] needs names")
-            pins = {}
-            for field, required in fields:
-                if field in table:
-                    pins[field] = _toml_status_pin(table, board_names, field)
-                elif required:
-                    raise RuntimeError(f"circuitpython.toml [[{key}]] needs {field}")
-            if not pins:
-                raise RuntimeError(f"circuitpython.toml [[{key}]] needs at least one pin")
-            resolved.append(([str(name).upper() for name in names], pins))
-        if resolved:
-            buses[bus] = resolved
+    for label, (bus, fields) in BOARD_BUS_LABELS.items():
+        if label not in device_tree.label2node:
+            continue
+        if bus in buses:
+            raise RuntimeError(f"devicetree label {label} is a second {bus} board bus")
+        pins = {}
+        for field, name in fields:
+            pin = _board_pin_named(board_names, name)
+            if pin is None:
+                raise RuntimeError(f"devicetree label {label} needs a board pin named {name}")
+            pins[field] = pin
+        buses[bus] = pins
     return buses
 
 
@@ -1258,12 +1260,10 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     # the [pins] table, that the status LED code drives with neopixel_write.
     status_neopixel = _toml_status_pin(mpconfigboard, board_names, "STATUS_NEOPIXEL")
     status_neopixel_power = _toml_status_pin(mpconfigboard, board_names, "STATUS_NEOPIXEL_POWER")
-    # board.I2C(), board.SPI(), board.UART() and other named board buses from
-    # circuitpython.toml, constructed on demand on their pins.
-    board_buses = _toml_board_buses(mpconfigboard, board_names)
-    board_bus_names = {
-        name for tables in board_buses.values() for names, _ in tables for name in names
-    }
+    # board.I2C(), board.SPI() and board.UART() for the buses that devicetree
+    # labels mark, constructed on demand on their pins.
+    board_buses = _dt_board_buses(device_tree, board_names)
+    board_bus_names = {bus.upper() for bus in board_buses}
     pin_object_of = {}
     # GPIO pad number -> pad: every (label, num) name and alias the
     # devicetree walk produced keys into one pin object per pad.
@@ -1400,8 +1400,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
         zephyr_binding_headers.append(f'#include "shared-bindings/{module}/{driverclass}.h"')
 
-        # Designate a main device such as board.I2C or board.I2S, unless
-        # circuitpython.toml defines the board buses of this class.
+        # Designate a main device such as board.I2C or board.I2S, unless a
+        # devicetree label marks a board bus of this class.
         if BOARD_BUS_OF_DRIVER.get(driver) in board_buses:
             pass
         elif len(instances) == 1:
@@ -1461,7 +1461,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0({function_object}, {c_function_name});""".lstri
             )
             for label in labels:
                 if label.upper() in board_bus_names:
-                    # A circuitpython.toml board bus has this name.
+                    # A labeled board bus has this name.
                     continue
                 zephyr_binding_labels.append(
                     f"{{ MP_ROM_QSTR(MP_QSTR_{label.upper()}), MP_ROM_PTR(&{function_object}) }},"
@@ -1470,36 +1470,18 @@ static MP_DEFINE_CONST_FUN_OBJ_0({function_object}, {c_function_name});""".lstri
     zephyr_binding_objects = "\n".join(zephyr_binding_objects)
     zephyr_binding_labels = "\n".join(zephyr_binding_labels)
 
-    # Board buses from circuitpython.toml: the CIRCUITPY_BOARD_* pin tables for
-    # shared-module/board, and board names for each bus. Bus 0 of a class is
-    # board_<bus>_obj; later ones get their own singleton.
+    # Board buses from devicetree labels: the CIRCUITPY_BOARD_* pin tables for
+    # shared-module/board, and the board name for each bus.
     board_bus_defines = []
-    board_bus_objects = []
     board_bus_labels = []
-    for bus, tables in board_buses.items():
-        entries = []
-        for index, (names, pins) in enumerate(tables):
-            fields = ", ".join(
-                f".{field} = &pin_{pin_object_of[pin]}" for field, pin in pins.items()
-            )
-            entries.append(f"{{{fields}}}")
-            if index == 0:
-                function_object = f"board_{bus}_obj"
-            else:
-                board_bus_objects.append(
-                    f"CIRCUITPY_BOARD_BUS_SINGLETON({names[0].lower()}, {bus}, {index})"
-                )
-                function_object = f"board_{names[0].lower()}_obj"
-            for name in names:
-                board_bus_labels.append(
-                    f"{{ MP_ROM_QSTR(MP_QSTR_{name}), MP_ROM_PTR(&{function_object}) }},"
-                )
-        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()} ({len(tables)})")
-        board_bus_defines.append(
-            f"#define CIRCUITPY_BOARD_{bus.upper()}_PIN {{{', '.join(entries)}}}"
+    for bus, pins in board_buses.items():
+        fields = ", ".join(f".{field} = &pin_{pin_object_of[pin]}" for field, pin in pins.items())
+        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()} (1)")
+        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()}_PIN {{{{{fields}}}}}")
+        board_bus_labels.append(
+            f"{{ MP_ROM_QSTR(MP_QSTR_{bus.upper()}), MP_ROM_PTR(&board_{bus}_obj) }},"
         )
     board_bus_defines = "\n".join(board_bus_defines)
-    board_bus_objects = "\n".join(board_bus_objects)
     board_bus_labels = "\n".join(board_bus_labels)
 
     # Generate tables of allocatable bus instances for the iobroker
@@ -1870,7 +1852,6 @@ const size_t circuitpy_max_ram_size = {max_size};
 {pin_defs}
 
 {zephyr_binding_objects}
-{board_bus_objects}
 {iobroker_tables}
 
 void board_init(void) {{

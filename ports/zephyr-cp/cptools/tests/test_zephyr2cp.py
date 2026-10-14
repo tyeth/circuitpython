@@ -25,7 +25,7 @@ from zephyr2cp import (
     MINIMUM_RAM_SIZE,
     add_toml_pin_names,
     _fastest_first,
-    _toml_board_buses,
+    _dt_board_buses,
     _toml_status_pin,
 )
 
@@ -801,72 +801,50 @@ class TestTomlStatusPin:
             _toml_status_pin({"STATUS_NEOPIXEL": "NOPE"}, self.BOARD_NAMES, "STATUS_NEOPIXEL")
 
 
-class TestTomlBoardBuses:
-    """Resolution of circuitpython.toml [[board_i2c]]/[[board_spi]]/[[board_uart]]."""
+class TestDtBoardBuses:
+    """board.I2C(), board.SPI() and board.UART() from devicetree bus labels."""
 
     BOARD_NAMES = {
         ("gpio0", 11): ["SCL"],
         ("gpio0", 12): ["SDA"],
         ("gpio0", 14): ["SCK"],
         ("gpio0", 13): ["MOSI"],
+        ("gpio0", 15): ["MISO"],
         ("gpio0", 25): ["TX"],
         ("gpio0", 24): ["RX"],
-        ("gpio1", 1): ["SCL1"],
-        ("gpio1", 2): ["SDA1"],
     }
 
-    def test_resolves_buses_in_order(self):
-        buses = _toml_board_buses(
-            {
-                "board_i2c": [
-                    {"names": ["I2C", "stemma_i2c"], "scl": "SCL", "sda": "SDA"},
-                    {"names": ["I2C1"], "scl": "SCL1", "sda": "SDA1"},
-                ],
-                "board_uart": [{"names": ["UART"], "tx": "TX", "rx": "RX"}],
-            },
-            self.BOARD_NAMES,
+    @staticmethod
+    def _device_tree(*labels):
+        return SimpleNamespace(label2node={label: object() for label in labels})
+
+    def test_feather_labels(self):
+        buses = _dt_board_buses(
+            self._device_tree("feather_i2c", "feather_spi", "feather_serial"), self.BOARD_NAMES
         )
         assert buses == {
-            "i2c": [
-                (["I2C", "STEMMA_I2C"], {"scl": ("gpio0", 11), "sda": ("gpio0", 12)}),
-                (["I2C1"], {"scl": ("gpio1", 1), "sda": ("gpio1", 2)}),
-            ],
-            "uart": [(["UART"], {"tx": ("gpio0", 25), "rx": ("gpio0", 24)})],
+            "i2c": {"scl": ("gpio0", 11), "sda": ("gpio0", 12)},
+            "spi": {"clock": ("gpio0", 14), "mosi": ("gpio0", 13), "miso": ("gpio0", 15)},
+            "uart": {"tx": ("gpio0", 25), "rx": ("gpio0", 24)},
         }
 
-    def test_optional_pins_may_be_absent(self):
-        buses = _toml_board_buses(
-            {"board_spi": [{"names": ["SPI"], "clock": "SCK", "mosi": "MOSI"}]},
-            self.BOARD_NAMES,
-        )
-        assert buses == {"spi": [(["SPI"], {"clock": ("gpio0", 14), "mosi": ("gpio0", 13)})]}
+    def test_only_labeled_buses(self):
+        buses = _dt_board_buses(self._device_tree("feather_i2c", "i2c0"), self.BOARD_NAMES)
+        assert list(buses) == ["i2c"]
 
-    def test_absent_tables_are_empty(self):
-        assert _toml_board_buses({}, self.BOARD_NAMES) == {}
-        assert _toml_board_buses(None, self.BOARD_NAMES) == {}
+    def test_no_labels(self):
+        assert _dt_board_buses(self._device_tree("i2c0", "spi1"), self.BOARD_NAMES) == {}
 
-    def test_missing_names_raises(self):
-        with pytest.raises(RuntimeError, match=r"\[\[board_i2c\]\] needs names"):
-            _toml_board_buses({"board_i2c": [{"scl": "SCL", "sda": "SDA"}]}, self.BOARD_NAMES)
+    def test_pin_names_ignore_case(self):
+        names = dict(self.BOARD_NAMES)
+        names[("gpio0", 11)] = ["scl"]
+        buses = _dt_board_buses(self._device_tree("feather_i2c"), names)
+        assert buses["i2c"]["scl"] == ("gpio0", 11)
 
-    def test_missing_required_pin_raises(self):
-        with pytest.raises(RuntimeError, match=r"\[\[board_i2c\]\] needs sda"):
-            _toml_board_buses({"board_i2c": [{"names": ["I2C"], "scl": "SCL"}]}, self.BOARD_NAMES)
-
-    def test_no_pins_raises(self):
-        with pytest.raises(RuntimeError, match="needs at least one pin"):
-            _toml_board_buses({"board_uart": [{"names": ["UART"]}]}, self.BOARD_NAMES)
-
-    def test_unknown_key_raises(self):
-        with pytest.raises(RuntimeError, match=r"unknown keys \['sck'\]"):
-            _toml_board_buses({"board_spi": [{"names": ["SPI"], "sck": "SCK"}]}, self.BOARD_NAMES)
-
-    def test_unknown_pin_raises(self):
-        with pytest.raises(RuntimeError, match="'NOPE' is not a board pin name"):
-            _toml_board_buses(
-                {"board_i2c": [{"names": ["I2C"], "scl": "NOPE", "sda": "SDA"}]},
-                self.BOARD_NAMES,
-            )
+    def test_missing_pin_name_raises(self):
+        names = {key: value for key, value in self.BOARD_NAMES.items() if value != ["MISO"]}
+        with pytest.raises(RuntimeError, match="feather_spi needs a board pin named MISO"):
+            _dt_board_buses(self._device_tree("feather_spi"), names)
 
 
 class TestFastestFirst:
