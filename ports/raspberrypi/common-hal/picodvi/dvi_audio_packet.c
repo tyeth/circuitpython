@@ -184,7 +184,7 @@ void hstx_packet_set_avi_infoframe(hstx_packet_t *packet, uint8_t vic, uint8_t p
 }
 
 int hstx_packet_set_audio_samples(hstx_packet_t *packet, const audio_sample_t *samples, int num_samples,
-    int frame_count) {
+    int frame_count, uint8_t channel_status) {
     hstx_packet_init(packet);
     if (num_samples < 1) {
         num_samples = 1;
@@ -221,9 +221,10 @@ int hstx_packet_set_audio_samples(hstx_packet_t *packet, const audio_sample_t *s
         d[4] = right & 0xFF;
         d[5] = (right >> 8) & 0xFF;
 
-        // IEC 60958 byte 0 = 0x04 (copy permitted), byte 3 = 0x02 (48 kHz).
+        // IEC 60958 byte 0 = 0x04 (copy permitted), byte 3 = channel_status
+        // (the sample rate).
         int frame = (frame_count + i) % 192;
-        uint8_t status = frame / 8 == 0 ? 0x04 : (frame / 8 == 3 ? 0x02 : 0);
+        uint8_t status = frame / 8 == 0 ? 0x04 : (frame / 8 == 3 ? channel_status : 0);
         uint8_t c = (status >> (frame % 8)) & 1;
         bool p_left = compute_parity3(d[1], d[2], c);
         bool p_right = compute_parity3(d[4], d[5], c);
