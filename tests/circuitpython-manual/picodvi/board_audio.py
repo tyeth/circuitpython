@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Adafruit Industries
 #
 # SPDX-License-Identifier: MIT
-# Fruit Jam with a display attached and no display settings in settings.toml.
+# A board with a default DVI display, a display attached and no display
+# settings in settings.toml.
 # Plays a tone on board.DVI_AUDIO, then checks it becomes
 # None when the display is released.
 #
