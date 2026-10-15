@@ -192,3 +192,93 @@ def test_flash_256k_overwrite(circuitpython, board):
         circuitpython.flash_file, "overwrite.txt", board, erase_page_size=262144
     )
     assert content == "second version"
+
+
+PAGE_CHANGE_CODE = """\
+import board
+import storage
+import time
+# The display's auto refresh keeps the supervisor tick running, which would
+# flush the cache whether or not the filesystem is marked dirty.
+board.DISPLAY.auto_refresh = False
+storage.remount("/", readonly=False)
+# Program the sectors first. Writes to erased flash skip the page cache.
+with open("/data.bin", "wb") as f:
+    f.write(bytes(16384))
+# Overwrite one sector, then one three pages later, so the last write moves
+# the flash cache to a new page. Don't flush or close the file.
+f = open("/data.bin", "r+b")
+f.write(b"A" * 512)
+f.seek(12288)
+f.write(b"Z" * 512)
+# The background flush runs after 1000 supervisor ticks. native_sim's 100 Hz
+# kernel tick makes that about 10 seconds.
+time.sleep(15)
+print("slept")
+while True:
+    time.sleep(1)
+"""
+
+
+@pytest.mark.circuitpy_drive({"code.py": PAGE_CHANGE_CODE})
+@pytest.mark.fat_filesystem_only
+def test_flash_background_flush_after_page_change(circuitpython):
+    """Test that the background flush writes the page cached by a page change.
+
+    The file is never flushed or closed, so only the background flush can
+    write the last sector before the simulator is stopped.
+    """
+    circuitpython.serial.wait_for("slept")
+    circuitpython.shutdown()
+
+    assert b"Z" * 512 in circuitpython.flash_file.read_bytes()
+
+
+LFS_PAGE_CHANGE_CODE = """\
+import board
+import os
+import storage
+import time
+# The display's auto refresh keeps the supervisor tick running, which would
+# flush the cache whether or not the filesystem is marked dirty.
+board.DISPLAY.auto_refresh = False
+storage.remount("/", readonly=False)
+# littlefs writes new data to unused blocks, and writes to erased flash skip
+# the page cache. Fill the free space and free it again so they don't.
+f = open("/burn.bin", "wb")
+chunk = bytes(8192)
+try:
+    while True:
+        f.write(chunk)
+except OSError:
+    pass
+f.close()
+os.remove("/burn.bin")
+# Creating the file syncs, so the cache holds the metadata page. The first
+# block of the file is on another page, so writing it changes pages. Don't
+# flush or close the file.
+f = open("/z.bin", "wb")
+f.write(b"Z" * 512)
+# The background flush runs after 1000 supervisor ticks. native_sim's 100 Hz
+# kernel tick makes that about 10 seconds.
+time.sleep(15)
+print("slept")
+while True:
+    time.sleep(1)
+"""
+
+
+@pytest.mark.circuitpy_drive({"code.py": LFS_PAGE_CHANGE_CODE})
+@pytest.mark.parametrize("board", ["native_native_sim_lfs"], indirect=True)
+def test_flash_background_flush_after_page_change_lfs(circuitpython):
+    """Test that the background flush writes the page cached by a littlefs write.
+
+    littlefs marks the filesystem dirty before writing, so the page change
+    must not clear the dirty flag. The file is never flushed or closed, so
+    only the background flush can write the block before the simulator is
+    stopped.
+    """
+    circuitpython.serial.wait_for("slept")
+    circuitpython.shutdown()
+
+    assert b"Z" * 512 in circuitpython.flash_file.read_bytes()
