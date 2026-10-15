@@ -54,7 +54,8 @@ Details of the TOML language subset
 * Whitespace is allowed.
 * Only basic strings are supported, not triple-quoted strings.
 * Only integers supported by ``strtol()`` can be parsed:
-  no ``0o``, no ``0b``, no underscores ``1_000``, ``011`` is 9, not 11.
+  no ``0o``, no ``0b``, no underscores ``1_000``.
+* Leading zeros are not allowed: ``011`` is an error, not 9 or 11.
 * Only bare keys are supported.
 * Duplicate keys are not diagnosed.
 * Comments are allowed.
