@@ -80,6 +80,12 @@ static uint32_t _current_page_address;
 
 static uint32_t _scratch_page_address;
 
+// Size of the filesystem in bytes: every whole page, less the scratch page if
+// there is one.
+static uint32_t _filesystem_size;
+
+static bool allocate_ram_cache(void);
+
 // Per-block flags packed into a uint8_t array (one byte per block).
 #define ROW_LOADED  0x01  // Block data is present in the cache.
 #define ROW_DIRTY   0x02  // Block has been modified since last flush.
@@ -247,7 +253,8 @@ void supervisor_flash_init(void) {
     // doesn't end on a page boundary, its last partial page can't be erased
     // without going past the end, so it is left unused.
     size_t page_count = filesystem_area->fa_size / _page_size;
-    if (page_count < 2) {
+    size_t min_page_count = IS_ENABLED(CONFIG_CIRCUITPY_FLASH_SCRATCH_PAGE) ? 2 : 1;
+    if (page_count < min_page_count) {
         printk("Filesystem area too small (%zu pages)\n", page_count);
         filesystem_area = NULL;
         return;
@@ -261,9 +268,22 @@ void supervisor_flash_init(void) {
     }
     memset(_row_flags, 0, _blocks_per_page);
 
+    _current_page_address = NO_PAGE_LOADED;
+
+    #if CONFIG_CIRCUITPY_FLASH_SCRATCH_PAGE
     // The last whole page is the scratch page.
     _scratch_page_address = (page_count - 1) * _page_size;
-    _current_page_address = NO_PAGE_LOADED;
+    _filesystem_size = _scratch_page_address;
+    #else
+    // No scratch page: allocate the RAM cache now and keep it, so writes
+    // never need one.
+    if (!allocate_ram_cache()) {
+        printk("Unable to allocate the filesystem ram cache\n");
+        filesystem_area = NULL;
+        return;
+    }
+    _filesystem_size = page_count * _page_size;
+    #endif
 }
 
 uint32_t supervisor_flash_get_block_size(void) {
@@ -274,7 +294,7 @@ uint32_t supervisor_flash_get_block_count(void) {
     if (filesystem_area == NULL) {
         return 0;
     }
-    return _scratch_page_address / FILESYSTEM_BLOCK_SIZE;
+    return _filesystem_size / FILESYSTEM_BLOCK_SIZE;
 }
 
 
@@ -502,6 +522,10 @@ static bool flush_ram_cache(bool keep_cache) {
 // Delegates to the correct flash flush method depending on the existing cache.
 // TODO Don't blink the status indicator if we don't actually do any writing (hard to tell right now).
 static void _flush_keep_cache(bool keep_cache) {
+    #if !CONFIG_CIRCUITPY_FLASH_SCRATCH_PAGE
+    // Without a scratch page, the RAM cache is never released.
+    keep_cache = true;
+    #endif
     #ifdef MICROPY_HW_LED_MSC
     port_pin_set_output_level(MICROPY_HW_LED_MSC, true);
     #endif

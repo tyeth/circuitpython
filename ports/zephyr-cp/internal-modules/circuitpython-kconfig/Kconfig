@@ -64,6 +64,21 @@ config ZERO_LATENCY_IRQS
 config BT_CTLR_ASSERT_OVERHEAD_START
 	default n if SOC_FAMILY_NORDIC_NRF
 
+# ===== Flash filesystem scratch page =====
+# supervisor/flash.c caches the erase page being written in RAM. With a
+# scratch page, it allocates the cache only while writing, and stages writes
+# in the last erase page of the filesystem when it can't. Without one, it
+# allocates the cache once at startup and keeps it, and the filesystem gets
+# the whole partition.
+#
+# ports/raspberrypi caches one 4 KB sector in a static buffer and reserves no
+# scratch page, so do the same on RP2040 and RP2350: the filesystem sizes
+# then match, and either port can use a filesystem formatted by the other.
+config CIRCUITPY_FLASH_SCRATCH_PAGE
+	bool "Stage flash writes in a scratch page when the RAM cache can't be allocated"
+	default n if SOC_FAMILY_RPI_PICO
+	default y
+
 # ===== External NOR flash =====
 # supervisor/flash.c sets aside the last erase page of the filesystem as a
 # scratch page, and caches a whole erase page in RAM while writing. The NOR
