@@ -17,6 +17,9 @@ CROSS_COMPILE = riscv32-esp-elf-
 else ifeq ($(IDF_TARGET),esp32p4)
 IDF_TARGET_ARCH = riscv
 CROSS_COMPILE = riscv32-esp-elf-
+else ifeq ($(IDF_TARGET),esp32s31)
+IDF_TARGET_ARCH = riscv
+CROSS_COMPILE = riscv32-esp-elf-
 else ifeq ($(IDF_TARGET),esp32c6)
 IDF_TARGET_ARCH = riscv
 CROSS_COMPILE = riscv32-esp-elf-
@@ -111,6 +114,7 @@ CIRCUITPY_SOCKETPOOL_IPV6 ?= 1
 #### esp32 ############################################################
 ifeq ($(IDF_TARGET),esp32)
 # Modules
+CIRCUITPY_MII ?= 1
 CIRCUITPY_RGBMATRIX = 0
 
 # No HMAC peripheral (introduced starting with ESP32-S2)
@@ -121,6 +125,9 @@ CIRCUITPY_USB_DEVICE = 0
 
 #### esp32c2 ##########################################################
 else ifeq ($(IDF_TARGET),esp32c2)
+
+# No EMAC hardware
+CIRCUITPY_MII = 0
 
 # C2 ROM spits out the UART at 74880 when connected to a 26mhz crystal!
 # Debug prints will default to that too.
@@ -172,6 +179,7 @@ CIRCUITPY_ESP_USB_SERIAL_JTAG = 0
 #### esp32c3 ##########################################################
 else ifeq ($(IDF_TARGET),esp32c3)
 # Modules
+CIRCUITPY_MII = 0
 CIRCUITPY_ESPCAMERA = 0
 CIRCUITPY_ESPULP = 0
 CIRCUITPY_MEMORYMAP = 0
@@ -205,6 +213,7 @@ CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 1
 #### esp32c5 ##########################################################
 else ifeq ($(IDF_TARGET),esp32c5)
 # Modules
+CIRCUITPY_MII = 0
 CIRCUITPY_ESPCAMERA = 0
 CIRCUITPY_ESPULP = 0
 CIRCUITPY_MEMORYMAP = 0
@@ -240,6 +249,7 @@ CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 1
 #### esp32c6 ##########################################################
 else ifeq ($(IDF_TARGET),esp32c6)
 # Modules
+CIRCUITPY_MII = 0
 CIRCUITPY_ESPCAMERA = 0
 CIRCUITPY_ESPULP = 0
 CIRCUITPY_MEMORYMAP = 0
@@ -275,6 +285,7 @@ CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 1
 #### esp32c61 #########################################################
 else ifeq ($(IDF_TARGET),esp32c61)
 # Modules
+CIRCUITPY_MII = 0
 CIRCUITPY_ESPCAMERA = 0
 CIRCUITPY_ESPULP = 0
 CIRCUITPY_MEMORYMAP = 0
@@ -320,6 +331,7 @@ CIRCUITPY_FREQUENCYIO = 0
 #### esp32h2 ##########################################################
 else ifeq ($(IDF_TARGET),esp32h2)
 # Modules
+CIRCUITPY_MII = 0
 CIRCUITPY_ESPCAMERA = 0
 CIRCUITPY_ESPULP = 0
 CIRCUITPY_MEMORYMAP = 0
@@ -354,11 +366,13 @@ else ifeq ($(IDF_TARGET),esp32p4)
 # No DAC
 CIRCUITPY_AUDIOIO = 0
 
+# MII is available on these targets with EMAC hardware.
+CIRCUITPY_MII ?= 1
+
 # No wifi
 # TODO: Support ESP32-C6 coprocessor on some boards.
 CIRCUITPY_BLEIO_NATIVE = 0
 CIRCUITPY_WIFI = 0
-CIRCUITPY_SSL = 0
 
 # Second stage bootloader doesn't work when the factory partition is empty due to
 # UF2 missing.
@@ -388,9 +402,55 @@ CIRCUITPY_ESPCAMERA = 0
 # P4 has MIPI-DSI
 CIRCUITPY_MIPIDSI = 1
 
+#### esp32s31 #########################################################
+else ifeq ($(IDF_TARGET),esp32s31)
+
+# No DAC
+CIRCUITPY_AUDIOIO = 0
+
+# No wifi or BLE yet
+CIRCUITPY_BLEIO_NATIVE = 0
+CIRCUITPY_WIFI = 0
+CIRCUITPY_SSL = 0
+
+# Second stage bootloader doesn't work when the factory partition is empty due to
+# UF2 missing.
+UF2_BOOTLOADER = 0
+CIRCUITPY_TUSB_MEM_ALIGN = 64
+CIRCUITPY_ALL_MEMORY_DMA_CAPABLE = 0
+CIRCUITPY_MAX3421E = 0
+
+# The IDF has no ADC calibration scheme for the S31 yet.
+CIRCUITPY_ANALOGBUFIO = 0
+CIRCUITPY_ANALOGIO = 0
+
+# Update this for multiple TWAI?
+CIRCUITPY_CANIO = 0
+
+# Library doesn't support S31 yet
+CIRCUITPY_ESPCAMERA = 0
+
+# The S31 has an LP core, not a ULP FSM or ULP RISC-V.
+CIRCUITPY_ESPULP = 0
+
+# The S31 has five eFuse key blocks, not six.
+CIRCUITPY_HARDWAREKEY = 0
+
+# No I80 support from the IDF
+CIRCUITPY_PARALLELDISPLAYBUS = 0
+
+# Protomatter needs an update
+CIRCUITPY_RGBMATRIX = 0
+
+# Touch readings saturate at 65535 on every pad.
+CIRCUITPY_ALARM_TOUCH = 0
+CIRCUITPY_TOUCHIO = 0
+CIRCUITPY_TOUCHIO_USE_NATIVE = 0
+
 #### esp32s2 ##########################################################
 else ifeq ($(IDF_TARGET),esp32s2)
 # Modules
+CIRCUITPY_MII = 0
 CIRCUITPY_AUDIOIO ?= 1
 CIRCUITPY_AUDIOFILEWRITER ?= 1
 
@@ -407,6 +467,9 @@ CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 0
 
 #### esp32s3 ##########################################################
 else ifeq ($(IDF_TARGET),esp32s3)
+
+# No EMAC hardware
+CIRCUITPY_MII = 0
 
 # Modules
 CIRCUITPY_ESP_USB_SERIAL_JTAG ?= 0

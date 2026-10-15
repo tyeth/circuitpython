@@ -47,6 +47,11 @@
 #include <zephyr/dfu/mcuboot.h>
 #endif
 
+#if defined(CONFIG_SOC_FAMILY_RPI_PICO)
+#include <hardware/structs/psm.h>
+#include <hardware/structs/watchdog.h>
+#endif
+
 #if defined(CONFIG_TRACING_PERFETTO) && defined(CONFIG_BOARD_NATIVE_SIM)
 #include "perfetto_encoder.h"
 #include <zephyr/sys/mem_stats.h>
@@ -252,6 +257,17 @@ safe_mode_t port_init(void) {
 void reset_cpu(void) {
     #if defined(CONFIG_ARCH_POSIX)
     cp_retained_save();
+    #endif
+
+    #if defined(CONFIG_SOC_FAMILY_RPI_PICO)
+    // On RP2 the Arm system reset leaves the USB controller running, so the
+    // host never sees the board go away. Reset the whole chip through the
+    // watchdog instead, as pico-sdk's watchdog_reboot() does. Zephyr's
+    // hal_rpi_pico does not build watchdog.c, so write the registers here.
+    hw_clear_bits(&watchdog_hw->ctrl, WATCHDOG_CTRL_ENABLE_BITS);
+    watchdog_hw->scratch[4] = 0;
+    hw_set_bits(&psm_hw->wdsel, PSM_WDSEL_BITS & ~(PSM_WDSEL_ROSC_BITS | PSM_WDSEL_XOSC_BITS));
+    hw_set_bits(&watchdog_hw->ctrl, WATCHDOG_CTRL_TRIGGER_BITS);
     #endif
 
     // Try a warm reboot first. It won't return if it works but isn't always
