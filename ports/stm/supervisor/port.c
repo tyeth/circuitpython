@@ -422,14 +422,8 @@ uint32_t *port_heap_get_bottom(void) {
     return &_ld_heap_start;
 }
 
-// The heap runs to the top of RAM unless the stack is there too. common_tcm.ld puts the stack in
-// DTCM, outside the heap's RAM. common_default.ld and common_nvm.ld put it at the top of RAM, so
-// the heap has to stop at the stack limit or heap blocks get handed out on top of the stack.
+// heap memory can be set in SRAM and stack can be set in DTCM
 uint32_t *port_heap_get_top(void) {
-    uintptr_t stack_top = (uintptr_t)port_stack_get_top();
-    if (stack_top > (uintptr_t)&_ld_heap_start && stack_top <= (uintptr_t)&_ld_heap_end) {
-        return port_stack_get_limit();
-    }
     return &_ld_heap_end;
 }
 
