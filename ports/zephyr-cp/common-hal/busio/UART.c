@@ -255,20 +255,28 @@ void common_hal_busio_uart_set_baudrate(busio_uart_obj_t *self, uint32_t baudrat
     uart_configure(self->uart_device, &config);
 }
 
+// K_FOREVER reads as -1, which usb_cdc reports as None.
+static mp_float_t timeout_to_seconds(k_timeout_t timeout) {
+    if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
+        return -1;
+    }
+    return (mp_float_t)k_ticks_to_us_floor64(timeout.ticks) / MICROPY_FLOAT_CONST(1000000.0);
+}
+
 mp_float_t common_hal_busio_uart_get_timeout(busio_uart_obj_t *self) {
-    return (mp_float_t)self->timeout.ticks / 1000000.0;
+    return timeout_to_seconds(self->timeout);
 }
 
 void common_hal_busio_uart_set_timeout(busio_uart_obj_t *self, mp_float_t timeout) {
-    self->timeout = K_USEC((uint64_t)(timeout * 1000000));
+    self->timeout = timeout < 0 ? K_FOREVER : K_USEC((uint64_t)(timeout * 1000000));
 }
 
 mp_float_t common_hal_busio_uart_get_write_timeout(busio_uart_obj_t *self) {
-    return (mp_float_t)self->write_timeout.ticks / 1000000.0;
+    return timeout_to_seconds(self->write_timeout);
 }
 
 void common_hal_busio_uart_set_write_timeout(busio_uart_obj_t *self, mp_float_t write_timeout) {
-    self->write_timeout = K_USEC((uint64_t)(write_timeout * 1000000));
+    self->write_timeout = write_timeout < 0 ? K_FOREVER : K_USEC((uint64_t)(write_timeout * 1000000));
 }
 
 uint32_t common_hal_busio_uart_rx_characters_available(busio_uart_obj_t *self) {
