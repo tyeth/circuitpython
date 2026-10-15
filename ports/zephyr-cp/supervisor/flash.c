@@ -355,6 +355,10 @@ static bool flush_scratch_flash(void) {
         copy_block(_scratch_page_address + i * FILESYSTEM_BLOCK_SIZE,
             _current_page_address + i * FILESYSTEM_BLOCK_SIZE);
     }
+    // Every scratch block is now written, so the next write must erase the
+    // scratch page first. Unload the page so that it does.
+    _current_page_address = NO_PAGE_LOADED;
+    _clear_row_flags();
     return true;
 }
 
@@ -541,8 +545,14 @@ static bool _flash_write_block(const uint8_t *data, uint32_t block) {
     // Mask out the lower bits that designate the address within the sector.
     uint32_t page_address = address & _page_mask;
     size_t block_index = (address / FILESYSTEM_BLOCK_SIZE) % _blocks_per_page;
-    // Flush the cache if we're moving onto a different page.
-    if (_current_page_address != page_address) {
+    // Flush the cache if we're moving onto a different page, or if we're
+    // writing the same block again while caching in the scratch page: flash
+    // can't be rewritten without an erase, so the second write must start a
+    // fresh scratch page.
+    bool scratch_rewrite = flash_cache_table == NULL &&
+        _current_page_address == page_address &&
+        (_row_flags[block_index] & ROW_DIRTY);
+    if (_current_page_address != page_address || scratch_rewrite) {
         // Check to see if we'd write to an erased block and aren't writing to
         // our cache. In that case we can write directly. Do not take this fast
         // path when the target block is part of the currently cached page: the
