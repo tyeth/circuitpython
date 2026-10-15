@@ -541,13 +541,12 @@ config MCUMGR_TRANSPORT_NETBUF_SIZE
 # - The stock Adafruit nRF52 bootloader (the Adafruit boards, which boot UF2
 #   with no MCUboot domain) reads the raw GPREGRET register instead, so no
 #   retention subsystem is needed for them.
-# - RP2: board overlays add the region; rom_bootloader.c consumes it.
 
 DT_BOOT_MODE_CHOSEN := zephyr,boot-mode
 DT_BOOT_INFO_CHOSEN := zephyr,bootloader-info
 
 config RETAINED_MEM
-	default y if (BOOTLOADER_MCUBOOT || SOC_FAMILY_RPI_PICO) && ($(dt_chosen_enabled,$(DT_BOOT_MODE_CHOSEN)) || $(dt_chosen_enabled,$(DT_BOOT_INFO_CHOSEN)))
+	default y if BOOTLOADER_MCUBOOT && ($(dt_chosen_enabled,$(DT_BOOT_MODE_CHOSEN)) || $(dt_chosen_enabled,$(DT_BOOT_INFO_CHOSEN)))
 
 config RETENTION
 	default y if RETAINED_MEM

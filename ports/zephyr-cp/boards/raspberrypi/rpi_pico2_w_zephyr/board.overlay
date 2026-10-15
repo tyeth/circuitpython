@@ -1,6 +1,3 @@
 /* Partition layout is owned by the mcuboot fork (dts/raspberrypi/rpi_pico2.dtsi)
  * and applied to this image by sysbuild. This overlay only adds board/app config. */
 #include "../../../app.overlay"
-
-#include <vendor/raspberrypi/rp2350-boot-mode-retention.dtsi>
-#include "../../rp2_boot_mode.dtsi"
