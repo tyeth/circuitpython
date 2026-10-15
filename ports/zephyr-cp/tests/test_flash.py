@@ -192,3 +192,73 @@ def test_flash_256k_overwrite(circuitpython, board):
         circuitpython.flash_file, "overwrite.txt", board, erase_page_size=262144
     )
     assert content == "second version"
+
+
+SCRATCH_PAGE_CODE = """\
+import gc
+import storage
+storage.remount("/", readonly=False)
+
+# Open the files and build their contents first: nothing that allocates can
+# run once the heap is full.
+names = ("/scratch0.txt", "/scratch1.txt", "/scratch2.txt", "/scratch3.txt")
+chunks = (b"A" * 300, b"B" * 300, b"C" * 300, b"D" * 300)
+files = [open(name, "wb") for name in names]
+
+# Fill the heap so flash.c can't allocate its RAM cache and stages writes in
+# the scratch page instead.
+filler = []
+for size in (65536, 4096, 512, 64):
+    while True:
+        try:
+            filler.append(bytearray(size))
+        except MemoryError:
+            break
+
+# Each flush() rewrites the directory block, and appends rewrite the FAT, so
+# the same blocks are written again while their page is in the scratch page.
+for _ in range(8):
+    for i in range(4):
+        files[i].write(chunks[i])
+        files[i].flush()
+for f in files:
+    f.close()
+
+filler = None
+gc.collect()
+ok = True
+for i in range(4):
+    with open(names[i], "rb") as f:
+        if f.read() != chunks[i] * 8:
+            ok = False
+            print("MISMATCH", names[i])
+if ok:
+    print("scratch_page_ok")
+print("done")
+"""
+
+
+@pytest.mark.parametrize("board", ["native_native_sim", "native_native_sim_asan"], indirect=True)
+@pytest.mark.circuitpy_drive({"code.py": SCRATCH_PAGE_CODE})
+@pytest.mark.flash_config(erase_block_size=16384)
+def test_flash_scratch_page_rewrites(circuitpython, board):
+    """Test rewriting blocks while writes are staged in the scratch page.
+
+    The flash simulator rejects writes to flash that isn't erased, so a block
+    programmed twice without an erase fails instead of silently corrupting.
+    16KB erase blocks make the RAM cache too big to allocate from a full heap,
+    and evenly divide the 0x1fc000 filesystem partition, so the scratch page
+    is inside it. (littlefs doesn't stage writes in the scratch page.)
+    """
+    circuitpython.wait_until_done()
+    output = circuitpython.serial.all_output
+    debug_output = circuitpython.debug_serial.all_output
+    assert "Unable to allocate ram cache" in debug_output, "scratch page path not taken"
+    assert "flash write failed" not in debug_output
+    assert "scratch_page_ok" in output
+
+    for i, letter in enumerate("ABCD"):
+        content = read_file_from_flash(
+            circuitpython.flash_file, f"scratch{i}.txt", board, erase_page_size=16384
+        )
+        assert content == letter * 300 * 8, f"scratch{i}.txt mismatch"
