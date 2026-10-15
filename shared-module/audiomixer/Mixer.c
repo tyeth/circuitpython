@@ -94,11 +94,12 @@ static inline uint32_t add16signed(uint32_t a, uint32_t b) {
 __attribute__((always_inline))
 static inline uint32_t mult16signed(uint32_t val, int32_t lomul, int32_t himul) {
     #if (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1))
-    lomul <<= 16;
-    himul <<= 16;
+    // A level of 1.0 is 1 << 15, so shifting by 16 would overflow into the sign bit.
+    lomul <<= 15;
+    himul <<= 15;
     int32_t hi, lo;
     enum { bits = 16 }; // saturate to 16 bits
-    enum { shift = 15 }; // shift is done automatically
+    enum { shift = 14 }; // smulw shifts by 16, so 14 more gives (val * mul) >> 15
     __asm__ volatile ("smulwb %0, %1, %2" : "=r" (lo) : "r" (lomul), "r" (val));
     __asm__ volatile ("smulwt %0, %1, %2" : "=r" (hi) : "r" (himul), "r" (val));
     __asm__ volatile ("ssat %0, %1, %2, asr %3" : "=r" (lo) : "I" (bits), "r" (lo), "I" (shift));
@@ -259,9 +260,9 @@ static void mix_down_one_voice(audiomixer_mixer_obj_t *self,
         uint16_t left_panning_scaled = 32768, right_panning_scaled = 32768;
         if (MP_LIKELY(self->base.channel_count == 2)) {
             if (panning >= 0) {
-                left_panning_scaled = 32767 - panning;
+                left_panning_scaled = 32768 - panning;
             } else {
-                right_panning_scaled = 32767 + panning;
+                right_panning_scaled = 32768 + panning;
             }
         }
 
