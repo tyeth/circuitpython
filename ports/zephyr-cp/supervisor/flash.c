@@ -212,8 +212,6 @@ void supervisor_flash_init(void) {
     const struct flash_parameters *fp = flash_get_parameters(d);
     _erase_value = fp->erase_value;
     flash_get_page_info_by_offs(d, filesystem_area->fa_off, &first_info);
-    struct flash_pages_info last_info;
-    flash_get_page_info_by_offs(d, filesystem_area->fa_off + filesystem_area->fa_size - FILESYSTEM_BLOCK_SIZE, &last_info);
     _page_size = first_info.size;
     if (_page_size < FILESYSTEM_BLOCK_SIZE) {
         _page_size = FILESYSTEM_BLOCK_SIZE;
@@ -223,6 +221,16 @@ void supervisor_flash_init(void) {
     printk("  erase page size %d\n", _page_size);
     printk("  blocks per page %d\n", _blocks_per_page);
 
+    // Page addresses are relative to the start of the area. If the area
+    // doesn't end on a page boundary, its last partial page can't be erased
+    // without going past the end, so it is left unused.
+    size_t page_count = filesystem_area->fa_size / _page_size;
+    if (page_count < 2) {
+        printk("Filesystem area too small (%zu pages)\n", page_count);
+        filesystem_area = NULL;
+        return;
+    }
+
     _row_flags = port_malloc(_blocks_per_page, false);
     if (_row_flags == NULL) {
         printk("Unable to allocate row flags (%d bytes)\n", _blocks_per_page);
@@ -231,8 +239,8 @@ void supervisor_flash_init(void) {
     }
     memset(_row_flags, 0, _blocks_per_page);
 
-    // The last page is the scratch sector.
-    _scratch_page_address = last_info.start_offset - filesystem_area->fa_off;
+    // The last whole page is the scratch page.
+    _scratch_page_address = (page_count - 1) * _page_size;
     _current_page_address = NO_PAGE_LOADED;
 }
 

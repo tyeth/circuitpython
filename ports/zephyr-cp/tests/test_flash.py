@@ -238,6 +238,23 @@ print("done")
 """
 
 
+def check_scratch_page_run(circuitpython, board, erase_page_size):
+    """Check a SCRATCH_PAGE_CODE run, on the console and in the flash image."""
+    circuitpython.wait_until_done()
+    output = circuitpython.serial.all_output
+    debug_output = circuitpython.debug_serial.all_output
+    assert "Unable to allocate ram cache" in debug_output, "scratch page path not taken"
+    assert "Erase of" not in debug_output
+    assert "flash write failed" not in debug_output
+    assert "scratch_page_ok" in output
+
+    for i, letter in enumerate("ABCD"):
+        content = read_file_from_flash(
+            circuitpython.flash_file, f"scratch{i}.txt", board, erase_page_size=erase_page_size
+        )
+        assert content == letter * 300 * 8, f"scratch{i}.txt mismatch"
+
+
 @pytest.mark.parametrize("board", ["native_native_sim", "native_native_sim_asan"], indirect=True)
 @pytest.mark.circuitpy_drive({"code.py": SCRATCH_PAGE_CODE})
 @pytest.mark.flash_config(erase_block_size=16384)
@@ -247,18 +264,20 @@ def test_flash_scratch_page_rewrites(circuitpython, board):
     The flash simulator rejects writes to flash that isn't erased, so a block
     programmed twice without an erase fails instead of silently corrupting.
     16KB erase blocks make the RAM cache too big to allocate from a full heap,
-    and evenly divide the 0x1fc000 filesystem partition, so the scratch page
-    is inside it. (littlefs doesn't stage writes in the scratch page.)
+    and evenly divide the 0x1fc000 filesystem partition. (littlefs doesn't
+    stage writes in the scratch page.)
     """
-    circuitpython.wait_until_done()
-    output = circuitpython.serial.all_output
-    debug_output = circuitpython.debug_serial.all_output
-    assert "Unable to allocate ram cache" in debug_output, "scratch page path not taken"
-    assert "flash write failed" not in debug_output
-    assert "scratch_page_ok" in output
+    check_scratch_page_run(circuitpython, board, erase_page_size=16384)
 
-    for i, letter in enumerate("ABCD"):
-        content = read_file_from_flash(
-            circuitpython.flash_file, f"scratch{i}.txt", board, erase_page_size=16384
-        )
-        assert content == letter * 300 * 8, f"scratch{i}.txt mismatch"
+
+@pytest.mark.parametrize("board", ["native_native_sim", "native_native_sim_asan"], indirect=True)
+@pytest.mark.circuitpy_drive({"code.py": SCRATCH_PAGE_CODE})
+@pytest.mark.flash_config(erase_block_size=65536)
+def test_flash_scratch_page_partial_last_page(circuitpython, board):
+    """Test the scratch page when the partition doesn't end on a page boundary.
+
+    The 0x1fc000 filesystem partition isn't a multiple of 64KB, so its last
+    page is partial and can't be erased. The scratch page must be the last
+    whole page instead.
+    """
+    check_scratch_page_run(circuitpython, board, erase_page_size=65536)
