@@ -123,6 +123,34 @@ CONNECTORS = {
         "D12",
         "D13",
     ],
+    # Our own binding (dts/bindings/adafruit-itsybitsy-header.yaml): the
+    # ItsyBitsy nRF52840 header pins only.
+    # TODO: figure out how to handle the extra pins on other ItsyBitsy
+    # boards, such as D3 and D4 on the ItsyBitsy M4 and RP2040. We may want
+    # separate connectors for the different board families.
+    "adafruit-itsybitsy-header": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "SCK",
+        "MOSI",
+        "MISO",
+        ["D0", "RX"],
+        ["D1", "TX"],
+        "D2",
+        "SDA",
+        "SCL",
+        "D5",
+        "D7",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
+    ],
     "adafruit-clue": [
         ["P0", "D0", "A2", "RX"],
         ["P1", "D1", "A3", "TX"],
