@@ -64,6 +64,17 @@ config ZERO_LATENCY_IRQS
 config BT_CTLR_ASSERT_OVERHEAD_START
 	default n if SOC_FAMILY_NORDIC_NRF
 
+# ===== External flash (nRF QSPI) =====
+# supervisor/flash.c sets aside the last erase page of the filesystem as a
+# scratch page, and caches a whole erase page in RAM while writing. Zephyr's
+# default layout page is the 64 KB erase block, which loses 64 KB of the
+# filesystem and needs a 64 KB RAM cache. Use the 4 KB sector instead; the
+# driver erases 4 KB sectors too.
+#
+# This also matches ports/nordic, so a filesystem it formatted fits here.
+config NORDIC_QSPI_NOR_FLASH_LAYOUT_PAGE_SIZE
+	default 4096 if NORDIC_QSPI_NOR
+
 # ===== Bluetooth defaults =====
 
 # Use a variable for the chosen name so the comma isn't parsed as an argument separator
