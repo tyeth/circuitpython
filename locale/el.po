@@ -1524,7 +1524,7 @@ msgid "%q must be array of type 'H'"
 msgstr "%q πρέπει να είναι πίνακας τύπου 'H'"
 
 #: ports/espressif/common-hal/audiobusio/PDMIn.c
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 msgid "%q must be 8, 16, 24, or 32"
 msgstr ""
 
@@ -1723,6 +1723,7 @@ msgstr ""
 #: shared-bindings/digitalio/DigitalInOut.c shared-bindings/emmcio/EMMC.c
 #: shared-bindings/i2cioexpander/IOPin.c shared-bindings/microcontroller/Pin.c
 #: shared-module/max3421e/Max3421E.c shared-module/usb/core/Device.c
+#: shared-module/usb_host_audio/USBIn.c
 msgid "%q in use"
 msgstr "%q είναι σε χρήση"
 
@@ -3959,10 +3960,12 @@ msgid "%q must be multiple of 8."
 msgstr ""
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Cannot record to a file"
 msgstr "Δεν μπορεί να γίνει καταγραφή σε αρχείο"
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Destination capacity is smaller than destination_length."
 msgstr ""
 "Το μέγεθος προορισμού πρέπει να είναι μικρότερο από το destination_length."
@@ -4003,7 +4006,7 @@ msgstr ""
 msgid "bits_per_sample must be 16"
 msgstr ""
 
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 #, c-format
 msgid "invalid destination buffer, must be an array of type: %c"
 msgstr ""
