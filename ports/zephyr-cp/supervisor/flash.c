@@ -31,6 +31,28 @@
 #elif FIXED_PARTITION_EXISTS(circuitpy_partition)
 #define CIRCUITPY_PARTITION circuitpy_partition
 #endif
+
+// Check that the filesystem partition starts and ends on a layout page
+// boundary: flash.c addresses erase pages relative to the start of the
+// partition. The NOR flash drivers set their layout page size in Kconfig, so
+// they can be checked at build time. (Other drivers report it only at run
+// time.)
+#if FIXED_PARTITION_EXISTS(CIRCUITPY_PARTITION)
+#define CIRCUITPY_PARTITION_NODE DT_NODELABEL(CIRCUITPY_PARTITION)
+#define CIRCUITPY_PARTITION_MTD DT_MTD_FROM_FIXED_PARTITION(CIRCUITPY_PARTITION_NODE)
+#if defined(CONFIG_NORDIC_QSPI_NOR) && DT_NODE_HAS_COMPAT(CIRCUITPY_PARTITION_MTD, nordic_qspi_nor)
+#define CIRCUITPY_LAYOUT_PAGE_SIZE CONFIG_NORDIC_QSPI_NOR_FLASH_LAYOUT_PAGE_SIZE
+#elif defined(CONFIG_SPI_NOR) && DT_NODE_HAS_COMPAT(CIRCUITPY_PARTITION_MTD, jedec_spi_nor)
+#define CIRCUITPY_LAYOUT_PAGE_SIZE CONFIG_SPI_NOR_FLASH_LAYOUT_PAGE_SIZE
+#elif defined(CONFIG_FLASH_MSPI_NOR) && DT_NODE_HAS_COMPAT(CIRCUITPY_PARTITION_MTD, jedec_nor)
+#define CIRCUITPY_LAYOUT_PAGE_SIZE CONFIG_FLASH_MSPI_NOR_LAYOUT_PAGE_SIZE
+#endif
+#ifdef CIRCUITPY_LAYOUT_PAGE_SIZE
+BUILD_ASSERT(DT_REG_ADDR(CIRCUITPY_PARTITION_NODE) % CIRCUITPY_LAYOUT_PAGE_SIZE == 0 &&
+    DT_REG_SIZE(CIRCUITPY_PARTITION_NODE) % CIRCUITPY_LAYOUT_PAGE_SIZE == 0,
+    "filesystem partition must start and end on a flash layout page boundary");
+#endif
+#endif
 static const struct flash_area *filesystem_area = NULL;
 
 #if !FIXED_PARTITION_EXISTS(CIRCUITPY_PARTITION)
