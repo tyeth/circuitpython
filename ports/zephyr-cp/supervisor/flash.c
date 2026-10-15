@@ -552,7 +552,9 @@ static bool _flash_write_block(const uint8_t *data, uint32_t block) {
             return write_flash(address, data, FILESYSTEM_BLOCK_SIZE);
         }
         if (_current_page_address != NO_PAGE_LOADED) {
-            supervisor_flash_flush();
+            // Flush only the old page. supervisor_flash_flush() would also
+            // clear the dirty flag, which littlefs sets before writing.
+            _flush_keep_cache(true);
         }
         if (flash_cache_table == NULL && !allocate_ram_cache()) {
             erase_page(_scratch_page_address);
