@@ -251,18 +251,6 @@ static bool touch_requested(void) {
     return baudrate == 1200 && dtr == 0;
 }
 
-static void touch_work_handler(struct k_work *work) {
-    // Host may have reopened the port.
-    if (!touch_requested()) {
-        return;
-    }
-    // Detach so the host sees a disconnect.
-    usbd_disable(&main_usbd);
-    reset_to_bootloader();
-}
-
-static K_WORK_DELAYABLE_DEFINE(touch_work, touch_work_handler);
-
 static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) {
     LOG_INF("USBD message: %s", usbd_msg_type_string(msg->type));
 
@@ -304,15 +292,13 @@ static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) 
     }
     update_console_flow_control();
 
-    // 1200 baud + DTR low, in either order; recheck in 100 ms.
+    // 1200 baud + DTR low, in either order.
     if ((msg->type == USBD_MSG_CDC_ACM_LINE_CODING ||
          msg->type == USBD_MSG_CDC_ACM_CONTROL_LINE_STATE) &&
-        msg->dev == touch_cdc) {
-        if (touch_requested()) {
-            k_work_schedule(&touch_work, K_MSEC(100));
-        } else {
-            k_work_cancel_delayable(&touch_work);
-        }
+        msg->dev == touch_cdc && touch_requested()) {
+        // Detach so the host sees a disconnect.
+        usbd_disable(&main_usbd);
+        reset_to_bootloader();
     }
 }
 
