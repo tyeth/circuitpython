@@ -177,6 +177,7 @@ void common_hal_busio_spi_construct(busio_spi_obj_t *self,
     // Always start at 250khz which is what SD cards need. They are sensitive to
     // SPI bus noise before they are put into SPI mode.
     config.baudRate = 250000;
+    self->target_frequency = config.baudRate;
     LPSPI_MasterInit(self->spi, &config, LPSPI_MASTER_CLK_FREQ);
     LPSPI_Enable(self->spi, false);
     uint32_t tcrPrescaleValue;
@@ -227,8 +228,8 @@ bool common_hal_busio_spi_configure(busio_spi_obj_t *self,
 
     if ((polarity == common_hal_busio_spi_get_polarity(self)) &&
         (phase == common_hal_busio_spi_get_phase(self)) &&
-        (bits == ((self->spi->TCR & LPSPI_TCR_FRAMESZ_MASK) >> LPSPI_TCR_FRAMESZ_SHIFT)) + 1 &&
-        (baudrate == common_hal_busio_spi_get_frequency(self))) {
+        (bits == ((self->spi->TCR & LPSPI_TCR_FRAMESZ_MASK) >> LPSPI_TCR_FRAMESZ_SHIFT) + 1) &&
+        (baudrate == self->target_frequency)) {
         return true;
     }
 
@@ -254,6 +255,7 @@ bool common_hal_busio_spi_configure(busio_spi_obj_t *self,
     LPSPI_Enable(self->spi, false);
     self->baudrate = LPSPI_MasterSetBaudRate(self->spi, baudrate, LPSPI_MASTER_CLK_FREQ, &tcrPrescaleValue);
     LPSPI_Enable(self->spi, true);
+    self->target_frequency = baudrate;
 
     return true;
 }
