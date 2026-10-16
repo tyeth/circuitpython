@@ -399,7 +399,7 @@ static bool has_leading_zero(const char *str) {
     if (*str == '+' || *str == '-') {
         str++;
     }
-    return str[0] == '0' && (unichar_isdigit(str[1]) || str[1] == '_');
+    return str[0] == '0' && unichar_isdigit(str[1]);
 }
 
 static settings_err_t get_int(const char *key, mp_int_t *value) {
