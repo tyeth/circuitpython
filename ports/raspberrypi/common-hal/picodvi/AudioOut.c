@@ -28,15 +28,13 @@ typedef struct {
     uint32_t sample_rate;
     // The usual ACR N, for when no N gives an exact CTS.
     uint32_t usual_n;
-    // IEC 60958 channel status byte 3.
-    uint8_t channel_status;
 } dvi_audio_rate_t;
 
 // The basic audio rates every DVI sink takes.
 static const dvi_audio_rate_t dvi_audio_rates[] = {
-    { 32000, 4096, 0x03 },
-    { 44100, 6272, 0x00 },
-    { 48000, 6144, 0x02 },
+    { 32000, 4096 },
+    { 44100, 6272 },
+    { 48000, 6144 },
 };
 #define DVI_AUDIO_RATE_COUNT MP_ARRAY_SIZE(dvi_audio_rates)
 #define DVI_AUDIO_H_TOTAL (MODE_640_H_FRONT_PORCH + MODE_640_H_SYNC_WIDTH + MODE_640_H_BACK_PORCH + MODE_640_H_ACTIVE_PIXELS)
@@ -286,7 +284,7 @@ static void dvi_audio_init_packets(dvi_audio_state_t *audio) {
     // Frame position 4 never sets the block start flag, and frames 4 to 7
     // carry no channel status bits, so silence is the same at every rate.
     audio_sample_t silence[4] = {{0}};
-    hstx_packet_set_audio_samples(&packet, silence, 4, 4, dvi_audio_rates[DVI_AUDIO_RATE_COUNT - 1].channel_status);
+    hstx_packet_set_audio_samples(&packet, silence, 4, 4, dvi_audio_rates[DVI_AUDIO_RATE_COUNT - 1].sample_rate);
     for (int vsync = 0; vsync < 2; vsync++) {
         dvi_audio_encode(audio->silence[vsync], &packet, vsync);
     }
@@ -468,7 +466,7 @@ static const uint32_t *dvi_audio_next_packet(dvi_audio_state_t *audio, const int
             }
             hstx_packet_t packet;
             audio->channel_frame = hstx_packet_set_audio_samples(&packet, packet_samples, n, audio->channel_frame,
-                dvi_audio_rates[audio->rate_index].channel_status);
+                dvi_audio_rates[audio->rate_index].sample_rate);
             uint32_t *buffer = audio->pool[audio->pool_head];
             dvi_audio_encode(buffer, &packet, vsync);
             audio->pool_position[audio->pool_head] = audio->write_position;
