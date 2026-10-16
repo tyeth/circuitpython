@@ -386,6 +386,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(supervisor_set_usb_identification_obj, 0, supervisor_
 //|
 //|     Leading zeros are not allowed in integers or in the integer part of floats:
 //|     ``017`` and ``01.5`` are errors.
+//|     Underscores are allowed between digits: ``1_000`` is the integer 1000.
 //|
 //|     Example::
 //|
