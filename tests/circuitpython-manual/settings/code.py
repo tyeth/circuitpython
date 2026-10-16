@@ -27,6 +27,7 @@ check("str_val", "hello")
 check("int_val", 42)
 check("neg_int_val", -7)
 check("hex_int_val", 31)
+check("hex_leading_zero_val", 15)  # TOML allows leading zeros after 0x
 check("zero_int_val", 0)
 check("signed_zero_val", 0)
 check("bool_true", True)
