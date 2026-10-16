@@ -402,33 +402,6 @@ static bool has_leading_zero(const char *str) {
     return str[0] == '0' && (unichar_isdigit(str[1]) || str[1] == '_');
 }
 
-// TOML allows underscores between digits, such as 1_000 or 0xdead_beef.
-// https://toml.io/en/v1.0.0#integer and https://toml.io/en/v1.0.0#float
-// Removes them in place. Returns false if an underscore is not between two digits.
-static bool remove_underscores(char *str) {
-    const char *p = str;
-    if (*p == '+' || *p == '-') {
-        p++;
-    }
-    bool hex = p[0] == '0' && p[1] == 'x';
-    char *out = str;
-    char prev = 0;
-    for (const char *in = str; *in; in++) {
-        if (*in == '_') {
-            bool prev_ok = hex ? unichar_isxdigit(prev) : unichar_isdigit(prev);
-            bool next_ok = hex ? unichar_isxdigit(in[1]) : unichar_isdigit(in[1]);
-            if (!prev_ok || !next_ok) {
-                return false;
-            }
-        } else {
-            *out++ = *in;
-        }
-        prev = *in;
-    }
-    *out = '\0';
-    return true;
-}
-
 static settings_err_t get_int(const char *key, mp_int_t *value) {
     char buf[16];
     bool quoted;
@@ -436,7 +409,7 @@ static settings_err_t get_int(const char *key, mp_int_t *value) {
     if (result != SETTINGS_OK) {
         return result;
     }
-    if (quoted || has_leading_zero(buf) || !remove_underscores(buf)) {
+    if (quoted || has_leading_zero(buf)) {
         return SETTINGS_ERR_BAD_VALUE;
     }
     char *end;
@@ -495,7 +468,7 @@ static settings_err_t get_float(const char *key, mp_float_t *value) {
     if (result != SETTINGS_OK) {
         return result;
     }
-    if (quoted || has_leading_zero(buf) || !remove_underscores(buf)) {
+    if (quoted || has_leading_zero(buf)) {
         return SETTINGS_ERR_BAD_VALUE;
     }
 

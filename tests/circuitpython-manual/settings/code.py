@@ -28,9 +28,6 @@ check("int_val", 42)
 check("neg_int_val", -7)
 check("hex_int_val", 31)
 check("hex_leading_zero_val", 15)  # TOML allows leading zeros after 0x
-check("underscore_int_val", 1000)  # TOML allows underscores between digits
-check("neg_underscore_int_val", -1000)
-check("hex_underscore_val", 0x1234ABCD)
 check("zero_int_val", 0)
 check("signed_zero_val", 0)
 check("bool_true", True)
@@ -39,8 +36,6 @@ check("float_val", 3.14)
 check("neg_float_val", -1.5)
 check("frac_float_val", 0.5)
 check("sci_float_val", 6.626e-34)
-check("underscore_float_val", 1000.5)
-check("underscore_exp_val", 1e10)
 # math.nan and math.inf are not always available
 check("pos_inf", float("inf"))
 check("neg_inf", -float("inf"))
@@ -63,11 +58,6 @@ check_bad("bad_leading_zero")  # TOML does not allow leading zeros
 check_bad("bad_leading_zero_neg")  # also after a sign
 check_bad("bad_leading_zero_08")  # not octal, so it used to fall back to float
 check_bad("bad_leading_zero_float")  # nor on the integer part of a float
-check_bad("bad_double_underscore")  # each underscore needs a digit on both sides
-check_bad("bad_leading_underscore")
-check_bad("bad_trailing_underscore")
-check_bad("bad_underscore_before_dot")
-check_bad("bad_underscore_after_hex_prefix")
 
 # Missing key returns default
 got = supervisor.get_setting("no_such_key", "default")
