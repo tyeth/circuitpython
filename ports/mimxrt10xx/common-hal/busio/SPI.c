@@ -19,7 +19,15 @@
 #if IMXRT11XX
 #define LPSPI_MASTER_CLK_FREQ (24000000)
 #else
-#define LPSPI_MASTER_CLK_FREQ (CLOCK_GetFreq(kCLOCK_Usb1PllPfd0Clk) / (CLOCK_GetDiv(kCLOCK_LpspiDiv) + 1))
+#define LPSPI_MASTER_CLK_FREQ (lpspi_clock_freq())
+
+static uint32_t lpspi_clock_freq(void) {
+    // Indexed by the LPSPI_CLK_SEL mux setting.
+    static const clock_name_t sources[] = {
+        kCLOCK_Usb1PllPfd1Clk, kCLOCK_Usb1PllPfd0Clk, kCLOCK_SysPllClk, kCLOCK_SysPllPfd2Clk
+    };
+    return CLOCK_GetFreq(sources[CLOCK_GetMux(kCLOCK_LpspiMux)]) / (CLOCK_GetDiv(kCLOCK_LpspiDiv) + 1);
+}
 #endif
 
 #define MAX_SPI_BUSY_RETRIES 100
