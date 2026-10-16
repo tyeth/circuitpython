@@ -199,7 +199,8 @@ int _zephyr_disk_ioctl(struct disk_info *disk, uint8_t cmd, void *buff) {
             disk_ioctl(root, GET_SECTOR_SIZE, buff);
             return 0;
         case DISK_IOCTL_CTRL_SYNC:
-            disk_ioctl(root, CTRL_SYNC, buff);
+            // Zephyr's MSC class sends this after every WRITE10. Don't flush
+            // here; the background flush writes the cached page.
             autoreload_resume(AUTORELOAD_SUSPEND_USB);
 
             // This write is complete; initiate an autoreload if this was a file data or metadata write,
