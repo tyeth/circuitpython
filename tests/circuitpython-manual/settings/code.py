@@ -64,6 +64,8 @@ check_bad("bad_leading_zero_08")  # not octal, so it used to fall back to float
 check_bad("bad_leading_zero_float")  # nor on the integer part of a float
 check_bad("bad_hex_no_digits")  # prefix with no digits
 check_bad("bad_hex_overflow")  # does not fit in a 32-bit int
+check_bad("bad_digit_at")  # '@' is not a digit
+check_bad("bad_unicode_underscore")  # no underscores in \u escapes
 
 # Missing key returns default
 got = supervisor.get_setting("no_such_key", "default")

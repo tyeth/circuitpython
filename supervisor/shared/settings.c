@@ -200,9 +200,11 @@ static const char *parse_digits(const char *str, mp_uint_t base, mp_uint_t *valu
         }
         if ('0' <= dig && dig <= '9') {
             dig -= '0';
-        } else {
-            // Lowercase; anything that is not a letter ends up >= base.
+        } else if ((dig | 0x20) >= 'a') {
+            // Lowercase; anything past 'z' ends up >= base.
             dig = (dig | 0x20) - 'a' + 10;
+        } else {
+            break;
         }
         if (dig >= base) {
             break;
@@ -219,14 +221,13 @@ static const char *parse_digits(const char *str, mp_uint_t base, mp_uint_t *valu
 }
 
 static settings_err_t read_unicode_escape(file_arg *file_handle, int sz, vstr_t *vstr) {
-    char hex_buf[sz + 1];
+    mp_uint_t c = 0;
     for (int i = 0; i < sz; i++) {
-        hex_buf[i] = get_next_byte(file_handle);
-    }
-    hex_buf[sz] = 0;
-    mp_uint_t c;
-    if (parse_digits(hex_buf, 16, &c) != &hex_buf[sz]) {
-        return SETTINGS_ERR_BAD_VALUE;
+        uint8_t hex = get_next_byte(file_handle);
+        if (!unichar_isxdigit(hex)) {
+            return SETTINGS_ERR_BAD_VALUE;
+        }
+        c = c * 16 + unichar_xdigit_value(hex);
     }
     if (c >= 0x110000) {
         return SETTINGS_ERR_UNICODE;
@@ -425,15 +426,6 @@ settings_err_t settings_get_str(const char *key, char *value, size_t value_len) 
     return result;
 }
 
-// TOML does not allow leading zeros on decimal integers or on the integer part of floats.
-// https://toml.io/en/v1.0.0#integer and https://toml.io/en/v1.0.0#float
-static bool has_leading_zero(const char *str) {
-    if (*str == '+' || *str == '-') {
-        str++;
-    }
-    return str[0] == '0' && unichar_isdigit(str[1]);
-}
-
 static settings_err_t get_int(const char *key, mp_int_t *value) {
     char buf[16];
     bool quoted;
@@ -441,7 +433,7 @@ static settings_err_t get_int(const char *key, mp_int_t *value) {
     if (result != SETTINGS_OK) {
         return result;
     }
-    if (quoted || has_leading_zero(buf)) {
+    if (quoted) {
         return SETTINGS_ERR_BAD_VALUE;
     }
     // Accept a superset of TOML: a sign is also allowed before 0x, 0o and 0b, the prefix
@@ -464,6 +456,9 @@ static settings_err_t get_int(const char *key, mp_int_t *value) {
         }
         if (base != 10) {
             str += 2;
+        } else if (unichar_isdigit(str[1])) {
+            // TOML does not allow leading zeros on decimal integers.
+            return SETTINGS_ERR_BAD_VALUE;
         }
     }
     mp_uint_t magnitude;
@@ -519,6 +514,15 @@ settings_err_t settings_get_bool(const char *key, bool *value) {
 }
 
 #if MICROPY_PY_BUILTINS_FLOAT
+// TOML does not allow leading zeros on decimal integers or on the integer part of floats.
+// https://toml.io/en/v1.0.0#integer and https://toml.io/en/v1.0.0#float
+static bool has_leading_zero(const char *str) {
+    if (*str == '+' || *str == '-') {
+        str++;
+    }
+    return str[0] == '0' && unichar_isdigit(str[1]);
+}
+
 static settings_err_t get_float(const char *key, mp_float_t *value) {
     char buf[48];
     bool quoted;
