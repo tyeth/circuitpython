@@ -185,15 +185,47 @@ static bool key_matches(file_arg *file_handle, const char *key) {
     return true;
 }
 
+// Parse digits in base 2 to 16, skipping any '_' after the first digit.
+// Used instead of strtol() and strtoul(), which would pull in about 0.8 kB of libc.
+//
+// Returns a pointer past the last digit, or NULL if there are no digits or the value
+// overflows mp_uint_t. *value is not touched on error.
+static const char *parse_digits(const char *str, mp_uint_t base, mp_uint_t *value) {
+    const char *start = str;
+    mp_uint_t val = 0;
+    for (;; str++) {
+        mp_uint_t dig = (unsigned char)*str;
+        if (dig == '_' && str != start) {
+            continue;
+        }
+        if ('0' <= dig && dig <= '9') {
+            dig -= '0';
+        } else {
+            // Lowercase; anything that is not a letter ends up >= base.
+            dig = (dig | 0x20) - 'a' + 10;
+        }
+        if (dig >= base) {
+            break;
+        }
+        if (__builtin_mul_overflow(val, base, &val) || __builtin_add_overflow(val, dig, &val)) {
+            return NULL;
+        }
+    }
+    if (str == start) {
+        return NULL;
+    }
+    *value = val;
+    return str;
+}
+
 static settings_err_t read_unicode_escape(file_arg *file_handle, int sz, vstr_t *vstr) {
     char hex_buf[sz + 1];
     for (int i = 0; i < sz; i++) {
         hex_buf[i] = get_next_byte(file_handle);
     }
     hex_buf[sz] = 0;
-    char *end;
-    unsigned long c = strtoul(hex_buf, &end, 16);
-    if (end != &hex_buf[sz]) {
+    mp_uint_t c;
+    if (parse_digits(hex_buf, 16, &c) != &hex_buf[sz]) {
         return SETTINGS_ERR_BAD_VALUE;
     }
     if (c >= 0x110000) {
@@ -412,15 +444,41 @@ static settings_err_t get_int(const char *key, mp_int_t *value) {
     if (quoted || has_leading_zero(buf)) {
         return SETTINGS_ERR_BAD_VALUE;
     }
-    char *end;
-    long num = strtol(buf, &end, 0);
-    while (unichar_isspace(*end)) {
-        end++;
+    // Accept a superset of TOML: a sign is also allowed before 0x, 0o and 0b, the prefix
+    // may be uppercase, and underscores need not be between digits.
+    const char *str = buf;
+    bool neg = false;
+    if (*str == '+' || *str == '-') {
+        neg = *str == '-';
+        str++;
     }
-    if (end == buf || *end) { // If the whole buffer was not consumed it's an error
+    mp_uint_t base = 10;
+    if (str[0] == '0') {
+        char prefix = str[1] | 0x20;
+        if (prefix == 'x') {
+            base = 16;
+        } else if (prefix == 'o') {
+            base = 8;
+        } else if (prefix == 'b') {
+            base = 2;
+        }
+        if (base != 10) {
+            str += 2;
+        }
+    }
+    mp_uint_t magnitude;
+    str = parse_digits(str, base, &magnitude);
+    // A negative value can be one larger than MP_INT_MAX.
+    if (str == NULL || magnitude > (mp_uint_t)MP_INT_MAX + neg) {
         return SETTINGS_ERR_BAD_VALUE;
     }
-    *value = (mp_int_t)num;
+    while (unichar_isspace(*str)) {
+        str++;
+    }
+    if (*str) { // If the whole buffer was not consumed it's an error
+        return SETTINGS_ERR_BAD_VALUE;
+    }
+    *value = (mp_int_t)(neg ? 0 - magnitude : magnitude);
     return SETTINGS_OK;
 }
 
