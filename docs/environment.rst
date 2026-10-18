@@ -53,8 +53,11 @@ Details of the TOML language subset
 * The supported data types are strings, integers, floats, and booleans.
 * Whitespace is allowed.
 * Only basic strings are supported, not triple-quoted strings.
-* Only integers supported by ``strtol()`` can be parsed:
-  no ``0o``, no ``0b``, no underscores ``1_000``, ``011`` is 9, not 11.
+* Integers may be decimal, hexadecimal ``0x1F``, octal ``0o17``, or binary ``0b101``,
+  and may contain underscores ``1_000``.
+  Unlike TOML, a sign is also allowed before ``0x``, ``0o``, and ``0b``,
+  the prefix may be uppercase, and underscores need not be between digits.
+* Leading zeros are not allowed: ``011`` is an error, not 9 or 11.
 * Only bare keys are supported.
 * Duplicate keys are not diagnosed.
 * Comments are allowed.
