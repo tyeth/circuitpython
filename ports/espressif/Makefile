@@ -534,6 +534,7 @@ CHIP_COMPONENTS = \
 	esp_driver_usb_serial_jtag \
 	esp_hal_dma \
 	esp_hal_i2s \
+	esp_hal_lcd \
 	esp_hal_pcnt \
 	esp_hal_pmu \
 	esp_hal_rmt \
