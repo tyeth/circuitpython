@@ -1673,17 +1673,16 @@ const size_t iobroker_gpio_port_count = {count};
     if table_parts:
         iobroker_tables = iobroker_tables + "\n\n" + "\n\n".join(table_parts)
 
-    # Generate i2sout_reset() that stops all board I2SOut instances
-    if i2sout_instance_names:
-        stop_calls = "\n    ".join(
-            f"common_hal_audiobusio_i2sout_stop(&{name}_obj);" for name in i2sout_instance_names
-        )
-        i2sout_reset_func = f"""
+    # Generate i2sout_reset() that stops the board's I2SOut objects. It is
+    # generated even when there are none, because reset_port() calls it on
+    # every board with audiobusio.I2SOut.
+    stop_calls = "\n    ".join(
+        f"common_hal_audiobusio_i2sout_stop(&{name}_obj);" for name in i2sout_instance_names
+    )
+    i2sout_reset_func = f"""
 void i2sout_reset(void) {{
     {stop_calls}
 }}"""
-    else:
-        i2sout_reset_func = ""
 
     zephyr_display_header = ""
     zephyr_display_init = ""
