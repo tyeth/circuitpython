@@ -27,6 +27,7 @@
 
 #include "shared-module/storage/__init__.h"
 #include "supervisor/filesystem.h"
+#include "supervisor/port.h"
 #include "supervisor/shared/reload.h"
 
 #include <zephyr/logging/log.h>
@@ -199,7 +200,8 @@ int _zephyr_disk_ioctl(struct disk_info *disk, uint8_t cmd, void *buff) {
             disk_ioctl(root, GET_SECTOR_SIZE, buff);
             return 0;
         case DISK_IOCTL_CTRL_SYNC:
-            disk_ioctl(root, CTRL_SYNC, buff);
+            // Zephyr's MSC class sends this after every WRITE10. Don't flush
+            // here; the background flush writes the cached page.
             autoreload_resume(AUTORELOAD_SUSPEND_USB);
 
             // This write is complete; initiate an autoreload if this was a file data or metadata write,
@@ -235,6 +237,19 @@ static void update_console_flow_control(void) {
         .flow_ctrl = on ? UART_CFG_FLOW_CTRL_RTS_CTS : UART_CFG_FLOW_CTRL_NONE,
     };
     uart_configure(console_dev, &config);
+}
+
+// First enabled CDC, as on TinyUSB ports.
+static const struct device *touch_cdc;
+
+static bool touch_requested(void) {
+    uint32_t baudrate = 0;
+    uint32_t dtr = 1;
+    if (uart_line_ctrl_get(touch_cdc, UART_LINE_CTRL_BAUD_RATE, &baudrate) != 0 ||
+        uart_line_ctrl_get(touch_cdc, UART_LINE_CTRL_DTR, &dtr) != 0) {
+        return false;
+    }
+    return baudrate == 1200 && dtr == 0;
 }
 
 static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) {
@@ -277,6 +292,15 @@ static void _msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg) 
         console_dtr = dtr != 0;
     }
     update_console_flow_control();
+
+    // 1200 baud + DTR low, in either order.
+    if ((msg->type == USBD_MSG_CDC_ACM_LINE_CODING ||
+         msg->type == USBD_MSG_CDC_ACM_CONTROL_LINE_STATE) &&
+        msg->dev == touch_cdc && touch_requested()) {
+        // Detach so the host sees a disconnect.
+        usbd_disable(&main_usbd);
+        reset_to_bootloader();
+    }
 }
 
 void usb_init(void) {
@@ -314,7 +338,7 @@ void usb_init(void) {
     if (console) {
         uint8_t *receiver_buffer = port_malloc(1024, true);
         if (receiver_buffer != NULL) {
-            common_hal_usb_cdc_serial_construct_from_device(&usb_cdc_console_obj, DEVICE_DT_GET(DT_NODELABEL(cdc_acm_console)), 1024, receiver_buffer);
+            common_hal_usb_cdc_serial_construct_from_device(&usb_cdc_console_obj, DEVICE_DT_GET(DT_NODELABEL(cdc_acm_console)), 1024, receiver_buffer, true);
         } else {
             console = false;
         }
@@ -325,7 +349,7 @@ void usb_init(void) {
     if (data) {
         uint8_t *receiver_buffer = port_malloc(1024, true);
         if (receiver_buffer != NULL) {
-            common_hal_usb_cdc_serial_construct_from_device(&usb_cdc_data_obj, DEVICE_DT_GET(DT_NODELABEL(cdc_acm_data)), 1024, receiver_buffer);
+            common_hal_usb_cdc_serial_construct_from_device(&usb_cdc_data_obj, DEVICE_DT_GET(DT_NODELABEL(cdc_acm_data)), 1024, receiver_buffer, false);
         } else {
             data = false;
         }
@@ -440,6 +464,12 @@ void usb_init(void) {
         USB_BCC_MISCELLANEOUS, 0x02, 0x01);
     printk("Setting self powered\n");
     usbd_self_powered(&main_usbd, attributes & USB_SCD_SELF_POWERED);
+
+    if (usb_cdc_console_enabled()) {
+        touch_cdc = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_console));
+    } else if (usb_cdc_data_enabled()) {
+        touch_cdc = DEVICE_DT_GET(DT_NODELABEL(cdc_acm_data));
+    }
 
     printk("Registering callback\n");
     err = usbd_msg_register_cb(&main_usbd, _msg_cb);

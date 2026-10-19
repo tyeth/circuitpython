@@ -1530,7 +1530,7 @@ msgid "%q must be array of type 'H'"
 msgstr "%q는 'H' 유형의 배열이어야 합니다"
 
 #: ports/espressif/common-hal/audiobusio/PDMIn.c
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 msgid "%q must be 8, 16, 24, or 32"
 msgstr ""
 
@@ -1733,6 +1733,7 @@ msgstr "프로그램이 너무 깁니다"
 #: shared-bindings/digitalio/DigitalInOut.c shared-bindings/emmcio/EMMC.c
 #: shared-bindings/i2cioexpander/IOPin.c shared-bindings/microcontroller/Pin.c
 #: shared-module/max3421e/Max3421E.c shared-module/usb/core/Device.c
+#: shared-module/usb_host_audio/USBIn.c
 msgid "%q in use"
 msgstr "%q 사용 중입니다"
 
@@ -3999,10 +4000,12 @@ msgid "%q must be multiple of 8."
 msgstr ""
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Cannot record to a file"
 msgstr "파일에 녹음 할 수 없습니다"
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Destination capacity is smaller than destination_length."
 msgstr "대상 용량이 destination_length보다 작습니다."
 
@@ -4042,7 +4045,7 @@ msgstr ""
 msgid "bits_per_sample must be 16"
 msgstr ""
 
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 #, c-format
 msgid "invalid destination buffer, must be an array of type: %c"
 msgstr ""

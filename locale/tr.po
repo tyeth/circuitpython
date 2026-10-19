@@ -1526,7 +1526,7 @@ msgid "%q must be array of type 'H'"
 msgstr "%q, 'H' dizisi türünde olmalıdır"
 
 #: ports/espressif/common-hal/audiobusio/PDMIn.c
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 msgid "%q must be 8, 16, 24, or 32"
 msgstr "%q 8, 16, 24 veya 32 olmalıdır"
 
@@ -1725,6 +1725,7 @@ msgstr ""
 #: shared-bindings/digitalio/DigitalInOut.c shared-bindings/emmcio/EMMC.c
 #: shared-bindings/i2cioexpander/IOPin.c shared-bindings/microcontroller/Pin.c
 #: shared-module/max3421e/Max3421E.c shared-module/usb/core/Device.c
+#: shared-module/usb_host_audio/USBIn.c
 msgid "%q in use"
 msgstr "%q kullanımda"
 
@@ -3961,10 +3962,12 @@ msgid "%q must be multiple of 8."
 msgstr "%q 8'in katı olmalıdır."
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Cannot record to a file"
 msgstr "Dosyaya kayıt yapılamıyor"
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Destination capacity is smaller than destination_length."
 msgstr "Hedef kapasitesi, hedef_uzunluğundan daha küçük."
 
@@ -4004,7 +4007,7 @@ msgstr ""
 msgid "bits_per_sample must be 16"
 msgstr ""
 
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 #, c-format
 msgid "invalid destination buffer, must be an array of type: %c"
 msgstr ""

@@ -153,7 +153,6 @@ INC += \
 	-isystem esp-idf/components/lwip/port/include \
 	-isystem esp-idf/components/lwip/port/esp32xx/include \
 	-isystem esp-idf/components/lwip/port/freertos/include \
-	-isystem esp-idf/components/mbedtls/esp_crt_bundle/include \
 	-isystem esp-idf/components/mbedtls/mbedtls/include \
 	-isystem esp-idf/components/mbedtls/mbedtls/tf-psa-crypto/include \
 	-isystem esp-idf/components/mbedtls/mbedtls/tf-psa-crypto/drivers/builtin/include \
@@ -535,6 +534,7 @@ CHIP_COMPONENTS = \
 	esp_driver_usb_serial_jtag \
 	esp_hal_dma \
 	esp_hal_i2s \
+	esp_hal_lcd \
 	esp_hal_pcnt \
 	esp_hal_pmu \
 	esp_hal_rmt \
@@ -677,7 +677,15 @@ SRC_C += \
 	peripherals/$(IDF_TARGET)/pins.c
 
 ifeq ($(CIRCUITPY_SSL),1)
-SRC_C += common-hal/ssl/crt_bundle.c
+# The same root certificate bundle and lookup code as the other ports, not ESP-IDF's.
+# A board short of flash can set CIRCUITPY_SSL_ROOTS to roots-filtered.pem.
+# The generated bundle holds a hash of each root's subject name, not the name itself;
+# the format is described in lib/mbedtls_config/crt_bundle.c.
+CIRCUITPY_SSL_ROOTS ?= $(TOP)/lib/certificates/data/roots-full.pem
+SRC_C += lib/mbedtls_config/crt_bundle.c
+$(BUILD)/x509_crt_bundle.S: $(CIRCUITPY_SSL_ROOTS) $(TOP)/tools/gen_crt_bundle.py
+	$(Q)$(PYTHON) $(TOP)/tools/gen_crt_bundle.py -i $< -o $@ --asm
+OBJ_CRT_BUNDLE := $(BUILD)/x509_crt_bundle.o
 endif
 
 SRC_C += $(wildcard common-hal/espidf/*.c)
@@ -844,6 +852,7 @@ endif
 OBJ += $(addprefix $(BUILD)/, $(SRC_CIRCUITPY_COMMON:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
+OBJ += $(OBJ_CRT_BUNDLE)
 
 $(BUILD)/$(FATFS_DIR)/ff.o: COPT += -Os
 $(filter $(PY_BUILD)/../extmod/vfs_fat_%.o, $(PY_O)): COPT += -Os
@@ -977,7 +986,43 @@ ifeq ($(IDF_TARGET),esp32)
 BINARY_BLOBS += esp-idf/components/esp_phy/lib/$(IDF_TARGET)/librtc.a
 endif
 
-ESP_IDF_COMPONENTS_LINK = $(IDF_TARGET_ARCH) $(CHIP_COMPONENTS) app_update bootloader_support driver esp_driver_dma esp_driver_gpio esp_driver_gptimer esp_driver_i2c esp_driver_ledc esp_driver_spi esp_driver_uart efuse esp_adc esp_app_format esp_common esp_event esp_gdbstub esp_hal_ana_conv esp_hal_clock esp_hal_gpio esp_hal_gpspi esp_hal_i2c esp_hal_ledc esp_hal_mspi esp_hal_security esp_hal_timg esp_hal_uart esp_hal_wdt esp_hw_support esp_mm esp_partition esp_pm esp_ringbuf esp_rom esp_system esp_timer freertos hal heap log esp_libc nvs_flash nvs_sec_provider pthread soc spi_flash vfs esp_stdio
+# CONFIG_COMPILER_CXX_EXCEPTIONS is off, so IDF's cxx component replaces these
+# with stubs that abort, and C++ code such as nvs_flash does not link libgcc's
+# unwinder. Same list as esp-idf/components/cxx/CMakeLists.txt.
+CXX_EXCEPTION_WRAPS = \
+	__register_frame_info_bases \
+	__register_frame_info \
+	__register_frame \
+	__register_frame_info_table_bases \
+	__register_frame_info_table \
+	__register_frame_table \
+	__deregister_frame_info_bases \
+	__deregister_frame_info \
+	_Unwind_Find_FDE \
+	_Unwind_GetGR \
+	_Unwind_GetCFA \
+	_Unwind_GetIP \
+	_Unwind_GetIPInfo \
+	_Unwind_GetRegionStart \
+	_Unwind_GetDataRelBase \
+	_Unwind_GetTextRelBase \
+	_Unwind_SetIP \
+	_Unwind_SetGR \
+	_Unwind_GetLanguageSpecificData \
+	_Unwind_FindEnclosingFunction \
+	_Unwind_Resume \
+	_Unwind_RaiseException \
+	_Unwind_DeleteException \
+	_Unwind_ForcedUnwind \
+	_Unwind_Resume_or_Rethrow \
+	_Unwind_Backtrace \
+	__cxa_call_unexpected \
+	__gxx_personality_v0 \
+	__cxa_throw \
+	__cxa_allocate_exception
+LDFLAGS += $(foreach f,$(CXX_EXCEPTION_WRAPS),-Wl,--wrap=$(f))
+
+ESP_IDF_COMPONENTS_LINK = $(IDF_TARGET_ARCH) $(CHIP_COMPONENTS) app_update bootloader_support driver esp_driver_dma esp_driver_gpio esp_driver_gptimer esp_driver_i2c esp_driver_ledc esp_driver_spi esp_driver_uart efuse esp_adc esp_app_format esp_common esp_event esp_gdbstub esp_hal_ana_conv esp_hal_clock esp_hal_gpio esp_hal_gpspi esp_hal_i2c esp_hal_ledc esp_hal_mspi esp_hal_security esp_hal_timg esp_hal_uart esp_hal_wdt esp_hw_support esp_mm esp_partition esp_pm esp_ringbuf esp_rom esp_system esp_timer freertos hal heap log esp_libc nvs_flash nvs_sec_provider pthread soc spi_flash vfs esp_stdio cxx
 ifneq ($(IDF_TARGET),esp32)
 ESP_IDF_COMPONENTS_LINK += esp_hal_systimer
 endif
