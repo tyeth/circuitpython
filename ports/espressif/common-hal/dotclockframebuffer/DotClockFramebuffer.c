@@ -101,7 +101,7 @@ void common_hal_dotclockframebuffer_framebuffer_construct(dotclockframebuffer_fr
     cfg->timings.vsync_back_porch = vsync_back_porch;
     cfg->timings.vsync_front_porch = vsync_front_porch;
     cfg->timings.flags.hsync_idle_low = hsync_idle_low;
-    cfg->timings.flags.vsync_idle_low = hsync_idle_low;
+    cfg->timings.flags.vsync_idle_low = vsync_idle_low;
     cfg->timings.flags.de_idle_high = de_idle_high;
     cfg->timings.flags.pclk_active_neg = !pclk_active_high;
     cfg->timings.flags.pclk_idle_high = pclk_idle_high;
