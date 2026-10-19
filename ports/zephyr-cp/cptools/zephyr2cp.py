@@ -73,6 +73,9 @@ CONNECTORS = {
         "SCL",
         "SDA",
     ],
+    # The standard bus pin names are those on Arduino Uno R3 boards: TX/RX on
+    # D1/D0, SPI on D11-D13 (and the 2x3 SPI header), and SDA/SCL on the two
+    # pins above AREF, which this binding calls D14 and D15.
     "arduino-header-r3": [
         "A0",
         "A1",
@@ -80,8 +83,8 @@ CONNECTORS = {
         "A3",
         "A4",
         "A5",
-        "D0",
-        "D1",
+        ["D0", "RX"],
+        ["D1", "TX"],
         "D2",
         "D3",
         "D4",
@@ -91,11 +94,11 @@ CONNECTORS = {
         "D8",
         "D9",
         "D10",
-        "D11",
-        "D12",
-        "D13",
-        "D14",
-        "D15",
+        ["D11", "MOSI"],
+        ["D12", "MISO"],
+        ["D13", "SCK"],
+        ["D14", "SDA"],
+        ["D15", "SCL"],
     ],
     "adafruit-feather-header": [
         "A0",
@@ -760,21 +763,31 @@ def _toml_status_pin(mpconfigboard, board_names, key):
     raise RuntimeError(f"circuitpython.toml {key} = {name!r} is not a board pin name")
 
 
-# Devicetree labels that mark a board's standard header buses, mapped to the
-# bus class and the board pin names its signals use, as (field, pin name).
-# The field names match the CIRCUITPY_BOARD_*_PIN structs in
-# shared-module/board. The pin names come from the board's connector (see
-# CONNECTORS) or its [pins] table.
+# The standard pins of each board bus. For example:
 #
-# These labels are ours, not upstream's. Each board adds them in its
-# board.overlay, as an alias of an upstream connector label when there is
-# one (board_i2c: &feather_i2c {};) or on the bus node otherwise.
-BOARD_BUS_LABELS = {
-    "board_i2c": ("i2c", (("scl", "SCL"), ("sda", "SDA"))),
-    "board_spi": ("spi", (("clock", "SCK"), ("mosi", "MOSI"), ("miso", "MISO"))),
-    "board_serial": ("uart", (("tx", "TX"), ("rx", "RX"))),
+#     "i2c [bus kind]": {"scl [pin field]": "SCL [pin name]", "sda [pin field]": "SDA [pin name]"},
+#
+# - bus kind: board.I2C(), board.SPI() or board.UART(). The generated pin table
+#   for shared-module/board is named after it (CIRCUITPY_BOARD_I2C_PIN).
+# - pin field: The corresponding name of the field in the struct holding the
+#   pins for the bus in shared-module/board/__init__.c. For instance, the `scl`
+#   field in the `board_i2c_pin_t` struct.
+# - pin name: the standard board pin name whose pin goes in that field. A
+#   board's connector (see CONNECTORS) or its circuitpython.toml [pins] table
+#   gives its header pins these names.
+BOARD_BUS_PINS = {
+    "i2c": {"scl": "SCL", "sda": "SDA"},
+    "spi": {"clock": "SCK", "mosi": "MOSI", "miso": "MISO"},
+    "uart": {"tx": "TX", "rx": "RX"},
 }
-# The board bus class each busio-capable devicetree driver provides.
+# The board bus kind for each busio driver kind. For example:
+#
+#     "serial [driver kind]": "uart [bus kind]",
+#
+# - driver kind: a BUSIO_CLASSES key, the kind of devicetree device that a
+#   busio class uses ("serial" for busio.UART, after Zephyr's serial drivers).
+# - bus kind: a BOARD_BUS_PINS key, the board bus that such devices provide
+#   ("uart" for board.UART()).
 BOARD_BUS_OF_DRIVER = {"i2c": "i2c", "spi": "spi", "serial": "uart"}
 
 
@@ -786,30 +799,39 @@ def _board_pin_named(board_names, name):
     return None
 
 
-def _dt_board_buses(device_tree, board_names):
-    """Find the board buses that devicetree labels mark.
+def _standard_bus_pins(board_names):
+    """Find the standard pins of each board bus class.
 
-    Each BOARD_BUS_LABELS label in the devicetree gives one board bus, named
-    after its class (``board.I2C``, ``board.SPI`` or ``board.UART``), on the
-    board pins with the label's pin names. The labeled node only says that
-    the board has the bus. It may be dynamic or disabled, because iobroker
-    picks the instance when the bus is constructed. Returns
-    ``{bus: {field: pin}}``.
+    A class has standard pins when the board names every pin it needs with
+    the standard names in BOARD_BUS_PINS. Returns ``{bus: {field: pin}}``,
+    with ``pin`` an ``(ioport, num)`` key of ``board_names``.
     """
-    buses = {}
-    for label, (bus, fields) in BOARD_BUS_LABELS.items():
-        if label not in device_tree.label2node:
+    standard_pins = {}
+    for bus, fields in BOARD_BUS_PINS.items():
+        pins = {field: _board_pin_named(board_names, name) for field, name in fields.items()}
+        if None not in pins.values():
+            standard_pins[bus] = pins
+    return standard_pins
+
+
+def _fixed_instance_on_pins(device_tree, instances, routable_labels, port_indexes, pins):
+    """Return the labels of the fixed nRF bus instance that uses ``pins``.
+
+    ``pins`` are ``(ioport, num)`` board pins. An instance uses them when its
+    default pinctrl state routes signals to all of them. Routable instances
+    have no pins of their own and are skipped. Returns None when no instance
+    uses the pins.
+    """
+    if not pins or not all(ioport in port_indexes for ioport, _ in pins):
+        return None
+    wanted = {port_indexes[ioport] * 32 + num for ioport, num in pins}
+    for labels in instances:
+        if labels[0] in routable_labels:
             continue
-        if bus in buses:
-            raise RuntimeError(f"devicetree label {label} is a second {bus} board bus")
-        pins = {}
-        for field, name in fields:
-            pin = _board_pin_named(board_names, name)
-            if pin is None:
-                raise RuntimeError(f"devicetree label {label} needs a board pin named {name}")
-            pins[field] = pin
-        buses[bus] = pins
-    return buses
+        psels = _pinctrl_default_psels(device_tree.label2node[labels[0]]) or []
+        if wanted <= {value & NRF_PIN_FIELD_MASK for value in psels}:
+            return labels
+    return None
 
 
 @cpbuild.run_in_thread
@@ -1285,11 +1307,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 # module), which iobroker allocates pwmio channels on too.
                 pwm_emul = line.strip().endswith("=y")
     board_info["neopixel_write"] = pwm_nrfx
-    # board.I2C(), board.SPI() and board.UART() for the buses that devicetree
-    # labels mark, constructed on demand on their pins. That needs iobroker
-    # routing (nRF); other SoCs keep their fixed devicetree buses.
-    board_buses = _dt_board_buses(device_tree, board_names) if pinctrl_nrf else {}
-    board_bus_names = {bus.upper() for bus in board_buses}
+    standard_bus_pins = _standard_bus_pins(board_names)
     pin_object_of = {}
     # GPIO pad number -> pad: every (label, num) name and alias the
     # devicetree walk produced keys into one pin object per pad.
@@ -1409,6 +1427,41 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             ):
                 iobroker_labels.add(labels[0])
 
+    # The zephyr,console and zephyr,shell-uart UARTs belong to Zephyr, so they
+    # are never board objects.
+    chosen_props = device_tree.root.nodes["chosen"].props
+    console_nodes = [
+        chosen_props[name].to_path()
+        for name in ("zephyr,console", "zephyr,shell-uart")
+        if name in chosen_props
+    ]
+
+    # On nRF, board.I2C(), board.SPI() and board.UART() use the board's
+    # standard pins:
+    # - A fixed instance on the standard pins is the board object, unless it
+    #   is a console.
+    # - Otherwise, if the board has a routable instance of the class, the
+    #   board object is a bus on the standard pins, and iobroker picks the
+    #   instance when the bus is constructed.
+    fixed_on_standard_pins = {}
+    board_buses = {}
+    if pinctrl_nrf:
+        for driver, bus in BOARD_BUS_OF_DRIVER.items():
+            if bus not in standard_bus_pins:
+                continue
+            instances = active_zephyr_devices.get(driver, [])
+            fixed = _fixed_instance_on_pins(
+                device_tree,
+                instances,
+                iobroker_labels,
+                port_indexes,
+                standard_bus_pins[bus].values(),
+            )
+            if fixed is not None:
+                fixed_on_standard_pins[driver] = fixed
+            elif any(labels[0] in iobroker_labels for labels in instances):
+                board_buses[bus] = standard_bus_pins[bus]
+
     zephyr_binding_headers = []
     zephyr_binding_objects = []
     zephyr_binding_labels = []
@@ -1426,54 +1479,57 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
         zephyr_binding_headers.append(f'#include "shared-bindings/{module}/{driverclass}.h"')
 
-        # Designate a main device such as board.I2C or board.I2S, unless a
-        # devicetree label marks a board bus of this class.
-        if BOARD_BUS_OF_DRIVER.get(driver) in board_buses:
+        # A board has at most one object per class, under the class's
+        # standard name (board.I2C, board.I2SOUT, ...). Other fixed instances
+        # are not board objects.
+        bus = BOARD_BUS_OF_DRIVER.get(driver)
+        candidates = [
+            labels
+            for labels in instances
+            if labels[0] not in iobroker_labels
+            and device_tree.label2node[labels[0]] not in console_nodes
+        ]
+        main = None
+        if bus in board_buses:
+            # The board bus has the standard name.
             pass
-        elif len(instances) == 1:
-            instances[0].append(driverclass)
+        elif pinctrl_nrf and bus is not None:
+            # The fixed instance on the standard pins, unless it is a console.
+            fixed = fixed_on_standard_pins.get(driver)
+            if fixed in candidates:
+                main = fixed
+        elif len(candidates) == 1:
+            main = candidates[0]
         else:
-            # Check to see if a main device has already been designated
-            found_main = False
-            for labels in instances:
-                for label in labels:
-                    if label == driverclass:
-                        found_main = True
-            if not found_main:
-                for priority_label in (f"zephyr_{driver}", f"arduino_{driver}"):
-                    for labels in instances:
-                        if priority_label in labels:
-                            labels.append(driverclass)
-                            found_main = True
-                            break
-                    if found_main:
-                        break
-        for labels in instances:
-            if labels[0] in iobroker_labels:
-                # Dynamically routable instances are not exposed as board
-                # singletons; construct a busio object with pins instead.
-                continue
-            instance_name = f"{driver.replace('/', '_')}_{labels[0]}"
-            c_function_name = f"_{instance_name}"
-            singleton_ptr = f"{c_function_name}_singleton"
-            function_object = f"{c_function_name}_obj"
-            obj_type = f"{module}_{driverclass.lower()}"
+            # A label picks the main instance.
+            for priority_label in (driverclass, f"zephyr_{driver}", f"arduino_{driver}"):
+                main = next((labels for labels in candidates if priority_label in labels), None)
+                if main is not None:
+                    break
+        if main is None:
+            continue
 
-            # Handle special cases for different drivers
-            if driver == "serial":
-                # UART needs a receiver buffer
-                buffer_decl = f"static byte {instance_name}_buffer[128];"
-                construct_call = f"common_hal_busio_uart_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({labels[0]})), 128, {instance_name}_buffer)"
-            else:
-                # Default case (I2C, SPI, I2S)
-                buffer_decl = ""
-                construct_call = f"common_hal_{module}_{driverclass.lower()}_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({labels[0]})))"
+        instance_name = f"{driver.replace('/', '_')}_{main[0]}"
+        c_function_name = f"_{instance_name}"
+        singleton_ptr = f"{c_function_name}_singleton"
+        function_object = f"{c_function_name}_obj"
+        obj_type = f"{module}_{driverclass.lower()}"
 
-            if driver == "i2s":
-                i2sout_instance_names.append(instance_name)
+        # Handle special cases for different drivers
+        if driver == "serial":
+            # UART needs a receiver buffer
+            buffer_decl = f"static byte {instance_name}_buffer[128];"
+            construct_call = f"common_hal_busio_uart_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({main[0]})), 128, {instance_name}_buffer)"
+        else:
+            # Default case (I2C, SPI, I2S)
+            buffer_decl = ""
+            construct_call = f"common_hal_{module}_{driverclass.lower()}_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({main[0]})))"
 
-            zephyr_binding_objects.append(
-                f"""{buffer_decl}
+        if driver == "i2s":
+            i2sout_instance_names.append(instance_name)
+
+        zephyr_binding_objects.append(
+            f"""{buffer_decl}
 static {obj_type}_obj_t {instance_name}_obj;
 static mp_obj_t {singleton_ptr} = mp_const_none;
 static mp_obj_t {c_function_name}(void) {{
@@ -1484,19 +1540,15 @@ static mp_obj_t {c_function_name}(void) {{
     return {singleton_ptr};
 }}
 static MP_DEFINE_CONST_FUN_OBJ_0({function_object}, {c_function_name});""".lstrip()
-            )
-            for label in labels:
-                if label.upper() in board_bus_names:
-                    # A labeled board bus has this name.
-                    continue
-                zephyr_binding_labels.append(
-                    f"{{ MP_ROM_QSTR(MP_QSTR_{label.upper()}), MP_ROM_PTR(&{function_object}) }},"
-                )
+        )
+        zephyr_binding_labels.append(
+            f"{{ MP_ROM_QSTR(MP_QSTR_{driverclass.upper()}), MP_ROM_PTR(&{function_object}) }},"
+        )
     zephyr_binding_headers = "\n".join(zephyr_binding_headers)
     zephyr_binding_objects = "\n".join(zephyr_binding_objects)
     zephyr_binding_labels = "\n".join(zephyr_binding_labels)
 
-    # Board buses from devicetree labels: the CIRCUITPY_BOARD_* pin tables for
+    # Board buses on the standard pins: the CIRCUITPY_BOARD_* pin tables for
     # shared-module/board, and the board name for each bus.
     board_bus_defines = []
     board_bus_labels = []

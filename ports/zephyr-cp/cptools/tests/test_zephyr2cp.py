@@ -25,7 +25,8 @@ from zephyr2cp import (
     MINIMUM_RAM_SIZE,
     add_toml_pin_names,
     _fastest_first,
-    _dt_board_buses,
+    _fixed_instance_on_pins,
+    _standard_bus_pins,
     _toml_status_pin,
 )
 
@@ -801,8 +802,8 @@ class TestTomlStatusPin:
             _toml_status_pin({"STATUS_NEOPIXEL": "NOPE"}, self.BOARD_NAMES, "STATUS_NEOPIXEL")
 
 
-class TestDtBoardBuses:
-    """board.I2C(), board.SPI() and board.UART() from devicetree bus labels."""
+class TestStandardBusPins:
+    """The standard pins of board.I2C(), board.SPI() and board.UART()."""
 
     BOARD_NAMES = {
         ("gpio0", 11): ["SCL"],
@@ -814,39 +815,102 @@ class TestDtBoardBuses:
         ("gpio0", 24): ["RX"],
     }
 
-    @staticmethod
-    def _device_tree(*labels):
-        return SimpleNamespace(label2node={label: object() for label in labels})
-
-    def test_board_labels(self):
-        buses = _dt_board_buses(
-            self._device_tree("board_i2c", "board_spi", "board_serial"), self.BOARD_NAMES
-        )
-        assert buses == {
+    def test_all_standard_names(self):
+        assert _standard_bus_pins(self.BOARD_NAMES) == {
             "i2c": {"scl": ("gpio0", 11), "sda": ("gpio0", 12)},
             "spi": {"clock": ("gpio0", 14), "mosi": ("gpio0", 13), "miso": ("gpio0", 15)},
             "uart": {"tx": ("gpio0", 25), "rx": ("gpio0", 24)},
         }
 
-    def test_only_labeled_buses(self):
-        buses = _dt_board_buses(
-            self._device_tree("board_i2c", "feather_spi", "i2c0"), self.BOARD_NAMES
-        )
-        assert list(buses) == ["i2c"]
+    def test_missing_name_leaves_out_bus(self):
+        names = {key: value for key, value in self.BOARD_NAMES.items() if value != ["MISO"]}
+        assert list(_standard_bus_pins(names)) == ["i2c", "uart"]
 
-    def test_no_labels(self):
-        assert _dt_board_buses(self._device_tree("i2c0", "spi1"), self.BOARD_NAMES) == {}
+    def test_no_standard_names(self):
+        assert _standard_bus_pins({("gpio0", 2): ["D2"]}) == {}
 
     def test_pin_names_ignore_case(self):
         names = dict(self.BOARD_NAMES)
         names[("gpio0", 11)] = ["scl"]
-        buses = _dt_board_buses(self._device_tree("board_i2c"), names)
-        assert buses["i2c"]["scl"] == ("gpio0", 11)
+        assert _standard_bus_pins(names)["i2c"]["scl"] == ("gpio0", 11)
 
-    def test_missing_pin_name_raises(self):
-        names = {key: value for key, value in self.BOARD_NAMES.items() if value != ["MISO"]}
-        with pytest.raises(RuntimeError, match="board_spi needs a board pin named MISO"):
-            _dt_board_buses(self._device_tree("board_spi"), names)
+    def test_connector_aliases(self):
+        # Arduino header pins carry both their header name and the standard name.
+        names = {
+            ("gpio1", 0): ["D0", "RX"],
+            ("gpio1", 1): ["D1", "TX"],
+            ("gpio1", 2): ["D14", "SDA"],
+            ("gpio1", 3): ["D15", "SCL"],
+        }
+        assert _standard_bus_pins(names) == {
+            "i2c": {"scl": ("gpio1", 3), "sda": ("gpio1", 2)},
+            "uart": {"tx": ("gpio1", 1), "rx": ("gpio1", 0)},
+        }
+
+
+class TestFixedInstanceOnPins:
+    """The fixed nRF bus instance on a board's standard pins."""
+
+    # psels entries carry the signal function in their upper bits and the
+    # absolute pin (port * 32 + pin) in the low 9 bits; 0x1ff is disconnected.
+    DTS = """
+/dts-v1/;
+/ {
+    pinctrl {
+        i2c1_default: i2c1_default {
+            group1 {
+                psels = <0x0c000022>, <0x0b000023>;
+            };
+        };
+        i2c2_dynamic: i2c2_dynamic {
+            group1 {
+                psels = <0x0c0001ff>, <0x0b0001ff>;
+            };
+        };
+        uart1_default: uart1_default {
+            group1 {
+                psels = <0x00000021>, <0x00020020>, <0x0001000b>;
+            };
+        };
+    };
+    i2c1: i2c@1 {
+        pinctrl-0 = <&i2c1_default>;
+    };
+    i2c2: i2c@2 {
+        pinctrl-0 = <&i2c2_dynamic>;
+    };
+    uart1: uart@1 {
+        pinctrl-0 = <&uart1_default>;
+    };
+};
+"""
+    PORT_INDEXES = {"gpio0": 0, "gpio1": 1}
+    I2C_PINS = [("gpio1", 3), ("gpio1", 2)]
+
+    def _find(self, instances, pins, routable=()):
+        return _fixed_instance_on_pins(
+            parse_dts_string(self.DTS), instances, set(routable), self.PORT_INDEXES, pins
+        )
+
+    def test_finds_instance_on_pins(self):
+        instances = [["i2c2"], ["i2c1", "arduino_i2c"]]
+        assert self._find(instances, self.I2C_PINS) == ["i2c1", "arduino_i2c"]
+
+    def test_extra_signals_still_match(self):
+        # TX and RX are routed, along with RTS on another pin.
+        assert self._find([["uart1"]], [("gpio1", 1), ("gpio1", 0)]) == ["uart1"]
+
+    def test_skips_routable_instances(self):
+        assert self._find([["i2c1"]], self.I2C_PINS, routable=["i2c1"]) is None
+
+    def test_no_instance_on_pins(self):
+        assert self._find([["i2c1"], ["i2c2"]], [("gpio0", 3), ("gpio0", 4)]) is None
+
+    def test_unknown_port_is_none(self):
+        assert self._find([["i2c1"]], [("expander", 3), ("gpio1", 2)]) is None
+
+    def test_no_pins_is_none(self):
+        assert self._find([["i2c1"]], []) is None
 
 
 class TestFastestFirst:
