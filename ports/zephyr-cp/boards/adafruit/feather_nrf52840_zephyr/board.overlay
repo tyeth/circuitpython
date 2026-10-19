@@ -264,7 +264,11 @@
 	pinctrl-names = "default", "sleep";
 };
 
+// The upstream board uses the legacy UART driver for UART0, which can't be
+// de-initialized, so iobroker could not route it again once it was released.
+// Instead, use the UARTE driver, which can be deinited, like UART1.
 &uart0 {
+	compatible = "nordic,nrf-uarte";
 	status = "okay";
 	zephyr,deferred-init;
 	current-speed = <115200>;
