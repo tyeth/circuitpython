@@ -814,24 +814,41 @@ def _standard_bus_pins(board_names):
     return standard_pins
 
 
-def _fixed_instance_on_pins(device_tree, instances, routable_labels, port_indexes, pins):
-    """Return the labels of the fixed nRF bus instance that uses ``pins``.
+def _node_enabled(node):
+    """Return True if a devicetree node's status is "okay" (or unset)."""
+    status = node.props.get("status")
+    return status is None or status.to_string() == "okay"
 
-    ``pins`` are ``(ioport, num)`` board pins. An instance uses them when its
-    default pinctrl state routes signals to all of them. Routable instances
-    have no pins of their own and are skipped. Returns None when no instance
-    uses the pins.
+
+def _used_by_zephyr(device_tree, node):
+    """Return True if Zephyr itself uses a bus node.
+
+    A bus is Zephyr's when a /chosen property points at it (such as the
+    zephyr,console UART), it has child device nodes (such as a flash chip),
+    or another enabled node refers to it by phandle (such as a display's
+    mipi-dbi node).
     """
-    if not pins or not all(ioport in port_indexes for ioport, _ in pins):
-        return None
-    wanted = {port_indexes[ioport] * 32 + num for ioport, num in pins}
-    for labels in instances:
-        if labels[0] in routable_labels:
+    for prop in device_tree.root.nodes["chosen"].props.values():
+        try:
+            if prop.to_path() is node:
+                return True
+        except dtlib.DTError:
+            pass
+    if node.nodes:
+        return True
+    for other in device_tree.node_iter():
+        if other is node or not _node_enabled(other):
             continue
-        psels = _pinctrl_default_psels(device_tree.label2node[labels[0]]) or []
-        if wanted <= {value & NRF_PIN_FIELD_MASK for value in psels}:
-            return labels
-    return None
+        for prop in other.props.values():
+            if prop.type == dtlib.Type.PHANDLE:
+                referenced = [prop.to_node()]
+            elif prop.type == dtlib.Type.PHANDLES:
+                referenced = prop.to_nodes()
+            else:
+                continue
+            if node in referenced:
+                return True
+    return False
 
 
 @cpbuild.run_in_thread
@@ -1436,30 +1453,39 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
         if name in chosen_props
     ]
 
-    # On nRF, board.I2C(), board.SPI() and board.UART() use the board's
-    # standard pins:
-    # - A fixed instance on the standard pins is the board object, unless it
-    #   is a console.
-    # - Otherwise, if the board has a routable instance of the class, the
-    #   board object is a bus on the standard pins, and iobroker picks the
-    #   instance when the bus is constructed.
-    fixed_on_standard_pins = {}
+    # A board either routes its I2C, SPI and UART buses with iobroker (nRF
+    # boards with routable instances) or has only fixed buses from the
+    # devicetree.
+    #
+    # - With iobroker, board.I2C(), board.SPI() and board.UART() are buses on
+    #   the board's standard pins, and iobroker picks the instance when the
+    #   bus is constructed. Fixed bus instances are never board objects, and
+    #   only Zephyr may use them (see _used_by_zephyr()).
+    # - With only fixed buses, the board objects are fixed instances (below).
+    uses_iobroker = pinctrl_nrf and any(
+        labels[0] in iobroker_labels
+        for driver in BOARD_BUS_OF_DRIVER
+        for labels in active_zephyr_devices.get(driver, [])
+    )
     board_buses = {}
-    if pinctrl_nrf:
+    if uses_iobroker:
         for driver, bus in BOARD_BUS_OF_DRIVER.items():
-            if bus not in standard_bus_pins:
-                continue
             instances = active_zephyr_devices.get(driver, [])
-            fixed = _fixed_instance_on_pins(
-                device_tree,
-                instances,
-                iobroker_labels,
-                port_indexes,
-                standard_bus_pins[bus].values(),
-            )
-            if fixed is not None:
-                fixed_on_standard_pins[driver] = fixed
-            elif any(labels[0] in iobroker_labels for labels in instances):
+            for labels in instances:
+                node = device_tree.label2node[labels[0]]
+                if labels[0] not in iobroker_labels and not _used_by_zephyr(device_tree, node):
+                    message = (
+                        f"devicetree node {labels[0]} is a fixed {driver} instance, but the "
+                        "board routes its buses with iobroker: make it dynamic (all pins "
+                        "disconnected, zephyr,deferred-init) or disable it"
+                    )
+                    # The build's TaskGroup reports only that a task failed,
+                    # so log the reason too.
+                    logger.error(message)
+                    raise RuntimeError(message)
+            if bus in standard_bus_pins and any(
+                labels[0] in iobroker_labels for labels in instances
+            ):
                 board_buses[bus] = standard_bus_pins[bus]
 
     zephyr_binding_headers = []
@@ -1490,14 +1516,9 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             and device_tree.label2node[labels[0]] not in console_nodes
         ]
         main = None
-        if bus in board_buses:
-            # The board bus has the standard name.
+        if uses_iobroker and bus is not None:
+            # The board bus, if any, has the standard name.
             pass
-        elif pinctrl_nrf and bus is not None:
-            # The fixed instance on the standard pins, unless it is a console.
-            fixed = fixed_on_standard_pins.get(driver)
-            if fixed in candidates:
-                main = fixed
         elif len(candidates) == 1:
             main = candidates[0]
         else:

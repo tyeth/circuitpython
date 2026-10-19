@@ -25,9 +25,9 @@ from zephyr2cp import (
     MINIMUM_RAM_SIZE,
     add_toml_pin_names,
     _fastest_first,
-    _fixed_instance_on_pins,
     _standard_bus_pins,
     _toml_status_pin,
+    _used_by_zephyr,
 )
 
 
@@ -848,69 +848,56 @@ class TestStandardBusPins:
         }
 
 
-class TestFixedInstanceOnPins:
-    """The fixed nRF bus instance on a board's standard pins."""
+class TestUsedByZephyr:
+    """Fixed bus instances that Zephyr itself uses."""
 
-    # psels entries carry the signal function in their upper bits and the
-    # absolute pin (port * 32 + pin) in the low 9 bits; 0x1ff is disconnected.
     DTS = """
 /dts-v1/;
 / {
-    pinctrl {
-        i2c1_default: i2c1_default {
-            group1 {
-                psels = <0x0c000022>, <0x0b000023>;
-            };
-        };
-        i2c2_dynamic: i2c2_dynamic {
-            group1 {
-                psels = <0x0c0001ff>, <0x0b0001ff>;
-            };
-        };
-        uart1_default: uart1_default {
-            group1 {
-                psels = <0x00000021>, <0x00020020>, <0x0001000b>;
-            };
-        };
+    chosen {
+        zephyr,console = &uart0;
     };
-    i2c1: i2c@1 {
-        pinctrl-0 = <&i2c1_default>;
-    };
-    i2c2: i2c@2 {
-        pinctrl-0 = <&i2c2_dynamic>;
+    uart0: uart@0 {
     };
     uart1: uart@1 {
-        pinctrl-0 = <&uart1_default>;
+    };
+    spi0: spi@0 {
+        flash@0 {
+            reg = <0>;
+        };
+    };
+    spi1: spi@1 {
+    };
+    spi2: spi@2 {
+    };
+    display {
+        spi-dev = <&spi1>;
+    };
+    disabled_display {
+        status = "disabled";
+        spi-dev = <&spi2>;
     };
 };
 """
-    PORT_INDEXES = {"gpio0": 0, "gpio1": 1}
-    I2C_PINS = [("gpio1", 3), ("gpio1", 2)]
 
-    def _find(self, instances, pins, routable=()):
-        return _fixed_instance_on_pins(
-            parse_dts_string(self.DTS), instances, set(routable), self.PORT_INDEXES, pins
-        )
+    def _used(self, label):
+        dt = parse_dts_string(self.DTS)
+        return _used_by_zephyr(dt, dt.label2node[label])
 
-    def test_finds_instance_on_pins(self):
-        instances = [["i2c2"], ["i2c1", "arduino_i2c"]]
-        assert self._find(instances, self.I2C_PINS) == ["i2c1", "arduino_i2c"]
+    def test_chosen_console(self):
+        assert self._used("uart0")
 
-    def test_extra_signals_still_match(self):
-        # TX and RX are routed, along with RTS on another pin.
-        assert self._find([["uart1"]], [("gpio1", 1), ("gpio1", 0)]) == ["uart1"]
+    def test_child_device(self):
+        assert self._used("spi0")
 
-    def test_skips_routable_instances(self):
-        assert self._find([["i2c1"]], self.I2C_PINS, routable=["i2c1"]) is None
+    def test_referenced_by_phandle(self):
+        assert self._used("spi1")
 
-    def test_no_instance_on_pins(self):
-        assert self._find([["i2c1"], ["i2c2"]], [("gpio0", 3), ("gpio0", 4)]) is None
+    def test_referenced_only_by_disabled_node(self):
+        assert not self._used("spi2")
 
-    def test_unknown_port_is_none(self):
-        assert self._find([["i2c1"]], [("expander", 3), ("gpio1", 2)]) is None
-
-    def test_no_pins_is_none(self):
-        assert self._find([["i2c1"]], []) is None
+    def test_unused(self):
+        assert not self._used("uart1")
 
 
 class TestFastestFirst:
