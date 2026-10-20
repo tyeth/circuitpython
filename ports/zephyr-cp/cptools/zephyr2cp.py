@@ -814,6 +814,40 @@ def _standard_bus_pins(board_names):
     return standard_pins
 
 
+def _stemma_qt_pins(gpio_map):
+    """Return the ``{"scl": pin, "sda": pin}`` of a stemma-qt-connector node.
+
+    The binding maps connector pin 0 to SCL and pin 1 to SDA. Qwiic
+    connectors use the same binding. ``pin`` is an ``(ioport, num)`` key, as
+    in ``board_names``.
+    """
+    pins = []
+    for offset, _, label in gpio_map._markers:
+        if label:
+            pins.append((label, int.from_bytes(gpio_map.value[offset + 4 : offset + 8], "big")))
+    if len(pins) != 2:
+        raise RuntimeError(f"stemma-qt-connector gpio-map has {len(pins)} pins, not 2")
+    return {"scl": pins[0], "sda": pins[1]}
+
+
+def _board_i2c_buses(i2c_pins, stemma_pins):
+    """Lay out the board I2C buses for board.I2C() and board.STEMMA_I2C.
+
+    ``i2c_pins`` are board.I2C()'s pins and ``stemma_pins`` the STEMMA QT
+    connector's, each a ``{field: pin}`` dict or None. STEMMA_I2C is the same
+    bus as I2C when its connector uses the same pins, and its own bus
+    otherwise. Returns ``(buses, stemma_index)``: the pin dicts of the board
+    I2C buses, in instance order, and the instance that STEMMA_I2C names (or
+    None).
+    """
+    buses = [i2c_pins] if i2c_pins else []
+    if stemma_pins is None:
+        return buses, None
+    if stemma_pins not in buses:
+        buses.append(stemma_pins)
+    return buses, buses.index(stemma_pins)
+
+
 def _node_enabled(node):
     """Return True if a devicetree node's status is "okay" (or unset)."""
     status = node.props.get("status")
@@ -945,6 +979,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     ioports = {}
     all_ioports = []
     board_names = {}
+    stemma_qt_pins = None
     status_led = None
     status_led_inverted = False
     boot_button = None
@@ -1073,7 +1108,11 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             all_ioports.append(node.labels[0])
             if status == "okay":
                 ioports[node.labels[0]] = range(0, ngpios)
-        if gpio_map and compatible and compatible[0] != "gpio-nexus":
+        if gpio_map and compatible and compatible[0] == "stemma-qt-connector":
+            # The connector's pins keep the names the board gives them; it
+            # only says which ones board.STEMMA_I2C uses.
+            stemma_qt_pins = _stemma_qt_pins(gpio_map)
+        elif gpio_map and compatible and compatible[0] != "gpio-nexus":
             # Per-board connector names from circuitpython.toml's
             # ``[connectors.<node label>]`` table take precedence. They key the
             # gpio-map position (the header pin number as a string) to a name
@@ -1472,7 +1511,9 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
         for driver in BOARD_BUS_OF_DRIVER
         for labels in active_zephyr_devices.get(driver, [])
     )
+    # The pin dicts of each kind's board buses, in instance order.
     board_buses = {}
+    stemma_i2c_index = None
     if uses_iobroker:
         for driver, bus in BOARD_BUS_OF_DRIVER.items():
             instances = active_zephyr_devices.get(driver, [])
@@ -1488,10 +1529,16 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                     # so log the reason too.
                     logger.error(message)
                     raise RuntimeError(message)
-            if bus in standard_bus_pins and any(
-                labels[0] in iobroker_labels for labels in instances
-            ):
-                board_buses[bus] = standard_bus_pins[bus]
+            if not any(labels[0] in iobroker_labels for labels in instances):
+                continue
+            if bus == "i2c":
+                buses, stemma_i2c_index = _board_i2c_buses(
+                    standard_bus_pins.get("i2c"), stemma_qt_pins
+                )
+                if buses:
+                    board_buses["i2c"] = buses
+            elif bus in standard_bus_pins:
+                board_buses[bus] = [standard_bus_pins[bus]]
 
     zephyr_binding_headers = []
     zephyr_binding_objects = []
@@ -1532,30 +1579,40 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 main = next((labels for labels in candidates if priority_label in labels), None)
                 if main is not None:
                     break
-        if main is None:
-            continue
+        # The board names of each instance that gets a board object.
+        names_of = {}
+        if main is not None:
+            names_of[main[0]] = [driverclass.upper()]
+        # On an all-static board with a STEMMA QT (or Qwiic) connector,
+        # board.STEMMA_I2C is the instance labeled zephyr_i2c, Zephyr's label
+        # for the bus wired to such connectors. Its pins aren't compared
+        # with the connector's: that would mean decoding each SoC's pinctrl.
+        if driver == "i2c" and not uses_iobroker and stemma_qt_pins is not None:
+            stemma = next((labels for labels in candidates if "zephyr_i2c" in labels), None)
+            if stemma is not None:
+                names_of.setdefault(stemma[0], []).append("STEMMA_I2C")
+        for label, names in names_of.items():
+            instance_name = f"{driver.replace('/', '_')}_{label}"
+            c_function_name = f"_{instance_name}"
+            singleton_ptr = f"{c_function_name}_singleton"
+            function_object = f"{c_function_name}_obj"
+            obj_type = f"{module}_{driverclass.lower()}"
 
-        instance_name = f"{driver.replace('/', '_')}_{main[0]}"
-        c_function_name = f"_{instance_name}"
-        singleton_ptr = f"{c_function_name}_singleton"
-        function_object = f"{c_function_name}_obj"
-        obj_type = f"{module}_{driverclass.lower()}"
+            # Handle special cases for different drivers
+            if driver == "serial":
+                # UART needs a receiver buffer
+                buffer_decl = f"static byte {instance_name}_buffer[128];"
+                construct_call = f"common_hal_busio_uart_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({label})), 128, {instance_name}_buffer, false)"
+            else:
+                # Default case (I2C, SPI, I2S)
+                buffer_decl = ""
+                construct_call = f"common_hal_{module}_{driverclass.lower()}_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({label})))"
 
-        # Handle special cases for different drivers
-        if driver == "serial":
-            # UART needs a receiver buffer
-            buffer_decl = f"static byte {instance_name}_buffer[128];"
-            construct_call = f"common_hal_busio_uart_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({main[0]})), 128, {instance_name}_buffer, false)"
-        else:
-            # Default case (I2C, SPI, I2S)
-            buffer_decl = ""
-            construct_call = f"common_hal_{module}_{driverclass.lower()}_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({main[0]})))"
+            if driver == "i2s":
+                i2sout_instance_names.append(instance_name)
 
-        if driver == "i2s":
-            i2sout_instance_names.append(instance_name)
-
-        zephyr_binding_objects.append(
-            f"""{buffer_decl}
+            zephyr_binding_objects.append(
+                f"""{buffer_decl}
 static {obj_type}_obj_t {instance_name}_obj;
 static mp_obj_t {singleton_ptr} = mp_const_none;
 static mp_obj_t {c_function_name}(void) {{
@@ -1566,26 +1623,47 @@ static mp_obj_t {c_function_name}(void) {{
     return {singleton_ptr};
 }}
 static MP_DEFINE_CONST_FUN_OBJ_0({function_object}, {c_function_name});""".lstrip()
-        )
-        zephyr_binding_labels.append(
-            f"{{ MP_ROM_QSTR(MP_QSTR_{driverclass.upper()}), MP_ROM_PTR(&{function_object}) }},"
-        )
+            )
+            for name in names:
+                zephyr_binding_labels.append(
+                    f"{{ MP_ROM_QSTR(MP_QSTR_{name}), MP_ROM_PTR(&{function_object}) }},"
+                )
     zephyr_binding_headers = "\n".join(zephyr_binding_headers)
     zephyr_binding_objects = "\n".join(zephyr_binding_objects)
     zephyr_binding_labels = "\n".join(zephyr_binding_labels)
 
-    # Board buses on the standard pins: the CIRCUITPY_BOARD_* pin tables for
-    # shared-module/board, and the board name for each bus.
+    # Board buses: the CIRCUITPY_BOARD_* pin tables for shared-module/board,
+    # and the board name for each bus. board.I2C(), board.SPI() and
+    # board.UART() are instance 0 when the board has their standard pins.
+    # board.STEMMA_I2C is the same object as board.I2C() when it uses the
+    # same pins, and its own I2C instance otherwise.
     board_bus_defines = []
+    board_bus_objects = []
     board_bus_labels = []
-    for bus, pins in board_buses.items():
-        fields = ", ".join(f".{field} = &pin_{pin_object_of[pin]}" for field, pin in pins.items())
-        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()} (1)")
-        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()}_PIN {{{{{fields}}}}}")
+    for bus, buses in board_buses.items():
+        tables = ", ".join(
+            "{"
+            + ", ".join(f".{field} = &pin_{pin_object_of[pin]}" for field, pin in pins.items())
+            + "}"
+            for pins in buses
+        )
+        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()} ({len(buses)})")
+        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()}_PIN {{{tables}}}")
+        if bus in standard_bus_pins:
+            board_bus_labels.append(
+                f"{{ MP_ROM_QSTR(MP_QSTR_{bus.upper()}), MP_ROM_PTR(&board_{bus}_obj) }},"
+            )
+    if stemma_i2c_index == 0:
+        board_bus_labels.append("{ MP_ROM_QSTR(MP_QSTR_STEMMA_I2C), MP_ROM_PTR(&board_i2c_obj) },")
+    elif stemma_i2c_index is not None:
+        board_bus_objects.append(
+            f"CIRCUITPY_BOARD_BUS_SINGLETON(stemma_i2c, i2c, {stemma_i2c_index})"
+        )
         board_bus_labels.append(
-            f"{{ MP_ROM_QSTR(MP_QSTR_{bus.upper()}), MP_ROM_PTR(&board_{bus}_obj) }},"
+            "{ MP_ROM_QSTR(MP_QSTR_STEMMA_I2C), MP_ROM_PTR(&board_stemma_i2c_obj) },"
         )
     board_bus_defines = "\n".join(board_bus_defines)
+    board_bus_objects = "\n".join(board_bus_objects)
     board_bus_labels = "\n".join(board_bus_labels)
 
     # Generate tables of allocatable bus instances for the iobroker
@@ -1934,6 +2012,7 @@ const size_t circuitpy_max_ram_size = {max_size};
 {pin_defs}
 
 {zephyr_binding_objects}
+{board_bus_objects}
 {iobroker_tables}
 
 void board_init(void) {{

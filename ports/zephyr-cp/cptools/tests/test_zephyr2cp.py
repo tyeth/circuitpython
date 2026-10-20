@@ -24,8 +24,10 @@ from zephyr2cp import (
     BLOCKED_FLASH_COMPAT,
     MINIMUM_RAM_SIZE,
     add_toml_pin_names,
+    _board_i2c_buses,
     _fastest_first,
     _standard_bus_pins,
+    _stemma_qt_pins,
     _toml_status_pin,
     _used_by_zephyr,
 )
@@ -898,6 +900,61 @@ class TestUsedByZephyr:
 
     def test_unused(self):
         assert not self._used("uart1")
+
+
+class TestStemmaQtPins:
+    """The SCL and SDA pins of a stemma-qt-connector node."""
+
+    DTS = """
+/dts-v1/;
+/ {
+    gpio0: gpio@0 {
+        gpio-controller;
+        #gpio-cells = <2>;
+    };
+    stemma_connector: stemma_connector {
+        compatible = "stemma-qt-connector";
+        #gpio-cells = <2>;
+        gpio-map-mask = <0xffffffff 0xffffffc0>;
+        gpio-map-pass-thru = <0 0x3f>;
+        gpio-map = <0 0 &gpio0 23 0>,
+                   <1 0 &gpio0 22 0>;
+    };
+};
+"""
+
+    def test_scl_and_sda(self):
+        dt = parse_dts_string(self.DTS)
+        gpio_map = dt.label2node["stemma_connector"].props["gpio-map"]
+        assert _stemma_qt_pins(gpio_map) == {"scl": ("gpio0", 23), "sda": ("gpio0", 22)}
+
+    def test_wrong_pin_count(self):
+        dt = parse_dts_string(self.DTS.replace(",\n                   <1 0 &gpio0 22 0>", ""))
+        gpio_map = dt.label2node["stemma_connector"].props["gpio-map"]
+        with pytest.raises(RuntimeError, match="1 pins, not 2"):
+            _stemma_qt_pins(gpio_map)
+
+
+class TestBoardI2cBuses:
+    """The board I2C buses for board.I2C() and board.STEMMA_I2C."""
+
+    I2C = {"scl": ("gpio0", 25), "sda": ("gpio0", 24)}
+    STEMMA = {"scl": ("gpio0", 23), "sda": ("gpio0", 22)}
+
+    def test_no_stemma_connector(self):
+        assert _board_i2c_buses(self.I2C, None) == ([self.I2C], None)
+
+    def test_stemma_on_the_i2c_pins(self):
+        assert _board_i2c_buses(self.I2C, dict(self.I2C)) == ([self.I2C], 0)
+
+    def test_stemma_on_other_pins(self):
+        assert _board_i2c_buses(self.I2C, self.STEMMA) == ([self.I2C, self.STEMMA], 1)
+
+    def test_stemma_without_standard_i2c(self):
+        assert _board_i2c_buses(None, self.STEMMA) == ([self.STEMMA], 0)
+
+    def test_neither(self):
+        assert _board_i2c_buses(None, None) == ([], None)
 
 
 class TestFastestFirst:
