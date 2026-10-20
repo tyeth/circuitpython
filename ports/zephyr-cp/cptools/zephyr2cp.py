@@ -58,20 +58,102 @@ ANALOG_COMPAT = {
 
 AUDIOBUSIO_CLASSES = {"i2s": "I2SOut"}
 
+# Board pin names for each connector compatible, in gpio-map order. Keep the
+# entries in alphabetical order.
 CONNECTORS = {
-    "mikro-bus": [
-        "AN",
-        "RST",
-        "CS",
+    "adafruit-clue": [
+        ["P0", "D0", "A2", "RX"],
+        ["P1", "D1", "A3", "TX"],
+        ["P2", "D2", "A4"],
+        ["P3", "D3", "A5"],
+        ["P4", "D4", "A6"],
+        ["P5", "D5", "BUTTON_A"],
+        ["P6", "D6"],
+        ["P7", "D7"],
+        ["P8", "D8"],
+        ["P9", "D9"],
+        ["P10", "D10", "A7"],
+        ["P11", "D11", "BUTTON_B"],
+        ["P12", "D12", "A0"],
+        ["P13", "D13", "SCK"],
+        ["P14", "D14", "MISO"],
+        ["P15", "D15", "MOSI"],
+        ["P16", "D16", "A1"],
+        ["P17", "D17", "L", "LED"],
+        ["P18", "D18", "NEOPIXEL"],
+        ["P19", "D19", "SCL"],
+        ["P20", "D20", "SDA"],
+    ],
+    "adafruit-feather-header": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
         "SCK",
-        "MISO",
         "MOSI",
-        "PWM",
-        "INT",
+        "MISO",
         "RX",
         "TX",
+        "D4",
+        "SDA",
+        "SCL",
+        "D5",
+        "D6",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
+    ],
+    # Our own binding (dts/bindings/adafruit-itsybitsy-header.yaml): the
+    # ItsyBitsy nRF52840 header pins only.
+    # TODO: figure out how to handle the extra pins on other ItsyBitsy
+    # boards, such as D3 and D4 on the ItsyBitsy M4 and RP2040. We may want
+    # separate connectors for the different board families.
+    "adafruit-itsybitsy-header": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "SCK",
+        "MOSI",
+        "MISO",
+        ["D0", "RX"],
+        ["D1", "TX"],
+        "D2",
+        "SDA",
+        "SCL",
+        "D5",
+        "D7",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
+    ],
+    "arducam,dvp-20pin-connector": [
         "SCL",
         "SDA",
+        "VS",
+        "HS",
+        "PCLK",
+        "XCLK",
+        "D7",
+        "D6",
+        "D5",
+        "D4",
+        "D3",
+        "D2",
+        "D1",
+        "D0",
+        "PEN",
+        "PDN",
+        "GPIO0",
+        "GPIO1",
     ],
     # The standard bus pin names are those on Arduino Uno R3 boards: TX/RX on
     # D1/D0, SPI on D11-D13 (and the 2x3 SPI header), and SDA/SCL on the two
@@ -100,51 +182,19 @@ CONNECTORS = {
         ["D14", "SDA"],
         ["D15", "SCL"],
     ],
-    "adafruit-feather-header": [
-        "A0",
-        "A1",
-        "A2",
-        "A3",
-        "A4",
-        "A5",
+    "mikro-bus": [
+        "AN",
+        "RST",
+        "CS",
         "SCK",
-        "MOSI",
         "MISO",
+        "MOSI",
+        "PWM",
+        "INT",
         "RX",
         "TX",
-        "D4",
-        "SDA",
         "SCL",
-        "D5",
-        "D6",
-        "D9",
-        "D10",
-        "D11",
-        "D12",
-        "D13",
-    ],
-    "adafruit-clue": [
-        ["P0", "D0", "A2", "RX"],
-        ["P1", "D1", "A3", "TX"],
-        ["P2", "D2", "A4"],
-        ["P3", "D3", "A5"],
-        ["P4", "D4", "A6"],
-        ["P5", "D5", "BUTTON_A"],
-        ["P6", "D6"],
-        ["P7", "D7"],
-        ["P8", "D8"],
-        ["P9", "D9"],
-        ["P10", "D10", "A7"],
-        ["P11", "D11", "BUTTON_B"],
-        ["P12", "D12", "A0"],
-        ["P13", "D13", "SCK"],
-        ["P14", "D14", "MISO"],
-        ["P15", "D15", "MOSI"],
-        ["P16", "D16", "A1"],
-        ["P17", "D17", "L", "LED"],
-        ["P18", "D18", "NEOPIXEL"],
-        ["P19", "D19", "SCL"],
-        ["P20", "D20", "SDA"],
+        "SDA",
     ],
     "nordic,expansion-board-header": [
         "P1_04",
@@ -158,26 +208,6 @@ CONNECTORS = {
         "P1_12",
         "P1_13",
         "P1_14",
-    ],
-    "arducam,dvp-20pin-connector": [
-        "SCL",
-        "SDA",
-        "VS",
-        "HS",
-        "PCLK",
-        "XCLK",
-        "D7",
-        "D6",
-        "D5",
-        "D4",
-        "D3",
-        "D2",
-        "D1",
-        "D0",
-        "PEN",
-        "PDN",
-        "GPIO0",
-        "GPIO1",
     ],
     "nxp,cam-44pins-connector": ["CAM_RESETB", "CAM_PWDN"],
     "nxp,lcd-8080": [
@@ -233,6 +263,34 @@ CONNECTORS = {
         "IO1",
         "I2C_SCL",
         "I2C_SDA",
+    ],
+    "raspberrypi,pico-header": [
+        "GP0",
+        "GP1",
+        "GP2",
+        "GP3",
+        "GP4",
+        "GP5",
+        "GP6",
+        "GP7",
+        "GP8",
+        "GP9",
+        "GP10",
+        "GP11",
+        "GP12",
+        "GP13",
+        "GP14",
+        "GP15",
+        "GP16",
+        "GP17",
+        "GP18",
+        "GP19",
+        "GP20",
+        "GP21",
+        "GP22",
+        ["GP26_A0", "GP26", "A0"],
+        ["GP27_A1", "GP27", "A1"],
+        ["GP28_A2", "GP28", "A2"],
     ],
     "renesas,ra-gpio-mipi-header": [
         "IIC_SDA",
@@ -294,34 +352,6 @@ CONNECTORS = {
         "D2",
         "D1",
         "D0",
-    ],
-    "raspberrypi,pico-header": [
-        "GP0",
-        "GP1",
-        "GP2",
-        "GP3",
-        "GP4",
-        "GP5",
-        "GP6",
-        "GP7",
-        "GP8",
-        "GP9",
-        "GP10",
-        "GP11",
-        "GP12",
-        "GP13",
-        "GP14",
-        "GP15",
-        "GP16",
-        "GP17",
-        "GP18",
-        "GP19",
-        "GP20",
-        "GP21",
-        "GP22",
-        ["GP26_A0", "GP26", "A0"],
-        ["GP27_A1", "GP27", "A1"],
-        ["GP28_A2", "GP28", "A2"],
     ],
     # STEMMA QT connectors, and Qwiic connectors, which use the same binding.
     # board.STEMMA_I2C is on these pins (see STEMMA_I2C_PINS).
@@ -885,6 +915,29 @@ def _used_by_zephyr(device_tree, node):
     return False
 
 
+def _toml_status_dotstar(mpconfigboard, board_names):
+    """Resolve the status DotStar's ``STATUS_DOTSTAR_DATA`` and
+    ``STATUS_DOTSTAR_CLOCK`` keys to a ``(data, clock)`` pair of pins.
+
+    Returns None when neither key is present. Raises when only one is, or
+    when ``STATUS_NEOPIXEL`` is also set: the status LED code would use the
+    NeoPixel and ignore the DotStar.
+    """
+    data = _toml_status_pin(mpconfigboard, board_names, "STATUS_DOTSTAR_DATA")
+    clock = _toml_status_pin(mpconfigboard, board_names, "STATUS_DOTSTAR_CLOCK")
+    if data is None and clock is None:
+        return None
+    if data is None or clock is None:
+        raise RuntimeError(
+            "circuitpython.toml needs both STATUS_DOTSTAR_DATA and STATUS_DOTSTAR_CLOCK"
+        )
+    if (mpconfigboard or {}).get("STATUS_NEOPIXEL") is not None:
+        raise RuntimeError(
+            "circuitpython.toml sets both STATUS_NEOPIXEL and a status DotStar; use one"
+        )
+    return data, clock
+
+
 @cpbuild.run_in_thread
 def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfigboard=None):  # noqa: C901
     board_dir = builddir / "board"
@@ -1361,6 +1414,9 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     standard_bus_pins = _standard_bus_pins(board_names)
     stemma_i2c_pins = _named_pins(board_names, STEMMA_I2C_PINS)
     pin_object_of = {}
+    # Status DotStar: ``STATUS_DOTSTAR_DATA`` and ``STATUS_DOTSTAR_CLOCK``,
+    # driven by the status LED code with bit-banged SPI.
+    status_dotstar = _toml_status_dotstar(mpconfigboard, board_names)
     # GPIO pad number -> pad: every (label, num) name and alias the
     # devicetree walk produced keys into one pin object per pad.
     pad_of_gpio = {}
@@ -1421,6 +1477,10 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             if status_neopixel_power and (ioport, num) == status_neopixel_power:
                 status_neopixel_power = pin_object_name
             pin_object_of[(ioport, num)] = pin_object_name
+            if status_dotstar:
+                status_dotstar = tuple(
+                    pin_object_name if pin == (ioport, num) else pin for pin in status_dotstar
+                )
             pin_defs.append(
                 f"const mcu_pin_obj_t pin_{pin_object_name} = {{ .base.type = &mcu_pin_type, .package_pin = {package_pin_init}}};"
             )
@@ -1919,6 +1979,14 @@ static mii_ethernet_obj_t ethernet_obj;
         )
     else:
         status_neopixel_power = ""
+    if status_dotstar:
+        status_dotstar = (
+            f"#define MICROPY_HW_APA102_MOSI (&pin_{status_dotstar[0]})\n"
+            f"#define MICROPY_HW_APA102_SCK (&pin_{status_dotstar[1]})\n"
+            "#define CIRCUITPY_BITBANG_APA102 (1)\n"
+        )
+    else:
+        status_dotstar = ""
     ram_list = []
     ram_externs = []
     max_size = 0
@@ -1953,6 +2021,7 @@ static mii_ethernet_obj_t ethernet_obj;
 {status_neopixel}
 {status_neopixel_power}
 {board_bus_defines}
+{status_dotstar}
         """
     if not header.exists() or header.read_text() != new_header_content:
         header.write_text(new_header_content)

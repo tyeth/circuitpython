@@ -29,6 +29,7 @@ from zephyr2cp import (
     _fastest_first,
     _named_pins,
     _standard_bus_pins,
+    _toml_status_dotstar,
     _toml_status_pin,
     _used_by_zephyr,
 )
@@ -980,3 +981,32 @@ class TestFastestFirst:
             "i2c1",
             "i2c0",
         ]
+
+
+class TestTomlStatusDotstar:
+    """Resolution of circuitpython.toml STATUS_DOTSTAR_DATA/CLOCK keys."""
+
+    BOARD_NAMES = {
+        ("gpio0", 8): ["DOTSTAR_DATA"],
+        ("gpio1", 9): ["DOTSTAR_CLOCK"],
+        ("gpio0", 16): ["NEOPIXEL"],
+    }
+    DOTSTAR = {"STATUS_DOTSTAR_DATA": "DOTSTAR_DATA", "STATUS_DOTSTAR_CLOCK": "DOTSTAR_CLOCK"}
+
+    def test_resolves_data_and_clock(self):
+        assert _toml_status_dotstar(self.DOTSTAR, self.BOARD_NAMES) == (
+            ("gpio0", 8),
+            ("gpio1", 9),
+        )
+
+    def test_absent_keys_are_none(self):
+        assert _toml_status_dotstar({}, self.BOARD_NAMES) is None
+        assert _toml_status_dotstar(None, self.BOARD_NAMES) is None
+
+    def test_one_key_only_raises(self):
+        with pytest.raises(RuntimeError, match="needs both"):
+            _toml_status_dotstar({"STATUS_DOTSTAR_DATA": "DOTSTAR_DATA"}, self.BOARD_NAMES)
+
+    def test_with_status_neopixel_raises(self):
+        with pytest.raises(RuntimeError, match="both STATUS_NEOPIXEL and a status DotStar"):
+            _toml_status_dotstar({**self.DOTSTAR, "STATUS_NEOPIXEL": "NEOPIXEL"}, self.BOARD_NAMES)
