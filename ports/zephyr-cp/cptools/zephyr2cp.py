@@ -323,6 +323,9 @@ CONNECTORS = {
         ["GP27_A1", "GP27", "A1"],
         ["GP28_A2", "GP28", "A2"],
     ],
+    # STEMMA QT connectors, and Qwiic connectors, which use the same binding.
+    # board.STEMMA_I2C is on these pins (see STEMMA_I2C_PINS).
+    "stemma-qt-connector": ["STEMMA_SCL", "STEMMA_SDA"],
 }
 
 EXCEPTIONAL_DRIVERS = ["entropy", "gpio", "led"]
@@ -789,6 +792,9 @@ BOARD_BUS_PINS = {
 # - bus kind: a BOARD_BUS_PINS key, the board bus that such devices provide
 #   ("uart" for board.UART()).
 BOARD_BUS_OF_DRIVER = {"i2c": "i2c", "spi": "spi", "serial": "uart"}
+# The pins of board.STEMMA_I2C, as fields of board_i2c_pin_t (see
+# BOARD_BUS_PINS). The stemma-qt-connector entry in CONNECTORS names them.
+STEMMA_I2C_PINS = {"scl": "STEMMA_SCL", "sda": "STEMMA_SDA"}
 
 
 def _board_pin_named(board_names, name):
@@ -799,35 +805,29 @@ def _board_pin_named(board_names, name):
     return None
 
 
+def _named_pins(board_names, fields):
+    """Return ``{field: pin}`` for ``fields``, a ``{field: board pin name}``
+    dict, or None if the board lacks any of the names. ``pin`` is an
+    ``(ioport, num)`` key of ``board_names``.
+    """
+    pins = {field: _board_pin_named(board_names, name) for field, name in fields.items()}
+    if None in pins.values():
+        return None
+    return pins
+
+
 def _standard_bus_pins(board_names):
     """Find the standard pins of each board bus class.
 
     A class has standard pins when the board names every pin it needs with
-    the standard names in BOARD_BUS_PINS. Returns ``{bus: {field: pin}}``,
-    with ``pin`` an ``(ioport, num)`` key of ``board_names``.
+    the standard names in BOARD_BUS_PINS. Returns ``{bus: {field: pin}}``.
     """
     standard_pins = {}
     for bus, fields in BOARD_BUS_PINS.items():
-        pins = {field: _board_pin_named(board_names, name) for field, name in fields.items()}
-        if None not in pins.values():
+        pins = _named_pins(board_names, fields)
+        if pins is not None:
             standard_pins[bus] = pins
     return standard_pins
-
-
-def _stemma_qt_pins(gpio_map):
-    """Return the ``{"scl": pin, "sda": pin}`` of a stemma-qt-connector node.
-
-    The binding maps connector pin 0 to SCL and pin 1 to SDA. Qwiic
-    connectors use the same binding. ``pin`` is an ``(ioport, num)`` key, as
-    in ``board_names``.
-    """
-    pins = []
-    for offset, _, label in gpio_map._markers:
-        if label:
-            pins.append((label, int.from_bytes(gpio_map.value[offset + 4 : offset + 8], "big")))
-    if len(pins) != 2:
-        raise RuntimeError(f"stemma-qt-connector gpio-map has {len(pins)} pins, not 2")
-    return {"scl": pins[0], "sda": pins[1]}
 
 
 def _board_i2c_buses(i2c_pins, stemma_pins):
@@ -979,7 +979,6 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     ioports = {}
     all_ioports = []
     board_names = {}
-    stemma_qt_pins = None
     status_led = None
     status_led_inverted = False
     boot_button = None
@@ -1108,11 +1107,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             all_ioports.append(node.labels[0])
             if status == "okay":
                 ioports[node.labels[0]] = range(0, ngpios)
-        if gpio_map and compatible and compatible[0] == "stemma-qt-connector":
-            # The connector's pins keep the names the board gives them; it
-            # only says which ones board.STEMMA_I2C uses.
-            stemma_qt_pins = _stemma_qt_pins(gpio_map)
-        elif gpio_map and compatible and compatible[0] != "gpio-nexus":
+        if gpio_map and compatible and compatible[0] != "gpio-nexus":
             # Per-board connector names from circuitpython.toml's
             # ``[connectors.<node label>]`` table take precedence. They key the
             # gpio-map position (the header pin number as a string) to a name
@@ -1364,6 +1359,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 pwm_emul = line.strip().endswith("=y")
     board_info["neopixel_write"] = pwm_nrfx
     standard_bus_pins = _standard_bus_pins(board_names)
+    stemma_i2c_pins = _named_pins(board_names, STEMMA_I2C_PINS)
     pin_object_of = {}
     # GPIO pad number -> pad: every (label, num) name and alias the
     # devicetree walk produced keys into one pin object per pad.
@@ -1432,7 +1428,13 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             mcu_pin_mapping.append(
                 f"{{ MP_ROM_QSTR(MP_QSTR_{pin_object_name}), MP_ROM_PTR(&pin_{pin_object_name}) }},"
             )
-            board_pin_names = board_names.get((ioport, num), [])
+            # A pin prints as its first board name, so list the STEMMA QT
+            # names last: board.SCL should print as board.SCL, not
+            # board.STEMMA_SCL.
+            board_pin_names = sorted(
+                board_names.get((ioport, num), []),
+                key=lambda name: name.upper() in STEMMA_I2C_PINS.values(),
+            )
             for board_pin_name in board_pin_names:
                 board_pin_name = (
                     board_pin_name.upper()
@@ -1533,7 +1535,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 continue
             if bus == "i2c":
                 buses, stemma_i2c_index = _board_i2c_buses(
-                    standard_bus_pins.get("i2c"), stemma_qt_pins
+                    standard_bus_pins.get("i2c"), stemma_i2c_pins
                 )
                 if buses:
                     board_buses["i2c"] = buses
@@ -1587,7 +1589,7 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
         # board.STEMMA_I2C is the instance labeled zephyr_i2c, Zephyr's label
         # for the bus wired to such connectors. Its pins aren't compared
         # with the connector's: that would mean decoding each SoC's pinctrl.
-        if driver == "i2c" and not uses_iobroker and stemma_qt_pins is not None:
+        if driver == "i2c" and not uses_iobroker and stemma_i2c_pins is not None:
             stemma = next((labels for labels in candidates if "zephyr_i2c" in labels), None)
             if stemma is not None:
                 names_of.setdefault(stemma[0], []).append("STEMMA_I2C")

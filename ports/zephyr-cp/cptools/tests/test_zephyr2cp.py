@@ -23,11 +23,12 @@ from zephyr2cp import (
     find_ram_regions,
     BLOCKED_FLASH_COMPAT,
     MINIMUM_RAM_SIZE,
+    STEMMA_I2C_PINS,
     add_toml_pin_names,
     _board_i2c_buses,
     _fastest_first,
+    _named_pins,
     _standard_bus_pins,
-    _stemma_qt_pins,
     _toml_status_pin,
     _used_by_zephyr,
 )
@@ -902,37 +903,30 @@ class TestUsedByZephyr:
         assert not self._used("uart1")
 
 
-class TestStemmaQtPins:
-    """The SCL and SDA pins of a stemma-qt-connector node."""
+class TestStemmaI2cPins:
+    """The pins of board.STEMMA_I2C, named by the stemma-qt-connector entry."""
 
-    DTS = """
-/dts-v1/;
-/ {
-    gpio0: gpio@0 {
-        gpio-controller;
-        #gpio-cells = <2>;
-    };
-    stemma_connector: stemma_connector {
-        compatible = "stemma-qt-connector";
-        #gpio-cells = <2>;
-        gpio-map-mask = <0xffffffff 0xffffffc0>;
-        gpio-map-pass-thru = <0 0x3f>;
-        gpio-map = <0 0 &gpio0 23 0>,
-                   <1 0 &gpio0 22 0>;
-    };
-};
-"""
+    def test_same_pins_as_i2c(self):
+        names = {("gpio0", 3): ["SCL", "STEMMA_SCL"], ("gpio0", 2): ["SDA", "STEMMA_SDA"]}
+        assert _named_pins(names, STEMMA_I2C_PINS) == {
+            "scl": ("gpio0", 3),
+            "sda": ("gpio0", 2),
+        }
 
-    def test_scl_and_sda(self):
-        dt = parse_dts_string(self.DTS)
-        gpio_map = dt.label2node["stemma_connector"].props["gpio-map"]
-        assert _stemma_qt_pins(gpio_map) == {"scl": ("gpio0", 23), "sda": ("gpio0", 22)}
+    def test_own_pins(self):
+        names = {
+            ("gpio0", 25): ["SCL"],
+            ("gpio0", 24): ["SDA"],
+            ("gpio0", 23): ["SCL1", "STEMMA_SCL"],
+            ("gpio0", 22): ["SDA1", "STEMMA_SDA"],
+        }
+        assert _named_pins(names, STEMMA_I2C_PINS) == {
+            "scl": ("gpio0", 23),
+            "sda": ("gpio0", 22),
+        }
 
-    def test_wrong_pin_count(self):
-        dt = parse_dts_string(self.DTS.replace(",\n                   <1 0 &gpio0 22 0>", ""))
-        gpio_map = dt.label2node["stemma_connector"].props["gpio-map"]
-        with pytest.raises(RuntimeError, match="1 pins, not 2"):
-            _stemma_qt_pins(gpio_map)
+    def test_no_connector(self):
+        assert _named_pins({("gpio0", 3): ["SCL"], ("gpio0", 2): ["SDA"]}, STEMMA_I2C_PINS) is None
 
 
 class TestBoardI2cBuses:
