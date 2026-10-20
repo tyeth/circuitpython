@@ -614,6 +614,11 @@ SRC_C += \
 INC += \
 	-isystem lib/Pico-PIO-USB/src
 
+ifeq ($(CIRCUITPY_USB_HOST_BULK),1)
+# Pico-PIO-USB bulk IN ring, polled from the host frame handler.
+CFLAGS += -DPIO_USB_HOST_BULK_STREAM=1
+endif
+
 # Core1 posts USB events while core0 may hold the TinyUSB queue mutex. The
 # contended wait path calls these two flash-resident SDK functions, and core1
 # must not execute from flash. Replace them with RAM-resident implementations
@@ -624,9 +629,17 @@ endif
 ifeq ($(CIRCUITPY_PICODVI),1)
 SRC_C += \
 	bindings/picodvi/__init__.c \
+	bindings/picodvi/AudioOut.c \
 	bindings/picodvi/Framebuffer.c \
 	common-hal/picodvi/__init__.c \
 	common-hal/picodvi/Framebuffer_$(CHIP_VARIANT).c \
+
+ifeq ($(CIRCUITPY_PICODVI_AUDIOOUT),1)
+SRC_C += \
+	common-hal/picodvi/AudioOut.c \
+	common-hal/picodvi/dvi_audio_packet.c \
+
+endif
 
 ifeq ($(CHIP_VARIANT),RP2040)
 SRC_PICODVI := \
@@ -704,6 +717,8 @@ CFLAGS += \
 	  -DMBEDTLS_CONFIG_FILE='"$(TOP)/lib/mbedtls_config/mbedtls_config.h"' \
 	  -DTF_PSA_CRYPTO_CONFIG_FILE='"$(TOP)/lib/mbedtls_config/tf_psa_crypto_config.h"' \
 
+# The generated bundle holds a hash of each root's subject name, not the name itself;
+# the format is described in lib/mbedtls_config/crt_bundle.c.
 $(BUILD)/x509_crt_bundle.S: $(TOP)/lib/certificates/data/roots-full.pem $(TOP)/tools/gen_crt_bundle.py
 	$(Q)$(PYTHON) $(TOP)/tools/gen_crt_bundle.py -i $< -o $@ --asm
 OBJ_MBEDTLS := $(BUILD)/x509_crt_bundle.o

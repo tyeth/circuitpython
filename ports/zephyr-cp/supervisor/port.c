@@ -13,6 +13,13 @@
 #if CIRCUITPY_AUDIOBUSIO_I2SOUT
 #include "common-hal/audiobusio/I2SOut.h"
 #endif
+#if CIRCUITPY_NEOPIXEL_WRITE
+#include "common-hal/neopixel_write/__init__.h"
+#endif
+
+#if CIRCUITPY_RTC
+#include "shared-bindings/rtc/__init__.h"
+#endif
 
 #include <stdlib.h>
 
@@ -38,6 +45,11 @@
 
 #if defined(CONFIG_IMG_MANAGER)
 #include <zephyr/dfu/mcuboot.h>
+#endif
+
+#if defined(CONFIG_SOC_FAMILY_RPI_PICO)
+#include <hardware/structs/psm.h>
+#include <hardware/structs/watchdog.h>
 #endif
 
 #if defined(CONFIG_TRACING_PERFETTO) && defined(CONFIG_BOARD_NATIVE_SIM)
@@ -247,6 +259,17 @@ void reset_cpu(void) {
     cp_retained_save();
     #endif
 
+    #if defined(CONFIG_SOC_FAMILY_RPI_PICO)
+    // On RP2 the Arm system reset leaves the USB controller running, so the
+    // host never sees the board go away. Reset the whole chip through the
+    // watchdog instead, as pico-sdk's watchdog_reboot() does. Zephyr's
+    // hal_rpi_pico does not build watchdog.c, so write the registers here.
+    hw_clear_bits(&watchdog_hw->ctrl, WATCHDOG_CTRL_ENABLE_BITS);
+    watchdog_hw->scratch[4] = 0;
+    hw_set_bits(&psm_hw->wdsel, PSM_WDSEL_BITS & ~(PSM_WDSEL_ROSC_BITS | PSM_WDSEL_XOSC_BITS));
+    hw_set_bits(&watchdog_hw->ctrl, WATCHDOG_CTRL_TRIGGER_BITS);
+    #endif
+
     // Try a warm reboot first. It won't return if it works but isn't always
     // implemented.
     sys_reboot(SYS_REBOOT_WARM);
@@ -259,6 +282,13 @@ void reset_cpu(void) {
 void reset_port(void) {
     #if CIRCUITPY_AUDIOBUSIO_I2SOUT
     i2sout_reset();
+    #endif
+    #if CIRCUITPY_NEOPIXEL_WRITE
+    neopixel_write_reset();
+    #endif
+
+    #if CIRCUITPY_RTC
+    rtc_reset();
     #endif
 
     #if defined(CONFIG_ARCH_POSIX)
@@ -273,11 +303,8 @@ void reset_port(void) {
 }
 
 void reset_to_bootloader(void) {
-    // The 1200-bps CDC disconnect (and the supervisor's bootloader reset
-    // cause) asks for the update mode. On bootloaders that distinguish the
-    // flavors this is the serial DFU one; on the fork's MCUboot adaboot both
-    // flavors end up in the same update mode.
-    adaboot_request_update_mode(false);
+    // Ask for UF2 mode so the bootloader shows its drive.
+    adaboot_request_update_mode(true);
     reset_cpu();
 }
 

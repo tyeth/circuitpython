@@ -42,6 +42,10 @@
 #include "shared-module/aurora_epaper/aurora_framebuffer.h"
 #endif
 
+#if CIRCUITPY_PICODVI_AUDIOOUT
+#include "common-hal/picodvi/AudioOut.h"
+#endif
+
 #if CIRCUITPY_MIPIDSI
 #include "shared-bindings/mipidsi/Display.h"
 #endif
@@ -392,6 +396,11 @@ void displayio_gc_collect(void) {
         #if CIRCUITPY_AURORA_EPAPER
         if (display_bus_type == &aurora_framebuffer_type) {
             common_hal_aurora_epaper_framebuffer_collect_ptrs(&display_buses[i].aurora_epaper);
+        }
+        #endif
+        #if CIRCUITPY_PICODVI_AUDIOOUT
+        if (display_bus_type == &picodvi_framebuffer_type) {
+            picodvi_audioout_collect_ptrs(&display_buses[i].picodvi);
         }
         #endif
     }

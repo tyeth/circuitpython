@@ -915,7 +915,9 @@ msgstr ""
 #: ports/mimxrt10xx/common-hal/pwmio/PWMOut.c
 #: ports/raspberrypi/bindings/picodvi/Framebuffer.c
 #: ports/raspberrypi/bindings/rp2pio/StateMachine.c
-#: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2040.c py/argcheck.c
+#: ports/raspberrypi/common-hal/picodvi/AudioOut.c
+#: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2040.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c py/argcheck.c
 #: shared-bindings/digitalio/DigitalInOut.c
 #: shared-bindings/epaperdisplay/EPaperDisplay.c
 #: shared-bindings/i2cioexpander/IOPin.c shared-bindings/mipidsi/Display.c
@@ -972,6 +974,7 @@ msgstr ""
 #: ports/atmel-samd/common-hal/pulseio/PulseIn.c
 #: ports/atmel-samd/common-hal/rotaryio/IncrementalEncoder.c
 #: ports/cxd56/common-hal/pulseio/PulseIn.c
+#: ports/espressif/common-hal/mii/RMII.c
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2350.c
 #: ports/zephyr-cp/common-hal/busio/I2C.c
 #: ports/zephyr-cp/common-hal/busio/SPI.c
@@ -1066,6 +1069,7 @@ msgid "No pull up found on SDA or SCL; check your wiring"
 msgstr ""
 
 #: ports/atmel-samd/common-hal/busio/UART.c
+#: shared-bindings/usb_host_bulk/InStream.c
 msgid "%q must be power of 2"
 msgstr ""
 
@@ -1146,6 +1150,7 @@ msgstr ""
 #: ports/atmel-samd/common-hal/picogame/Display.c
 #: ports/espressif/common-hal/espidf/__init__.c
 #: ports/raspberrypi/common-hal/picogame/Display.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
 #: shared-bindings/picogame/Canvas.c shared-bindings/picogame/__init__.c
 msgid "Operation or feature not supported"
 msgstr ""
@@ -1231,6 +1236,7 @@ msgstr ""
 
 #: ports/espressif/bindings/espnow/ESPNow.c
 #: ports/espressif/common-hal/espulp/ULP.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
 #: shared-module/memorymonitor/AllocationAlarm.c
 #: shared-module/memorymonitor/AllocationSize.c
 msgid "Already running"
@@ -1246,6 +1252,7 @@ msgstr ""
 
 #: ports/espressif/boards/adafruit_feather_esp32c6_4mbflash_nopsram/mpconfigboard.h
 #: ports/espressif/boards/adafruit_itsybitsy_esp32/mpconfigboard.h
+#: ports/espressif/boards/waveshare_esp32_c5_lcd_1_47/mpconfigboard.h
 #: ports/espressif/boards/waveshare_esp32_c6_lcd_1_47/mpconfigboard.h
 msgid "You pressed the BOOT button at start up."
 msgstr ""
@@ -1290,6 +1297,12 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Adapter.c
 #: ports/nordic/common-hal/_bleio/Adapter.c
 msgid "Scan already in progress. Stop with stop_scan."
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/Adapter.c
+#: ports/nordic/common-hal/_bleio/Adapter.c
+#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
+msgid "Failed to connect: timeout"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/Adapter.c
@@ -1340,6 +1353,7 @@ msgstr ""
 #: ports/espressif/common-hal/_bleio/Characteristic.c
 #: ports/espressif/common-hal/_bleio/Service.c
 #: ports/raspberrypi/common-hal/alarm/pin/PinAlarm.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
 msgid "Too many %q"
 msgstr ""
 
@@ -1360,8 +1374,24 @@ msgstr ""
 #: ports/zephyr-cp/common-hal/_bleio/Characteristic.c
 #: ports/zephyr-cp/common-hal/_bleio/Connection.c
 #: ports/zephyr-cp/common-hal/_bleio/Descriptor.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 #: shared-bindings/_bleio/CharacteristicBuffer.c
 msgid "Not connected"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/Connection.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
+msgid ""
+"Unspecified issue. The pairing request on the other device may have been "
+"declined or ignored."
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/Connection.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/Connection.c
+#, c-format
+msgid "Unknown security error: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/Connection.c
@@ -1408,32 +1438,44 @@ msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown system firmware error at %s:%d: %d"
-msgstr ""
-
-#: ports/espressif/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown system firmware error: %d"
+msgid "Unknown BLE error at %s:%d: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#, c-format
+msgid "Unknown BLE error: 0x%04x"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
+msgid "%q not permitted"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 msgid "Insufficient authentication"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
 #: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
+msgid "Insufficient authorization"
+msgstr ""
+
+#: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 msgid "Insufficient encryption"
 msgstr ""
 
 #: ports/espressif/common-hal/_bleio/__init__.c
+#: ports/nordic/common-hal/_bleio/__init__.c
+#: ports/zephyr-cp/common-hal/_bleio/__init__.c
 #, c-format
-msgid "Unknown BLE error at %s:%d: %d"
-msgstr ""
-
-#: ports/espressif/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown BLE error: %d"
+msgid "Unknown gatt error: 0x%04x"
 msgstr ""
 
 #: ports/espressif/common-hal/alarm/pin/PinAlarm.c
@@ -1470,7 +1512,7 @@ msgid "%q must be array of type 'H'"
 msgstr ""
 
 #: ports/espressif/common-hal/audiobusio/PDMIn.c
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 msgid "%q must be 8, 16, 24, or 32"
 msgstr ""
 
@@ -1661,13 +1703,15 @@ msgstr ""
 #: ports/espressif/common-hal/qspibus/QSPIBus.c
 #: ports/mimxrt10xx/common-hal/audiobusio/__init__.c
 #: ports/mimxrt10xx/common-hal/usb_host/Port.c
+#: ports/raspberrypi/common-hal/picodvi/AudioOut.c
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2040.c
 #: ports/raspberrypi/common-hal/picodvi/Framebuffer_RP2350.c
 #: ports/raspberrypi/common-hal/rp2pio/StateMachine.c
 #: ports/raspberrypi/common-hal/usb_host/Port.c
 #: shared-bindings/digitalio/DigitalInOut.c shared-bindings/emmcio/EMMC.c
 #: shared-bindings/i2cioexpander/IOPin.c shared-bindings/microcontroller/Pin.c
-#: shared-module/max3421e/Max3421E.c
+#: shared-module/max3421e/Max3421E.c shared-module/usb/core/Device.c
+#: shared-module/usb_host_audio/USBIn.c
 msgid "%q in use"
 msgstr ""
 
@@ -1721,7 +1765,9 @@ msgstr ""
 msgid "pop from an empty PulseIn"
 msgstr ""
 
-#: ports/espressif/common-hal/qspibus/QSPIBus.c shared-module/usb/core/Device.c
+#: ports/espressif/common-hal/qspibus/QSPIBus.c
+#: ports/raspberrypi/common-hal/usb_host_bulk/InStream.c
+#: shared-module/usb/core/Device.c
 msgid "Could not allocate DMA capable buffer"
 msgstr ""
 
@@ -1777,13 +1823,11 @@ msgstr ""
 
 #: ports/espressif/common-hal/socketpool/Socket.c
 #: ports/raspberrypi/common-hal/socketpool/Socket.c
-#: ports/zephyr-cp/common-hal/socketpool/Socket.c
 msgid "Out of sockets"
 msgstr ""
 
 #: ports/espressif/common-hal/socketpool/SocketPool.c
-#: ports/raspberrypi/common-hal/socketpool/SocketPool.c
-msgid "SocketPool can only be used with wifi.radio"
+msgid "SocketPool can only be used with %q.%q or any %q.%q"
 msgstr ""
 
 #: ports/espressif/common-hal/watchdog/WatchDogTimer.c
@@ -1864,11 +1908,6 @@ msgstr ""
 msgid "non-zero timeout must be > 0.01"
 msgstr ""
 
-#: ports/nordic/common-hal/_bleio/Adapter.c
-#: ports/zephyr-cp/common-hal/_bleio/Adapter.c
-msgid "Failed to connect: timeout"
-msgstr ""
-
 #: ports/nordic/common-hal/_bleio/UUID.c
 msgid "Unexpected nrfx uuid type"
 msgstr ""
@@ -1880,24 +1919,6 @@ msgstr ""
 #: ports/nordic/common-hal/_bleio/__init__.c
 #, c-format
 msgid "Unknown system firmware error: %04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#, c-format
-msgid "Unknown gatt error: 0x%04x"
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#: ports/zephyr-cp/common-hal/_bleio/Connection.c
-msgid ""
-"Unspecified issue. The pairing request on the other device may have been "
-"declined or ignored."
-msgstr ""
-
-#: ports/nordic/common-hal/_bleio/__init__.c
-#: ports/zephyr-cp/common-hal/_bleio/Connection.c
-#, c-format
-msgid "Unknown security error: 0x%04x"
 msgstr ""
 
 #: ports/nordic/common-hal/alarm/pin/PinAlarm.c
@@ -1969,6 +1990,13 @@ msgstr ""
 #: shared-bindings/supervisor/__init__.c shared-module/audiofilters/__init__.c
 #: shared-module/displayio/__init__.c shared-module/synthio/Synthesizer.c
 msgid "%q must be of type %q or %q, not %q"
+msgstr ""
+
+#: ports/raspberrypi/bindings/picodvi/AudioOut.c
+#: shared-bindings/audiobusio/I2SOut.c shared-bindings/audioio/AudioOut.c
+#: shared-bindings/audiopwmio/PWMAudioOut.c shared-bindings/mcp4822/MCP4822.c
+#: shared-bindings/usb_audio/USBMicrophone.c
+msgid "Not playing"
 msgstr ""
 
 #: ports/raspberrypi/bindings/rp2pio/StateMachine.c
@@ -2222,6 +2250,10 @@ msgstr ""
 msgid "Only IPv4 sockets supported"
 msgstr ""
 
+#: ports/raspberrypi/common-hal/socketpool/SocketPool.c
+msgid "SocketPool can only be used with wifi.radio"
+msgstr ""
+
 #: ports/raspberrypi/common-hal/usb_host/Port.c
 msgid "All dma channels in use"
 msgstr ""
@@ -2403,8 +2435,12 @@ msgstr ""
 msgid "Use device tree to define %q devices"
 msgstr ""
 
+#: ports/zephyr-cp/common-hal/mii/Ethernet.c
+msgid "cannot construct ethernet interfaces; use board.ETHERNET"
+msgstr ""
+
 #: ports/zephyr-cp/common-hal/socketpool/SocketPool.c
-msgid "SocketPool can only be used with wifi.radio or hostnetwork.HostNetwork"
+msgid "SocketPool can only be used with %q.%q, %q.%q, or %q.%q"
 msgstr ""
 
 #: ports/zephyr-cp/common-hal/usb_hid/Device.c shared-module/usb_hid/Device.c
@@ -3901,21 +3937,17 @@ msgstr ""
 msgid "%q must be a bytearray or array of type 'H' or 'B'"
 msgstr ""
 
-#: shared-bindings/audiobusio/I2SOut.c shared-bindings/audioio/AudioOut.c
-#: shared-bindings/audiopwmio/PWMAudioOut.c shared-bindings/mcp4822/MCP4822.c
-#: shared-bindings/usb_audio/USBMicrophone.c
-msgid "Not playing"
-msgstr ""
-
 #: shared-bindings/audiobusio/PDMIn.c
 msgid "%q must be multiple of 8."
 msgstr ""
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Cannot record to a file"
 msgstr ""
 
 #: shared-bindings/audiobusio/PDMIn.c shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/usb_host_audio/USBIn.c
 msgid "Destination capacity is smaller than destination_length."
 msgstr ""
 
@@ -3955,7 +3987,7 @@ msgstr ""
 msgid "bits_per_sample must be 16"
 msgstr ""
 
-#: shared-bindings/audioi2sin/I2SIn.c
+#: shared-bindings/audioi2sin/I2SIn.c shared-bindings/usb_host_audio/USBIn.c
 #, c-format
 msgid "invalid destination buffer, must be an array of type: %c"
 msgstr ""
@@ -4267,6 +4299,10 @@ msgstr ""
 msgid "%q and %q contain duplicate pins"
 msgstr ""
 
+#: shared-bindings/mii/Ethernet.c shared-bindings/wifi/Radio.c
+msgid "invalid hostname"
+msgstr ""
+
 #: shared-bindings/msgpack/ExtType.c
 msgid "code outside range 0~127"
 msgstr ""
@@ -4404,10 +4440,6 @@ msgstr ""
 
 #: shared-bindings/wifi/Radio.c
 msgid "Invalid hex password"
-msgstr ""
-
-#: shared-bindings/wifi/Radio.c
-msgid "invalid hostname"
 msgstr ""
 
 #: shared-bindings/wifi/Radio.c
@@ -4675,11 +4707,11 @@ msgid "Invalid socket for TLS"
 msgstr ""
 
 #: shared-module/ssl/SSLSocket.c
-msgid "invalid key"
+msgid "invalid cert"
 msgstr ""
 
-#: shared-module/ssl/SSLSocket.c
-msgid "invalid cert"
+#: shared-module/storage/__init__.c
+msgid "File write in progress"
 msgstr ""
 
 #: shared-module/storage/__init__.c

@@ -26,6 +26,7 @@
 // This routine should work even when interrupts are disabled. Used by OneWire
 // for precise timing.
 void common_hal_mcu_delay_us(uint32_t delay) {
+    k_busy_wait(delay);
 }
 
 static uint32_t _irq_key;
@@ -110,5 +111,6 @@ watchdog_watchdogtimer_obj_t common_hal_mcu_watchdogtimer_obj = {
     },
     .timeout = 0.0f,
     .mode = WATCHDOGMODE_NONE,
+    .channel_id = -1,
 };
 #endif

@@ -12,8 +12,17 @@
 #include "esp_private/usb_phy.h"
 #include "tusb.h"
 
-#if !defined(CONFIG_IDF_TARGET_ESP32P4) || CIRCUITPY_USB_HOST_INSTANCE != 1
+#if defined(CONFIG_IDF_TARGET_ESP32P4)
+#if CIRCUITPY_USB_HOST_INSTANCE != 1
 #error "USB host requires the ESP32-P4 high-speed controller"
+#endif
+#elif defined(CONFIG_IDF_TARGET_ESP32S31)
+// The S31 has only the high-speed controller, as TinyUSB rhport 0.
+#if CIRCUITPY_USB_HOST_INSTANCE != 0
+#error "USB host requires the ESP32-S31 high-speed controller"
+#endif
+#else
+#error "USB host is not supported on this chip"
 #endif
 #if CIRCUITPY_USB_DEVICE && CIRCUITPY_USB_DEVICE_INSTANCE == CIRCUITPY_USB_HOST_INSTANCE
 #error "USB host and device must use different controllers"
@@ -55,5 +64,8 @@ usb_host_port_obj_t *common_hal_usb_host_port_construct(const mcu_pin_obj_t *dp,
 // TinyUSB installs the controller IRQ. Process its events on the VM task,
 // where the Python USB device and keyboard callbacks are safe to run.
 void tuh_event_hook_cb(uint8_t rhport, uint32_t eventid, bool in_isr) {
-    usb_background_schedule();
+    // The background tick polls IRQ events; scheduling here wakes a FreeRTOS task.
+    if (!in_isr) {
+        usb_background_schedule();
+    }
 }

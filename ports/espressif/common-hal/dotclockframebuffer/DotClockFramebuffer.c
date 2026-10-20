@@ -34,9 +34,7 @@
 #include "hal/gpio_hal.h"
 #include "soc/lcd_cam_struct.h"
 #include "esp_heap_caps.h"
-
-// should be from rom/cache.h but it wasn't working
-int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
+#include "esp_cache.h"
 
 #define LCD_RGB_ISR_IRAM_SAFE (1)
 #define LCD_RGB_INTR_ALLOC_FLAGS     (ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_INTRDISABLED)
@@ -103,7 +101,7 @@ void common_hal_dotclockframebuffer_framebuffer_construct(dotclockframebuffer_fr
     cfg->timings.vsync_back_porch = vsync_back_porch;
     cfg->timings.vsync_front_porch = vsync_front_porch;
     cfg->timings.flags.hsync_idle_low = hsync_idle_low;
-    cfg->timings.flags.vsync_idle_low = hsync_idle_low;
+    cfg->timings.flags.vsync_idle_low = vsync_idle_low;
     cfg->timings.flags.de_idle_high = de_idle_high;
     cfg->timings.flags.pclk_active_neg = !pclk_active_high;
     cfg->timings.flags.pclk_idle_high = pclk_idle_high;
@@ -140,6 +138,16 @@ void common_hal_dotclockframebuffer_framebuffer_construct(dotclockframebuffer_fr
     cfg->flags.disp_active_low = 0;
     cfg->flags.refresh_on_demand = 0;
     cfg->flags.fb_in_psram = 1; // allocate frame buffer in PSRAM
+
+    // Stream the PSRAM frame buffer through bounce buffers in internal RAM so
+    // that PSRAM access stalls cannot starve the LCD DMA. The frame buffer size
+    // must be a multiple of the bounce buffer size, so pick up to 10 lines that
+    // divide the height evenly.
+    int bounce_lines = 10;
+    while (bounce_lines > 1 && height % bounce_lines != 0) {
+        bounce_lines--;
+    }
+    cfg->bounce_buffer_size_px = cfg->timings.h_res * bounce_lines;
 
     esp_err_t ret = esp_lcd_new_rgb_panel(&self->panel_config, &self->panel_handle);
     CHECK_ESP_RESULT(ret);
@@ -203,7 +211,7 @@ mp_int_t common_hal_dotclockframebuffer_framebuffer_get_first_pixel_offset(dotcl
 }
 
 void common_hal_dotclockframebuffer_framebuffer_refresh(dotclockframebuffer_framebuffer_obj_t *self) {
-    Cache_WriteBack_Addr((uint32_t)(self->bufinfo.buf), self->bufinfo.len);
+    esp_cache_msync(self->bufinfo.buf, self->bufinfo.len, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_UNALIGNED);
 }
 
 mp_int_t common_hal_dotclockframebuffer_framebuffer_get_refresh_rate(dotclockframebuffer_framebuffer_obj_t *self) {

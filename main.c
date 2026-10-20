@@ -89,8 +89,16 @@
 #include "shared-module/keypad/__init__.h"
 #endif
 
+#if CIRCUITPY_STORAGE_MAP_FILE
+#include "shared-bindings/storage/__init__.h"
+#endif
+
 #if CIRCUITPY_AUDIOFILEWRITER
 #include "shared-module/audiofilewriter/AudioFileWriter.h"
+#endif
+
+#if CIRCUITPY_USB_HOST_AUDIO
+#include "shared-module/usb_host_audio/USBIn.h"
 #endif
 
 #if CIRCUITPY_MEMORYMONITOR
@@ -408,8 +416,16 @@ static void cleanup_after_vm(mp_obj_t exception) {
     keypad_reset();
     #endif
 
+    #if CIRCUITPY_STORAGE_MAP_FILE
+    storage_map_file_reset();
+    #endif
+
     #if CIRCUITPY_AUDIOFILEWRITER
     audiofilewriter_reset();
+    #endif
+
+    #if CIRCUITPY_USB_HOST_AUDIO
+    usb_host_audio_reset();
     #endif
 
     // Close user-initiated sockets.

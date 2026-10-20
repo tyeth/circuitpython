@@ -149,6 +149,18 @@ static mp_uint_t flash_read_blocks(mp_obj_t self_in, uint8_t *dest, uint32_t blo
     return supervisor_flash_read_blocks(dest, block_num, num_blocks);
 }
 
+#if CIRCUITPY_STORAGE_MAP_FILE
+// The sector -> block translation of flash_read_blocks(); FatFs has already validated the
+// cluster chain, so every sector it hands over lies inside the volume.
+const uint8_t *supervisor_flash_xip_address(uint32_t fatfs_sector, uint32_t *contiguous) {
+    uint32_t block = fatfs_sector - PART1_START_BLOCK;
+    #if CIRCUITPY_SAVES_PARTITION_SIZE > 0
+    block += CIRCUITPY_SAVES_PARTITION_SIZE / FILESYSTEM_BLOCK_SIZE;
+    #endif
+    return port_internal_flash_xip_address(block, contiguous);
+}
+#endif
+
 static volatile bool filesystem_dirty = false;
 void supervisor_flash_mark_dirty(void) {
     if (!filesystem_dirty) {
@@ -166,27 +178,31 @@ static mp_uint_t flash_write_blocks(mp_obj_t self_in, const uint8_t *src, uint32
         // can't write MBR, but pretend we did
         return 0;
     } else {
-        supervisor_flash_mark_dirty();
         block_num -= PART1_START_BLOCK;
         #if CIRCUITPY_SAVES_PARTITION_SIZE > 0
         mp_vfs_blockdev_t *self = (mp_vfs_blockdev_t *)self_in;
         block_num += self->offset / self->block_size;
         #endif
-        return supervisor_flash_write_blocks(src, block_num, num_blocks);
+        mp_uint_t result = supervisor_flash_write_blocks(src, block_num, num_blocks);
+        // Mark dirty after the write, so a flush running in another thread
+        // can't clear the flag between marking and caching the block.
+        supervisor_flash_mark_dirty();
+        return result;
     }
 }
 
 void PLACE_IN_ITCM(supervisor_flash_flush)(void) {
+    // Clear the flag before flushing. A write that lands during the flush
+    // marks the filesystem dirty again and turns the tick back on.
+    if (filesystem_dirty) {
+        filesystem_dirty = false;
+        supervisor_disable_tick();
+    }
     #if INTERNAL_FLASH_FILESYSTEM
     port_internal_flash_flush();
     #else
     supervisor_external_flash_flush();
     #endif
-    // Turn off ticks now that our filesystem has been flushed.
-    if (filesystem_dirty) {
-        supervisor_disable_tick();
-    }
-    filesystem_dirty = false;
 }
 
 static mp_obj_t supervisor_flash_obj_readblocks(mp_obj_t self, mp_obj_t block_num, mp_obj_t buf) {

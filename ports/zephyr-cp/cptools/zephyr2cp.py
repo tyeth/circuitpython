@@ -58,44 +58,31 @@ ANALOG_COMPAT = {
 
 AUDIOBUSIO_CLASSES = {"i2s": "I2SOut"}
 
+# Board pin names for each connector compatible, in gpio-map order. Keep the
+# entries in alphabetical order.
 CONNECTORS = {
-    "mikro-bus": [
-        "AN",
-        "RST",
-        "CS",
-        "SCK",
-        "MISO",
-        "MOSI",
-        "PWM",
-        "INT",
-        "RX",
-        "TX",
-        "SCL",
-        "SDA",
-    ],
-    "arduino-header-r3": [
-        "A0",
-        "A1",
-        "A2",
-        "A3",
-        "A4",
-        "A5",
-        "D0",
-        "D1",
-        "D2",
-        "D3",
-        "D4",
-        "D5",
-        "D6",
-        "D7",
-        "D8",
-        "D9",
-        "D10",
-        "D11",
-        "D12",
-        "D13",
-        "D14",
-        "D15",
+    "adafruit-clue": [
+        ["P0", "D0", "A2", "RX"],
+        ["P1", "D1", "A3", "TX"],
+        ["P2", "D2", "A4"],
+        ["P3", "D3", "A5"],
+        ["P4", "D4", "A6"],
+        ["P5", "D5", "BUTTON_A"],
+        ["P6", "D6"],
+        ["P7", "D7"],
+        ["P8", "D8"],
+        ["P9", "D9"],
+        ["P10", "D10", "A7"],
+        ["P11", "D11", "BUTTON_B"],
+        ["P12", "D12", "A0"],
+        ["P13", "D13", "SCK"],
+        ["P14", "D14", "MISO"],
+        ["P15", "D15", "MOSI"],
+        ["P16", "D16", "A1"],
+        ["P17", "D17", "L", "LED"],
+        ["P18", "D18", "NEOPIXEL"],
+        ["P19", "D19", "SCL"],
+        ["P20", "D20", "SDA"],
     ],
     "adafruit-feather-header": [
         "A0",
@@ -120,41 +107,33 @@ CONNECTORS = {
         "D12",
         "D13",
     ],
-    "adafruit-clue": [
-        ["P0", "D0", "A2", "RX"],
-        ["P1", "D1", "A3", "TX"],
-        ["P2", "D2", "A4"],
-        ["P3", "D3", "A5"],
-        ["P4", "D4", "A6"],
-        ["P5", "D5", "BUTTON_A"],
-        ["P6", "D6"],
-        ["P7", "D7"],
-        ["P8", "D8"],
-        ["P9", "D9"],
-        ["P10", "D10", "A7"],
-        ["P11", "D11", "BUTTON_B"],
-        ["P12", "D12", "A0"],
-        ["P13", "D13", "SCK"],
-        ["P14", "D14", "MISO"],
-        ["P15", "D15", "MOSI"],
-        ["P16", "D16", "A1"],
-        ["P17", "D17", "L", "LED"],
-        ["P18", "D18", "NEOPIXEL"],
-        ["P19", "D19", "SCL"],
-        ["P20", "D20", "SDA"],
-    ],
-    "nordic,expansion-board-header": [
-        "P1_04",
-        "P1_05",
-        "P1_06",
-        "P1_07",
-        "P1_08",
-        "P1_09",
-        "P1_10",
-        "P1_11",
-        "P1_12",
-        "P1_13",
-        "P1_14",
+    # Our own binding (dts/bindings/adafruit-itsybitsy-header.yaml): the
+    # ItsyBitsy nRF52840 header pins only.
+    # TODO: figure out how to handle the extra pins on other ItsyBitsy
+    # boards, such as D3 and D4 on the ItsyBitsy M4 and RP2040. We may want
+    # separate connectors for the different board families.
+    "adafruit-itsybitsy-header": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "SCK",
+        "MOSI",
+        "MISO",
+        ["D0", "RX"],
+        ["D1", "TX"],
+        "D2",
+        "SDA",
+        "SCL",
+        "D5",
+        "D7",
+        "D9",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
     ],
     "arducam,dvp-20pin-connector": [
         "SCL",
@@ -175,6 +154,60 @@ CONNECTORS = {
         "PDN",
         "GPIO0",
         "GPIO1",
+    ],
+    # The standard bus pin names are those on Arduino Uno R3 boards: TX/RX on
+    # D1/D0, SPI on D11-D13 (and the 2x3 SPI header), and SDA/SCL on the two
+    # pins above AREF, which this binding calls D14 and D15.
+    "arduino-header-r3": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        ["D0", "RX"],
+        ["D1", "TX"],
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10",
+        ["D11", "MOSI"],
+        ["D12", "MISO"],
+        ["D13", "SCK"],
+        ["D14", "SDA"],
+        ["D15", "SCL"],
+    ],
+    "mikro-bus": [
+        "AN",
+        "RST",
+        "CS",
+        "SCK",
+        "MISO",
+        "MOSI",
+        "PWM",
+        "INT",
+        "RX",
+        "TX",
+        "SCL",
+        "SDA",
+    ],
+    "nordic,expansion-board-header": [
+        "P1_04",
+        "P1_05",
+        "P1_06",
+        "P1_07",
+        "P1_08",
+        "P1_09",
+        "P1_10",
+        "P1_11",
+        "P1_12",
+        "P1_13",
+        "P1_14",
     ],
     "nxp,cam-44pins-connector": ["CAM_RESETB", "CAM_PWDN"],
     "nxp,lcd-8080": [
@@ -230,6 +263,34 @@ CONNECTORS = {
         "IO1",
         "I2C_SCL",
         "I2C_SDA",
+    ],
+    "raspberrypi,pico-header": [
+        "GP0",
+        "GP1",
+        "GP2",
+        "GP3",
+        "GP4",
+        "GP5",
+        "GP6",
+        "GP7",
+        "GP8",
+        "GP9",
+        "GP10",
+        "GP11",
+        "GP12",
+        "GP13",
+        "GP14",
+        "GP15",
+        "GP16",
+        "GP17",
+        "GP18",
+        "GP19",
+        "GP20",
+        "GP21",
+        "GP22",
+        ["GP26_A0", "GP26", "A0"],
+        ["GP27_A1", "GP27", "A1"],
+        ["GP28_A2", "GP28", "A2"],
     ],
     "renesas,ra-gpio-mipi-header": [
         "IIC_SDA",
@@ -292,34 +353,9 @@ CONNECTORS = {
         "D1",
         "D0",
     ],
-    "raspberrypi,pico-header": [
-        "GP0",
-        "GP1",
-        "GP2",
-        "GP3",
-        "GP4",
-        "GP5",
-        "GP6",
-        "GP7",
-        "GP8",
-        "GP9",
-        "GP10",
-        "GP11",
-        "GP12",
-        "GP13",
-        "GP14",
-        "GP15",
-        "GP16",
-        "GP17",
-        "GP18",
-        "GP19",
-        "GP20",
-        "GP21",
-        "GP22",
-        ["GP26_A0", "GP26", "A0"],
-        ["GP27_A1", "GP27", "A1"],
-        ["GP28_A2", "GP28", "A2"],
-    ],
+    # STEMMA QT connectors, and Qwiic connectors, which use the same binding.
+    # board.STEMMA_I2C is on these pins (see STEMMA_I2C_PINS).
+    "stemma-qt-connector": ["STEMMA_SCL", "STEMMA_SDA"],
 }
 
 EXCEPTIONAL_DRIVERS = ["entropy", "gpio", "led"]
@@ -509,6 +545,35 @@ INPUT_KEY_NAMES = {}
 # a pinctrl psel entry. The pin control entry uses all-ones in this field to
 # mark a disconnected signal (NRF_PIN_DISCONNECTED).
 NRF_PIN_FIELD_MASK = 0x1FF
+
+
+def _reg_addr_expr(device_tree, label):
+    """C expression for a node's register block address, or 0 when it has none.
+
+    The iobroker tables carry the address for SoC routing code that decides
+    reachability from it (nRF54L power domains). Some nodes the tables list
+    have no reg property (native_sim's gpio_emul, PIO-based buses), and
+    DT_REG_ADDR() does not compile for them.
+    """
+    node = device_tree.label2node.get(label)
+    if node is None or "reg" not in node.props:
+        return "0"
+    return f"DT_REG_ADDR(DT_NODELABEL({label}))"
+
+
+def _fastest_first(nodes):
+    """Order bus instance nodes by their ``max-frequency``, highest first.
+
+    iobroker hands out the first free instance in a pool, so this gives
+    busio the fastest one first, such as the nRF52840's 32 MHz SPIM3. The
+    sort is stable: nodes with equal or no ``max-frequency`` keep their order.
+    """
+
+    def max_frequency(node):
+        prop = node.props.get("max-frequency")
+        return prop.to_num() if prop is not None else 0
+
+    return sorted(nodes, key=max_frequency, reverse=True)
 
 
 def _pinctrl_default_psels(node):
@@ -714,6 +779,165 @@ def add_toml_pin_names(
     return analog_board_names
 
 
+def _toml_status_pin(mpconfigboard, board_names, key):
+    """Resolve a circuitpython.toml status pin key to its ``(ioport, num)``.
+
+    The key's value is a board pin name (``[pins]`` entries and
+    devicetree-derived names alike, matched after sanitizing the same way).
+    Returns None when the key is absent; raises when the name is unknown.
+    """
+    name = (mpconfigboard or {}).get(key)
+    if name is None:
+        return None
+    wanted = str(name).upper().replace(" ", "_").replace("-", "_")
+    for pin_key, names in board_names.items():
+        if any(existing.upper() == wanted for existing in names):
+            return pin_key
+    raise RuntimeError(f"circuitpython.toml {key} = {name!r} is not a board pin name")
+
+
+# The standard pins of each board bus. For example:
+#
+#     "i2c [bus kind]": {"scl [pin field]": "SCL [pin name]", "sda [pin field]": "SDA [pin name]"},
+#
+# - bus kind: board.I2C(), board.SPI() or board.UART(). The generated pin table
+#   for shared-module/board is named after it (CIRCUITPY_BOARD_I2C_PIN).
+# - pin field: The corresponding name of the field in the struct holding the
+#   pins for the bus in shared-module/board/__init__.c. For instance, the `scl`
+#   field in the `board_i2c_pin_t` struct.
+# - pin name: the standard board pin name whose pin goes in that field. A
+#   board's connector (see CONNECTORS) or its circuitpython.toml [pins] table
+#   gives its header pins these names.
+BOARD_BUS_PINS = {
+    "i2c": {"scl": "SCL", "sda": "SDA"},
+    "spi": {"clock": "SCK", "mosi": "MOSI", "miso": "MISO"},
+    "uart": {"tx": "TX", "rx": "RX"},
+}
+# The board bus kind for each busio driver kind. For example:
+#
+#     "serial [driver kind]": "uart [bus kind]",
+#
+# - driver kind: a BUSIO_CLASSES key, the kind of devicetree device that a
+#   busio class uses ("serial" for busio.UART, after Zephyr's serial drivers).
+# - bus kind: a BOARD_BUS_PINS key, the board bus that such devices provide
+#   ("uart" for board.UART()).
+BOARD_BUS_OF_DRIVER = {"i2c": "i2c", "spi": "spi", "serial": "uart"}
+# The pins of board.STEMMA_I2C, as fields of board_i2c_pin_t (see
+# BOARD_BUS_PINS). The stemma-qt-connector entry in CONNECTORS names them.
+STEMMA_I2C_PINS = {"scl": "STEMMA_SCL", "sda": "STEMMA_SDA"}
+
+
+def _board_pin_named(board_names, name):
+    """Return the ``(ioport, num)`` of the board pin called ``name``, or None."""
+    for pin_key, names in board_names.items():
+        if any(existing.upper() == name for existing in names):
+            return pin_key
+    return None
+
+
+def _named_pins(board_names, fields):
+    """Return ``{field: pin}`` for ``fields``, a ``{field: board pin name}``
+    dict, or None if the board lacks any of the names. ``pin`` is an
+    ``(ioport, num)`` key of ``board_names``.
+    """
+    pins = {field: _board_pin_named(board_names, name) for field, name in fields.items()}
+    if None in pins.values():
+        return None
+    return pins
+
+
+def _standard_bus_pins(board_names):
+    """Find the standard pins of each board bus class.
+
+    A class has standard pins when the board names every pin it needs with
+    the standard names in BOARD_BUS_PINS. Returns ``{bus: {field: pin}}``.
+    """
+    standard_pins = {}
+    for bus, fields in BOARD_BUS_PINS.items():
+        pins = _named_pins(board_names, fields)
+        if pins is not None:
+            standard_pins[bus] = pins
+    return standard_pins
+
+
+def _board_i2c_buses(i2c_pins, stemma_pins):
+    """Lay out the board I2C buses for board.I2C() and board.STEMMA_I2C.
+
+    ``i2c_pins`` are board.I2C()'s pins and ``stemma_pins`` the STEMMA QT
+    connector's, each a ``{field: pin}`` dict or None. STEMMA_I2C is the same
+    bus as I2C when its connector uses the same pins, and its own bus
+    otherwise. Returns ``(buses, stemma_index)``: the pin dicts of the board
+    I2C buses, in instance order, and the instance that STEMMA_I2C names (or
+    None).
+    """
+    buses = [i2c_pins] if i2c_pins else []
+    if stemma_pins is None:
+        return buses, None
+    if stemma_pins not in buses:
+        buses.append(stemma_pins)
+    return buses, buses.index(stemma_pins)
+
+
+def _node_enabled(node):
+    """Return True if a devicetree node's status is "okay" (or unset)."""
+    status = node.props.get("status")
+    return status is None or status.to_string() == "okay"
+
+
+def _used_by_zephyr(device_tree, node):
+    """Return True if Zephyr itself uses a bus node.
+
+    A bus is Zephyr's when a /chosen property points at it (such as the
+    zephyr,console UART), it has child device nodes (such as a flash chip),
+    or another enabled node refers to it by phandle (such as a display's
+    mipi-dbi node).
+    """
+    for prop in device_tree.root.nodes["chosen"].props.values():
+        try:
+            if prop.to_path() is node:
+                return True
+        except dtlib.DTError:
+            pass
+    if node.nodes:
+        return True
+    for other in device_tree.node_iter():
+        if other is node or not _node_enabled(other):
+            continue
+        for prop in other.props.values():
+            if prop.type == dtlib.Type.PHANDLE:
+                referenced = [prop.to_node()]
+            elif prop.type == dtlib.Type.PHANDLES:
+                referenced = prop.to_nodes()
+            else:
+                continue
+            if node in referenced:
+                return True
+    return False
+
+
+def _toml_status_dotstar(mpconfigboard, board_names):
+    """Resolve the status DotStar's ``STATUS_DOTSTAR_DATA`` and
+    ``STATUS_DOTSTAR_CLOCK`` keys to a ``(data, clock)`` pair of pins.
+
+    Returns None when neither key is present. Raises when only one is, or
+    when ``STATUS_NEOPIXEL`` is also set: the status LED code would use the
+    NeoPixel and ignore the DotStar.
+    """
+    data = _toml_status_pin(mpconfigboard, board_names, "STATUS_DOTSTAR_DATA")
+    clock = _toml_status_pin(mpconfigboard, board_names, "STATUS_DOTSTAR_CLOCK")
+    if data is None and clock is None:
+        return None
+    if data is None or clock is None:
+        raise RuntimeError(
+            "circuitpython.toml needs both STATUS_DOTSTAR_DATA and STATUS_DOTSTAR_CLOCK"
+        )
+    if (mpconfigboard or {}).get("STATUS_NEOPIXEL") is not None:
+        raise RuntimeError(
+            "circuitpython.toml sets both STATUS_NEOPIXEL and a status DotStar; use one"
+        )
+    return data, clock
+
+
 @cpbuild.run_in_thread
 def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfigboard=None):  # noqa: C901
     board_dir = builddir / "board"
@@ -721,16 +945,20 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
     board_info = {
         "wifi": False,
+        "ethernet": False,
         "usb_device": False,
         "_bleio": False,
         "hostnetwork": board_id in ["native_sim"],
         "audiobusio": False,
+        "neopixel_write": False,
     }
 
     config_bt_enabled = False
     config_bt_found = False
     config_adc_enabled = False
     config_dac_enabled = False
+    config_rtc_enabled = False
+    config_soc = None
     config_present = True
     config = zephyrbuilddir / ".config"
     if not config.exists():
@@ -747,6 +975,10 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 config_adc_enabled = line.strip().endswith("=y")
             elif line.startswith("CONFIG_DAC="):
                 config_dac_enabled = line.strip().endswith("=y")
+            elif line.startswith("CONFIG_RTC="):
+                config_rtc_enabled = line.strip().endswith("=y")
+            elif line.startswith("CONFIG_SOC="):
+                config_soc = line.split("=", 1)[1].strip().strip('"')
 
     runners = zephyrbuilddir / "runners.yaml"
     runners = yaml.safe_load(runners.read_text())
@@ -777,7 +1009,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
     else:
         vendor_name = board_info["vendor_id"]
     board_info["vendor"] = vendor_name
-    soc_name = board_yaml["socs"][0]["name"]
+    soc_names = [soc["name"] for soc in board_yaml["socs"]]
+    soc_name = config_soc if config_soc in soc_names else soc_names[0]
     board_info["soc"] = soc_name
     board_name = board_yaml["full_name"]
     if mpconfigboard and "NAME" in mpconfigboard:
@@ -876,6 +1109,8 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 usb_num_endpoint_pairs += min(single_direction_endpoints)
             elif driver.startswith("wifi"):
                 board_info["wifi"] = True
+            elif driver.startswith("ethernet"):
+                board_info["ethernet"] = True
             elif driver == "bluetooth/hci":
                 ble_hardware_present = True
             elif driver in AUDIOBUSIO_CLASSES:
@@ -891,6 +1126,13 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 # busio driver (i2c, spi, uart)
                 board_info["busio"] = True
                 logger.info(f"Supported busio driver: {driver}")
+                if driver not in active_zephyr_devices:
+                    active_zephyr_devices[driver] = []
+                active_zephyr_devices[driver].append(node.labels)
+            elif driver == "pwm":
+                # PWM instances are allocated at runtime through iobroker
+                # for neopixel_write and pwmio; no board singleton.
+                logger.info(f"Supported pwm driver: {driver}")
                 if driver not in active_zephyr_devices:
                     active_zephyr_devices[driver] = []
                 active_zephyr_devices[driver].append(node.labels)
@@ -1143,6 +1385,38 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
         pad_name_of_pad,
         gpio_pad_of_pad,
     )
+    # Status NeoPixel from circuitpython.toml: ``STATUS_NEOPIXEL`` (and the
+    # optional ``STATUS_NEOPIXEL_POWER``) name a board pin, usually one from
+    # the [pins] table, that the status LED code drives with neopixel_write.
+    status_neopixel = _toml_status_pin(mpconfigboard, board_names, "STATUS_NEOPIXEL")
+    status_neopixel_power = _toml_status_pin(mpconfigboard, board_names, "STATUS_NEOPIXEL_POWER")
+    pinctrl_nrf = False
+    pwm_nrfx = False
+    pwm_emul = False
+    if config_present:
+        for line in config.read_text().splitlines():
+            if line.startswith("CONFIG_PINCTRL_NRF="):
+                pinctrl_nrf = line.strip().endswith("=y")
+            elif line.startswith("CONFIG_PWM_NRFX="):
+                # Zephyr's nRF PWM driver defines the PWM instance devices.
+                # Without it, PWM nodes have no device to reference, and
+                # neopixel_write (the neopixel module's nRF implementation,
+                # which allocates an instance through iobroker) cannot transmit, so
+                # both the pwm pool and the module follow this symbol. pwmio
+                # allocates its channels through iobroker's nRF implementation
+                # too.
+                pwm_nrfx = line.strip().endswith("=y")
+            elif line.startswith("CONFIG_PWM_ADAFRUIT_EMUL="):
+                # The emulated PWM controllers on native_sim (pwm_emul
+                # module), which iobroker allocates pwmio channels on too.
+                pwm_emul = line.strip().endswith("=y")
+    board_info["neopixel_write"] = pwm_nrfx
+    standard_bus_pins = _standard_bus_pins(board_names)
+    stemma_i2c_pins = _named_pins(board_names, STEMMA_I2C_PINS)
+    pin_object_of = {}
+    # Status DotStar: ``STATUS_DOTSTAR_DATA`` and ``STATUS_DOTSTAR_CLOCK``,
+    # driven by the status LED code with bit-banged SPI.
+    status_dotstar = _toml_status_dotstar(mpconfigboard, board_names)
     # GPIO pad number -> pad: every (label, num) name and alias the
     # devicetree walk produced keys into one pin object per pad.
     pad_of_gpio = {}
@@ -1198,6 +1472,15 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
                 status_led = pin_object_name
             if boot_button and (ioport, num) == boot_button:
                 boot_button = pin_object_name
+            if status_neopixel and (ioport, num) == status_neopixel:
+                status_neopixel = pin_object_name
+            if status_neopixel_power and (ioport, num) == status_neopixel_power:
+                status_neopixel_power = pin_object_name
+            pin_object_of[(ioport, num)] = pin_object_name
+            if status_dotstar:
+                status_dotstar = tuple(
+                    pin_object_name if pin == (ioport, num) else pin for pin in status_dotstar
+                )
             pin_defs.append(
                 f"const mcu_pin_obj_t pin_{pin_object_name} = {{ .base.type = &mcu_pin_type, .package_pin = {package_pin_init}}};"
             )
@@ -1205,7 +1488,13 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             mcu_pin_mapping.append(
                 f"{{ MP_ROM_QSTR(MP_QSTR_{pin_object_name}), MP_ROM_PTR(&pin_{pin_object_name}) }},"
             )
-            board_pin_names = board_names.get((ioport, num), [])
+            # A pin prints as its first board name, so list the STEMMA QT
+            # names last: board.SCL should print as board.SCL, not
+            # board.STEMMA_SCL.
+            board_pin_names = sorted(
+                board_names.get((ioport, num), []),
+                key=lambda name: name.upper() in STEMMA_I2C_PINS.values(),
+            )
             for board_pin_name in board_pin_names:
                 board_pin_name = (
                     board_pin_name.upper()
@@ -1245,16 +1534,73 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
     # Bus instances the board enabled with all-disconnected pins are routed to
     # arbitrary pins at runtime by busio objects instead of being exposed as
-    # fixed board.X() singletons.
+    # fixed board.X() singletons. For now only nRF has iobroker routing. Other
+    # SoCs' pinctrl states have no psels, so all() of the empty list would
+    # wrongly mark every one of their buses as routable.
+    #
+    # TODO: add iobroker routing for the non-nRF SoCs.
     iobroker_labels = set()
-    for driver in BUSIO_CLASSES:
-        for labels in active_zephyr_devices.get(driver, []):
-            node = device_tree.label2node[labels[0]]
-            psels = _pinctrl_default_psels(node)
-            if psels is not None and all(
-                (value & NRF_PIN_FIELD_MASK) == NRF_PIN_FIELD_MASK for value in psels
-            ):
-                iobroker_labels.add(labels[0])
+    if pinctrl_nrf:
+        for driver in BUSIO_CLASSES:
+            for labels in active_zephyr_devices.get(driver, []):
+                node = device_tree.label2node[labels[0]]
+                psels = _pinctrl_default_psels(node)
+                if psels is not None and all(
+                    (value & NRF_PIN_FIELD_MASK) == NRF_PIN_FIELD_MASK for value in psels
+                ):
+                    iobroker_labels.add(labels[0])
+
+    # The zephyr,console and zephyr,shell-uart UARTs belong to Zephyr, so they
+    # are never board objects.
+    chosen_props = device_tree.root.nodes["chosen"].props
+    console_nodes = [
+        chosen_props[name].to_path()
+        for name in ("zephyr,console", "zephyr,shell-uart")
+        if name in chosen_props
+    ]
+
+    # A board either routes its I2C, SPI and UART buses with iobroker (nRF
+    # boards with routable instances) or has only fixed buses from the
+    # devicetree.
+    #
+    # - With iobroker, board.I2C(), board.SPI() and board.UART() are buses on
+    #   the board's standard pins, and iobroker picks the instance when the
+    #   bus is constructed. Fixed bus instances are never board objects, and
+    #   only Zephyr may use them (see _used_by_zephyr()).
+    # - With only fixed buses, the board objects are fixed instances (below).
+    uses_iobroker = pinctrl_nrf and any(
+        labels[0] in iobroker_labels
+        for driver in BOARD_BUS_OF_DRIVER
+        for labels in active_zephyr_devices.get(driver, [])
+    )
+    # The pin dicts of each kind's board buses, in instance order.
+    board_buses = {}
+    stemma_i2c_index = None
+    if uses_iobroker:
+        for driver, bus in BOARD_BUS_OF_DRIVER.items():
+            instances = active_zephyr_devices.get(driver, [])
+            for labels in instances:
+                node = device_tree.label2node[labels[0]]
+                if labels[0] not in iobroker_labels and not _used_by_zephyr(device_tree, node):
+                    message = (
+                        f"devicetree node {labels[0]} is a fixed {driver} instance, but the "
+                        "board routes its buses with iobroker: make it dynamic (all pins "
+                        "disconnected, zephyr,deferred-init) or disable it"
+                    )
+                    # The build's TaskGroup reports only that a task failed,
+                    # so log the reason too.
+                    logger.error(message)
+                    raise RuntimeError(message)
+            if not any(labels[0] in iobroker_labels for labels in instances):
+                continue
+            if bus == "i2c":
+                buses, stemma_i2c_index = _board_i2c_buses(
+                    standard_bus_pins.get("i2c"), stemma_i2c_pins
+                )
+                if buses:
+                    board_buses["i2c"] = buses
+            elif bus in standard_bus_pins:
+                board_buses[bus] = [standard_bus_pins[bus]]
 
     zephyr_binding_headers = []
     zephyr_binding_objects = []
@@ -1273,31 +1619,42 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
 
         zephyr_binding_headers.append(f'#include "shared-bindings/{module}/{driverclass}.h"')
 
-        # Designate a main device such as board.I2C or board.I2S.
-        if len(instances) == 1:
-            instances[0].append(driverclass)
+        # A board has at most one object per class, under the class's
+        # standard name (board.I2C, board.I2SOUT, ...). Other fixed instances
+        # are not board objects.
+        bus = BOARD_BUS_OF_DRIVER.get(driver)
+        candidates = [
+            labels
+            for labels in instances
+            if labels[0] not in iobroker_labels
+            and device_tree.label2node[labels[0]] not in console_nodes
+        ]
+        main = None
+        if uses_iobroker and bus is not None:
+            # The board bus, if any, has the standard name.
+            pass
+        elif len(candidates) == 1:
+            main = candidates[0]
         else:
-            # Check to see if a main device has already been designated
-            found_main = False
-            for labels in instances:
-                for label in labels:
-                    if label == driverclass:
-                        found_main = True
-            if not found_main:
-                for priority_label in (f"zephyr_{driver}", f"arduino_{driver}"):
-                    for labels in instances:
-                        if priority_label in labels:
-                            labels.append(driverclass)
-                            found_main = True
-                            break
-                    if found_main:
-                        break
-        for labels in instances:
-            if labels[0] in iobroker_labels:
-                # Dynamically routable instances are not exposed as board
-                # singletons; construct a busio object with pins instead.
-                continue
-            instance_name = f"{driver.replace('/', '_')}_{labels[0]}"
+            # A label picks the main instance.
+            for priority_label in (driverclass, f"zephyr_{driver}", f"arduino_{driver}"):
+                main = next((labels for labels in candidates if priority_label in labels), None)
+                if main is not None:
+                    break
+        # The board names of each instance that gets a board object.
+        names_of = {}
+        if main is not None:
+            names_of[main[0]] = [driverclass.upper()]
+        # On an all-static board with a STEMMA QT (or Qwiic) connector,
+        # board.STEMMA_I2C is the instance labeled zephyr_i2c, Zephyr's label
+        # for the bus wired to such connectors. Its pins aren't compared
+        # with the connector's: that would mean decoding each SoC's pinctrl.
+        if driver == "i2c" and not uses_iobroker and stemma_i2c_pins is not None:
+            stemma = next((labels for labels in candidates if "zephyr_i2c" in labels), None)
+            if stemma is not None:
+                names_of.setdefault(stemma[0], []).append("STEMMA_I2C")
+        for label, names in names_of.items():
+            instance_name = f"{driver.replace('/', '_')}_{label}"
             c_function_name = f"_{instance_name}"
             singleton_ptr = f"{c_function_name}_singleton"
             function_object = f"{c_function_name}_obj"
@@ -1307,11 +1664,11 @@ def zephyr_dts_to_cp_board(board_id, portdir, builddir, zephyrbuilddir, mpconfig
             if driver == "serial":
                 # UART needs a receiver buffer
                 buffer_decl = f"static byte {instance_name}_buffer[128];"
-                construct_call = f"common_hal_busio_uart_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({labels[0]})), 128, {instance_name}_buffer)"
+                construct_call = f"common_hal_busio_uart_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({label})), 128, {instance_name}_buffer, false)"
             else:
                 # Default case (I2C, SPI, I2S)
                 buffer_decl = ""
-                construct_call = f"common_hal_{module}_{driverclass.lower()}_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({labels[0]})))"
+                construct_call = f"common_hal_{module}_{driverclass.lower()}_construct_from_device(&{instance_name}_obj, DEVICE_DT_GET(DT_NODELABEL({label})))"
 
             if driver == "i2s":
                 i2sout_instance_names.append(instance_name)
@@ -1329,25 +1686,54 @@ static mp_obj_t {c_function_name}(void) {{
 }}
 static MP_DEFINE_CONST_FUN_OBJ_0({function_object}, {c_function_name});""".lstrip()
             )
-            for label in labels:
+            for name in names:
                 zephyr_binding_labels.append(
-                    f"{{ MP_ROM_QSTR(MP_QSTR_{label.upper()}), MP_ROM_PTR(&{function_object}) }},"
+                    f"{{ MP_ROM_QSTR(MP_QSTR_{name}), MP_ROM_PTR(&{function_object}) }},"
                 )
     zephyr_binding_headers = "\n".join(zephyr_binding_headers)
     zephyr_binding_objects = "\n".join(zephyr_binding_objects)
     zephyr_binding_labels = "\n".join(zephyr_binding_labels)
+
+    # Board buses: the CIRCUITPY_BOARD_* pin tables for shared-module/board,
+    # and the board name for each bus. board.I2C(), board.SPI() and
+    # board.UART() are instance 0 when the board has their standard pins.
+    # board.STEMMA_I2C is the same object as board.I2C() when it uses the
+    # same pins, and its own I2C instance otherwise.
+    board_bus_defines = []
+    board_bus_objects = []
+    board_bus_labels = []
+    for bus, buses in board_buses.items():
+        tables = ", ".join(
+            "{"
+            + ", ".join(f".{field} = &pin_{pin_object_of[pin]}" for field, pin in pins.items())
+            + "}"
+            for pins in buses
+        )
+        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()} ({len(buses)})")
+        board_bus_defines.append(f"#define CIRCUITPY_BOARD_{bus.upper()}_PIN {{{tables}}}")
+        if bus in standard_bus_pins:
+            board_bus_labels.append(
+                f"{{ MP_ROM_QSTR(MP_QSTR_{bus.upper()}), MP_ROM_PTR(&board_{bus}_obj) }},"
+            )
+    if stemma_i2c_index == 0:
+        board_bus_labels.append("{ MP_ROM_QSTR(MP_QSTR_STEMMA_I2C), MP_ROM_PTR(&board_i2c_obj) },")
+    elif stemma_i2c_index is not None:
+        board_bus_objects.append(
+            f"CIRCUITPY_BOARD_BUS_SINGLETON(stemma_i2c, i2c, {stemma_i2c_index})"
+        )
+        board_bus_labels.append(
+            "{ MP_ROM_QSTR(MP_QSTR_STEMMA_I2C), MP_ROM_PTR(&board_stemma_i2c_obj) },"
+        )
+    board_bus_defines = "\n".join(board_bus_defines)
+    board_bus_objects = "\n".join(board_bus_objects)
+    board_bus_labels = "\n".join(board_bus_labels)
 
     # Generate tables of allocatable bus instances for the iobroker
     # Zephyr module (dynamic pin routing; nRF SoCs). Instances enabled with
     # all-disconnected pinctrl can be routed to arbitrary pins at runtime;
     # instances with fixed devicetree pins are only usable when the requested
     # pins match their state.
-    pinctrl_nrf = False
-    if config_present:
-        for line in config.read_text().splitlines():
-            if line.startswith("CONFIG_PINCTRL_NRF="):
-                pinctrl_nrf = line.strip().endswith("=y")
-                break
+    board_info["pwmio"] = pwm_nrfx or pwm_emul
 
     iobroker_includes = """
 #include <zephyr/device.h>
@@ -1367,27 +1753,35 @@ static MP_DEFINE_CONST_FUN_OBJ_0({function_object}, {c_function_name});""".lstri
             f"DEVICE_DT_GET(DT_NODELABEL({label}))" for label in sorted(ioports.keys())
         )
         indexes = ", ".join(str(port_indexes[label]) for label in sorted(ioports.keys()))
+        addrs = ", ".join(_reg_addr_expr(device_tree, label) for label in sorted(ioports.keys()))
         count = len(port_indexes)
     else:
         devices = "NULL"
         indexes = "0"
+        addrs = "0"
         count = 0
     table_parts.append(
         f"""
 const struct device * const iobroker_gpio_port_devices[] = {{ {devices} }};
 const uint8_t iobroker_gpio_port_indexes[] = {{ {indexes} }};
+const uint32_t iobroker_gpio_port_addrs[] = {{ {addrs} }};
 const size_t iobroker_gpio_port_count = {count};
 """
     )
 
     if pinctrl_nrf:
-        pool_kinds = (("i2c", "i2c"), ("spi", "spi"), ("serial", "uart"))
+        pool_kinds = (("i2c", "i2c"), ("spi", "spi"), ("serial", "uart"), ("pwm", "pwm"))
         bus_table_parts = []
         for driver, pool in pool_kinds:
             dynamic_entries = []
             fixed_entries = []
-            for labels in active_zephyr_devices.get(driver, []):
-                node = device_tree.label2node[labels[0]]
+            # PWM instances only exist as devices when the driver is built.
+            instances = (
+                active_zephyr_devices.get(driver, []) if driver != "pwm" or pwm_nrfx else []
+            )
+            nodes = _fastest_first(device_tree.label2node[labels[0]] for labels in instances)
+            for node in nodes:
+                label = node.labels[0]
                 if node in path2chosen:
                     # Console and other system devices are not allocatable.
                     continue
@@ -1395,13 +1789,13 @@ const size_t iobroker_gpio_port_count = {count};
                 if psels is None or len(psels) > 4:
                     continue
                 if all((value & NRF_PIN_FIELD_MASK) == NRF_PIN_FIELD_MASK for value in psels):
-                    dynamic_entries.append((labels[0], None, 0))
+                    dynamic_entries.append((label, None, 0))
                 else:
-                    fixed_entries.append((labels[0], psels, len(psels)))
+                    fixed_entries.append((label, psels, len(psels)))
 
             entries = dynamic_entries + fixed_entries
 
-            # Always define all three pools, even when empty: iobroker.c and
+            # Always define all four pools, even when empty: iobroker.c and
             # the nRF routing code reference every pool's tables whenever
             # CONFIG_PINCTRL_NRF is on, so an empty pool is still an empty
             # array plus a zero count.
@@ -1423,6 +1817,7 @@ const size_t iobroker_gpio_port_count = {count};
                 declares.append(f"PINCTRL_DT_DEV_CONFIG_DECLARE(DT_NODELABEL({label}));")
                 entry = (
                     f"    {{ .dev = DEVICE_DT_GET(DT_NODELABEL({label})), "
+                    f".reg_addr = {_reg_addr_expr(device_tree, label)}, "
                     f".pcfg = PINCTRL_DT_DEV_CONFIG_GET(DT_NODELABEL({label}))"
                 )
                 if psels is not None:
@@ -1496,20 +1891,19 @@ const size_t iobroker_gpio_port_count = {count};
     if table_parts:
         iobroker_tables = iobroker_tables + "\n\n" + "\n\n".join(table_parts)
 
-    # Generate i2sout_reset() that stops all board I2SOut instances
-    if i2sout_instance_names:
-        stop_calls = "\n    ".join(
-            f"common_hal_audiobusio_i2sout_stop(&{name}_obj);" for name in i2sout_instance_names
-        )
-        i2sout_reset_func = f"""
+    # Generate i2sout_reset() that stops the board's I2SOut objects. It is
+    # generated even when there are none, because reset_port() calls it on
+    # every board with audiobusio.I2SOut.
+    stop_calls = "\n    ".join(
+        f"common_hal_audiobusio_i2sout_stop(&{name}_obj);" for name in i2sout_instance_names
+    )
+    i2sout_reset_func = f"""
 void i2sout_reset(void) {{
     {stop_calls}
 }}"""
-    else:
-        i2sout_reset_func = ""
 
     zephyr_display_header = ""
-    zephyr_display_object = ""
+    zephyr_display_init = ""
     zephyr_display_board_entry = ""
     if board_info.get("zephyr_display", False):
         zephyr_display_header = """
@@ -1518,32 +1912,43 @@ void i2sout_reset(void) {{
 #include "shared-module/displayio/__init__.h"
 #include "bindings/zephyr_display/Display.h"
         """.strip()
-        zephyr_display_object = """
-void board_init(void) {
+        zephyr_display_init = """
 #if CIRCUITPY_ZEPHYR_DISPLAY && DT_HAS_CHOSEN(zephyr_display)
     // Always allocate a display slot so board.DISPLAY is at least a valid
     // NoneType object even if the underlying Zephyr display is unavailable.
     primary_display_t *display_obj = allocate_display();
-    if (display_obj == NULL) {
-        return;
+    if (display_obj != NULL) {
+        zephyr_display_display_obj_t *display = &display_obj->zephyr_display;
+        display->base.type = &mp_type_NoneType;
+
+        const struct device *display_dev = device_get_binding(DEVICE_DT_NAME(DT_CHOSEN(zephyr_display)));
+        if (display_dev != NULL && device_is_ready(display_dev)) {
+            display->base.type = &zephyr_display_display_type;
+            common_hal_zephyr_display_display_construct_from_device(display, display_dev, 0, true);
+        }
     }
-
-    zephyr_display_display_obj_t *display = &display_obj->zephyr_display;
-    display->base.type = &mp_type_NoneType;
-
-    const struct device *display_dev = device_get_binding(DEVICE_DT_NAME(DT_CHOSEN(zephyr_display)));
-    if (display_dev == NULL || !device_is_ready(display_dev)) {
-        return;
-    }
-
-    display->base.type = &zephyr_display_display_type;
-    common_hal_zephyr_display_display_construct_from_device(display, display_dev, 0, true);
 #endif
-}
         """.strip()
         zephyr_display_board_entry = (
             "{ MP_ROM_QSTR(MP_QSTR_DISPLAY), MP_ROM_PTR(&displays[0].zephyr_display) },"
         )
+
+    ethernet_init = ""
+    ethernet_static_obj = ""
+    if board_info.get("ethernet", False):
+        ethernet_init = """
+#if CIRCUITPY_MII
+    common_hal_mii_ethernet_construct(&ethernet_obj, NULL);
+    mii_set_default_instance(&ethernet_obj);
+#endif
+        """.strip()
+
+        ethernet_static_obj = """#if CIRCUITPY_MII
+// The board owns this instance; the supervisor reaches the default instance
+// that board_init registers.
+static mii_ethernet_obj_t ethernet_obj;
+#endif
+"""
 
     board_dir.mkdir(exist_ok=True, parents=True)
     header = board_dir / "mpconfigboard.h"
@@ -1564,6 +1969,24 @@ void board_init(void) {
     else:
         boot_button = ""
         boot_button_active_high = ""
+    if status_neopixel:
+        status_neopixel = f"#define MICROPY_HW_NEOPIXEL (&pin_{status_neopixel})\n"
+    else:
+        status_neopixel = ""
+    if status_neopixel_power:
+        status_neopixel_power = (
+            f"#define CIRCUITPY_STATUS_LED_POWER (&pin_{status_neopixel_power})\n"
+        )
+    else:
+        status_neopixel_power = ""
+    if status_dotstar:
+        status_dotstar = (
+            f"#define MICROPY_HW_APA102_MOSI (&pin_{status_dotstar[0]})\n"
+            f"#define MICROPY_HW_APA102_SCK (&pin_{status_dotstar[1]})\n"
+            "#define CIRCUITPY_BITBANG_APA102 (1)\n"
+        )
+    else:
+        status_dotstar = ""
     ram_list = []
     ram_externs = []
     max_size = 0
@@ -1595,6 +2018,10 @@ void board_init(void) {
 {status_led_inverted}
 {boot_button}
 {boot_button_active_high}
+{status_neopixel}
+{status_neopixel_power}
+{board_bus_defines}
+{status_dotstar}
         """
     if not header.exists() or header.read_text() != new_header_content:
         header.write_text(new_header_content)
@@ -1616,12 +2043,23 @@ void board_init(void) {
             "#endif\n"
         )
 
+    ethernet_include = ""
+    ethernet_entry = ""
+    if board_info.get("ethernet", False):
+        ethernet_include = '#if CIRCUITPY_MII\n#include "common-hal/mii/__init__.h"\n#endif\n'
+        ethernet_entry = (
+            "#if CIRCUITPY_MII\n"
+            "    { MP_ROM_QSTR(MP_QSTR_ETHERNET), MP_ROM_PTR(&ethernet_obj) },\n"
+            "#endif\n"
+        )
+
     new_board_c_content = f"""
     // This file is autogenerated by build_circuitpython.py
 
 #include "shared-bindings/board/__init__.h"
 
 {hostnetwork_include}
+{ethernet_include}
 
 #include <stdint.h>
 
@@ -1641,11 +2079,18 @@ const uint32_t* const ram_bounds[] = {{
 }};
 const size_t circuitpy_max_ram_size = {max_size};
 
+{ethernet_static_obj}
 {pin_defs}
 
 {zephyr_binding_objects}
+{board_bus_objects}
 {iobroker_tables}
-{zephyr_display_object}
+
+void board_init(void) {{
+    {zephyr_display_init}
+    {ethernet_init}
+}}
+
 {i2sout_reset_func}
 
 static const mp_rom_map_elem_t mcu_pin_globals_table[] = {{
@@ -1657,10 +2102,12 @@ static const mp_rom_map_elem_t board_module_globals_table[] = {{
 CIRCUITPYTHON_BOARD_DICT_STANDARD_ITEMS
 
 {hostnetwork_entry}
+{ethernet_entry}
 {zephyr_display_board_entry}
 {board_pin_mapping}
 
 {zephyr_binding_labels}
+{board_bus_labels}
 
 }};
 
@@ -1693,6 +2140,28 @@ MP_DEFINE_CONST_DICT(board_module_globals, board_module_globals_table);
     board_info["analogio"] = (adc_present and config_adc_enabled) or (
         dac_present and config_dac_enabled
     )
+    board_info["rtc"] = False
+    # RTC needs both a devicetree `rtc` alias pointing at the RTC device
+    # (the same selection Zephyr's own RTC sample uses) and the Zephyr RTC
+    # driver layer enabled (CONFIG_RTC).
+    rtc_node = device_tree.alias2node.get("rtc")
+    if rtc_node is not None:
+        rtc_status = rtc_node.props.get("status")
+        rtc_present = rtc_status is None or rtc_status.to_string() == "okay"
+        if rtc_present and config_rtc_enabled:
+            board_info["rtc"] = True
+        elif rtc_present:
+            logger.warning(
+                "Devicetree has a status-okay 'rtc' alias but CONFIG_RTC is "
+                "not enabled, so the rtc module is disabled."
+            )
+    board_info["watchdog"] = True
+    # Watchdog is always enabled: RAISE mode raises the WatchDogTimeout
+    # exception from a software Zephyr k_timer and works on every board.
+    # RESET mode additionally uses the hardware watchdog selected by the
+    # devicetree `watchdog0` alias (the same selection Zephyr's own watchdog
+    # sample uses); boards without the alias support only RAISE mode and
+    # raise NotImplementedError when RESET is requested.
     board_info["usb_num_endpoint_pairs"] = usb_num_endpoint_pairs
 
     # Detect NVM partition size from the device tree.
