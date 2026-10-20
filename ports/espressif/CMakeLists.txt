@@ -9,8 +9,8 @@ set(COMPONENTS bt driver esp_driver_dac esp_driver_gpio esp_driver_gptimer esp_d
 set(EXTRA_COMPONENT_DIRS "esp-protocols/components/mdns" "esp-camera")
 
 if(CIRCUITPY_ESP_HOSTED)
-    list(APPEND EXTRA_COMPONENT_DIRS "esp-hosted" "esp-wifi-remote/components/esp_wifi_remote")
-    list(APPEND COMPONENTS esp-hosted esp_wifi_remote)
+    list(APPEND EXTRA_COMPONENT_DIRS "esp-hosted")
+    list(APPEND COMPONENTS esp-hosted)
 endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

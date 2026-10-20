@@ -1051,12 +1051,10 @@ ESP_IDF_COMPONENTS_LINK += esp_coex esp_phy wpa_supplicant
 endif
 endif
 ifeq ($(CIRCUITPY_ESP_HOSTED),1)
-export ESP_IDF_VERSION := $(shell sed -nE 's/set\(IDF_VERSION_(MAJOR|MINOR) ([0-9]+)\)/\2/p' esp-idf/tools/cmake/version.cmake | paste -sd.)
-INC := -isystem esp-wifi-remote/components/esp_wifi_remote/idf_v$(ESP_IDF_VERSION)/include/injected \
-       -isystem esp-wifi-remote/components/esp_wifi_remote/idf_v$(ESP_IDF_VERSION)/include \
-       -isystem esp-wifi-remote/components/esp_wifi_remote/include \
-       -isystem esp-hosted/host/api/include -isystem esp-hosted/host $(INC)
-ESP_IDF_COMPONENTS_LINK += esp_wifi_remote esp-hosted esp_http_client http_parser console
+# ESP-IDF v6.1+ has remote Wi-Fi support built into esp_wifi, so no separate
+# esp_wifi_remote component is needed.
+INC := -isystem esp-hosted/host/api/include -isystem esp-hosted/host $(INC)
+ESP_IDF_COMPONENTS_LINK += esp-hosted esp_http_client http_parser console
 REGISTRATION_FUNCTIONS += -u esp_hosted_init
 endif
 # mdns registers handlers on ETH_EVENT, which is defined by esp_eth. On EMAC-capable
