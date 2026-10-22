@@ -84,6 +84,6 @@ manifest:
       submodules:
         - path: lib/cyw43-driver
     - name: hal_infineon
-      url: https://github.com/tyeth/hal_infineon
-      revision: daae5ca73811dbee8ad01fb1aaeafa98896ef94b
+      url: https://github.com/tyeth-ai-assisted/hal_infineon
+      revision: 12f662c34e21e7c1addd3f7aad0488d35bffd8c2
       path: modules/hal/infineon
