@@ -30,7 +30,7 @@ manifest:
     #   hal_infineon  as imported by Zephyr's own manifest
     - name: zephyr
       url: https://github.com/tyeth-ai-assisted/zephyr
-      revision: 4b1c753a769b507077c7fd69732d15d7c326d0fe
+      revision: 62aa864927d3ae43ede3b2b557b6f410aae8899a
       clone-depth: 100
       import:
         # Skip what no CircuitPython board can use, so west update fetches 37
