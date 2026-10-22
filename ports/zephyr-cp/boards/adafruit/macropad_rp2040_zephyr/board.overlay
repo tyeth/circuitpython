@@ -13,7 +13,8 @@
 	};
 };
 
-/* No Zephyr console, so SCL/SDA (GPIO21/20) are free for I2C0. */
+/* No Zephyr console by default, so SCL/SDA (GPIO21/20) are free for I2C0. A
+ * CONSOLE=1 build puts the console back on UART1 (console.overlay). */
 / {
 	chosen {
 		/delete-property/ zephyr,console;
