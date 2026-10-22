@@ -357,16 +357,21 @@ static int bleio_adapter_ensure_stack_ready(void) {
         return 0;
     }
     int err = bt_enable(NULL);
-    if (err != 0 && err != -EALREADY) {
-        return err;
+    if (err != 0) {
+        // -EALREADY also covers an incomplete or failed earlier startup.
+        // Its settings handlers are unsafe until bt_init() has succeeded.
+        return err == -EALREADY && bt_is_ready() ? 0 : err;
     }
 
     // bt_init() returns early without setting BT_DEV_READY when
     // CONFIG_BT_SETTINGS=y and no identity is loaded yet.
     // Load settings so the BT settings handler fires and calls
     // bt_finalize_init() which sets BT_DEV_READY.
-    settings_load();
-    return 0;
+    err = settings_load();
+    if (err != 0) {
+        return err;
+    }
+    return bt_is_ready() ? 0 : -EIO;
 }
 
 void common_hal_bleio_adapter_set_enabled(bleio_adapter_obj_t *self, bool enabled) {
@@ -465,6 +470,10 @@ void common_hal_bleio_adapter_set_tx_power(bleio_adapter_obj_t *self, mp_int_t t
 }
 
 bleio_address_obj_t *common_hal_bleio_adapter_get_address(bleio_adapter_obj_t *self) {
+    int err = bleio_adapter_ensure_stack_ready();
+    if (err != 0) {
+        raise_zephyr_error(err);
+    }
     // Report the local identity address, which is the same address used to
     // derive the default adapter name in common_hal_bleio_adapter_set_enabled.
     bt_addr_le_t id_addrs[CONFIG_BT_ID_MAX];
