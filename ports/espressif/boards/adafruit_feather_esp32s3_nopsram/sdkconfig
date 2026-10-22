@@ -12,3 +12,5 @@
 # end of Component config
 
 # end of Espressif IoT Development Framework Configuration
+# Fit the Env Hub server certificate chain in an outbound TLS record.
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=4096
