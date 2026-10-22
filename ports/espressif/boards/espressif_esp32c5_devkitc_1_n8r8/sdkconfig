@@ -15,3 +15,6 @@
 # Allow the collector's TLS certificate chain to fit in a record.
 CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=4096
 CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=4096
+# Frozen libraries need a larger application slot; back up user_fs before flashing.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="boards/espressif_esp32c5_devkitc_1_n8r8/partitions.csv"
+CONFIG_PARTITION_TABLE_FILENAME="boards/espressif_esp32c5_devkitc_1_n8r8/partitions.csv"
