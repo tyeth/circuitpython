@@ -81,6 +81,8 @@ manifest:
       url: https://github.com/tyeth/hal_rpi_pico
       revision: 725e9e429eab65eda01762a1af9016426dee00ac
       path: modules/hal/rpi_pico
+      submodules:
+        - path: lib/cyw43-driver
     - name: hal_infineon
       url: https://github.com/tyeth/hal_infineon
       revision: daae5ca73811dbee8ad01fb1aaeafa98896ef94b
