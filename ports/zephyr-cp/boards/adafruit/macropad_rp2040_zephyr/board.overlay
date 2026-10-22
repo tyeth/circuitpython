@@ -12,3 +12,20 @@
 		status = "disabled";
 	};
 };
+
+/* No Zephyr console, so SCL/SDA (GPIO21/20) are free for I2C0. */
+/ {
+	chosen {
+		/delete-property/ zephyr,console;
+		/delete-property/ zephyr,shell-uart;
+	};
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+/* The zephyr_i2c label makes this board.STEMMA_I2C as well as board.I2C. */
+zephyr_i2c: &i2c0 {
+	status = "okay";
+};
