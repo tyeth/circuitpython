@@ -5,4 +5,5 @@ CONFIG_PARTITION_TABLE_FILENAME="boards/adafruit_feather_esp32_v2/partitions.csv
 
 # Allow the collector's certificate chain to fit in an outbound TLS record.
 # Keep the upstream 16 KiB inbound record limit.
-CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=4096
+# The current three-certificate chain needs 4159 bytes including TLS framing.
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=8192
