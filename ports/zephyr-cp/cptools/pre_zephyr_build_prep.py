@@ -25,7 +25,7 @@ for blob in blobs:
 # already in use, rather than from inside the CMake-driven CircuitPython step.
 if mpconfigboard.get("FROZEN_MPY_DIRS") and "MICROPY_MPYCROSS" not in os.environ:
     subprocess.run(
-        ["make", "-C", str(portdir.parent.parent / "mpy-cross"), "USER_C_MODULES="],
+        ["make", "-C", str(portdir.parent.parent / "mpy-cross"), "BUILD=build", "USER_C_MODULES="],
         check=True,
     )
 
