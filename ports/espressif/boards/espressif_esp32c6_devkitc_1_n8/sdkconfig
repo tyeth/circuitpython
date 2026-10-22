@@ -12,3 +12,7 @@
 # end of Component config
 
 # end of Espressif IoT Development Framework Configuration
+
+# The collector serves a certificate chain larger than the upstream 2 KB record.
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=4096
+CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=4096
