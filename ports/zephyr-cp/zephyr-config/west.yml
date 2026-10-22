@@ -30,7 +30,7 @@ manifest:
     #   hal_infineon  as imported by Zephyr's own manifest
     - name: zephyr
       url: https://github.com/tyeth-ai-assisted/zephyr
-      revision: ea703e85b630897a5df75f4156f22f72edd5a81d
+      revision: 560a6a2f4a448c6be36c6c9ec69905243725e9ee
       clone-depth: 100
       import:
         # Skip what no CircuitPython board can use, so west update fetches 37
@@ -85,5 +85,5 @@ manifest:
         - path: lib/cyw43-driver
     - name: hal_infineon
       url: https://github.com/tyeth-ai-assisted/hal_infineon
-      revision: 12f662c34e21e7c1addd3f7aad0488d35bffd8c2
+      revision: 7f93dc60675126a63358ffa0780648d94fd2d634
       path: modules/hal/infineon
