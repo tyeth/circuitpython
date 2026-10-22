@@ -1,0 +1,14 @@
+/* Partition layout is owned by the mcuboot fork (dts/adafruit/adafruit_macropad_rp2040.dtsi)
+ * and applied to this image by sysbuild. This overlay only adds board/app config. */
+#include "../../../app.overlay"
+
+/* Free the key and encoder pins for keypad and rotaryio. */
+/ {
+	keys {
+		status = "disabled";
+	};
+
+	encoder {
+		status = "disabled";
+	};
+};
