@@ -535,6 +535,8 @@ async def build_circuitpython():  # noqa: C901
                 ],
                 srcdir,
                 check_hash=[version_header],
+                # Git commits, tags and dirty state are not file dependencies.
+                always_run=True,
             )
         )
 
