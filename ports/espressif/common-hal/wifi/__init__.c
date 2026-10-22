@@ -576,7 +576,9 @@ void wifi_reset(void) {
     if (!wifi_inited) {
         return;
     }
-    common_hal_wifi_monitor_deinit(MP_STATE_VM(wifi_monitor_singleton));
+    if (MP_STATE_VM(wifi_monitor_singleton) != NULL) {
+        common_hal_wifi_monitor_deinit(MP_STATE_VM(wifi_monitor_singleton));
+    }
     wifi_radio_obj_t *radio = &common_hal_wifi_radio_obj;
     common_hal_wifi_radio_set_enabled(radio, false);
     #ifndef CONFIG_IDF_TARGET_ESP32
