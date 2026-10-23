@@ -109,7 +109,10 @@ static MP_DEFINE_CONST_FUN_OBJ_1(espnow_deinit_obj, espnow_deinit);
 //|         This blocks until a timeout of ``2`` seconds if the ESP-NOW internal buffers are full.
 //|
 //|         :param ReadableBuffer message: The message to send (length <= 250 bytes).
-//|         :param Peer peer: Send message to this peer. If `None`, send to all registered peers.
+//|         :param Peer peer: Send message to this peer. If `None`, send to registered
+//|             unicast peers only. To broadcast or multicast, pass the corresponding
+//|             registered `Peer` explicitly. If no unicast peers are registered,
+//|             sending with `None` raises `OSError`.
 //|         """
 //|         ...
 //|
