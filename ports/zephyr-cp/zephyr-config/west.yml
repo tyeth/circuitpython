@@ -78,8 +78,8 @@ manifest:
           - uoscore-uedhoc
           - zephyr-xenlib
     - name: hal_rpi_pico
-      url: https://github.com/tyeth/hal_rpi_pico
-      revision: 725e9e429eab65eda01762a1af9016426dee00ac
+      url: https://github.com/tyeth-ai-assisted/hal_rpi_pico
+      revision: de12fc2a0f756d889cc13c129622ddb663025d29
       path: modules/hal/rpi_pico
       submodules:
         - path: lib/cyw43-driver
