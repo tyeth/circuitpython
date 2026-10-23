@@ -285,11 +285,53 @@ void common_hal_wifi_radio_stop_scanning_networks(wifi_radio_obj_t *self) {
 }
 
 void common_hal_wifi_radio_start_station(wifi_radio_obj_t *self) {
-    // set_mode_station(self, true);
+    if (self->sta_netif == NULL) {
+        raise_zephyr_error(-ENODEV);
+    }
+    common_hal_wifi_radio_set_enabled(self, true);
+    self->sta_mode = true;
 }
 
 void common_hal_wifi_radio_stop_station(wifi_radio_obj_t *self) {
-    // set_mode_station(self, false);
+    if (self->sta_netif == NULL) {
+        raise_zephyr_error(-ENODEV);
+    }
+    // AIROC uses the station interface for its mutually exclusive AP mode.
+    // A station disconnect there would make the live AP interface dormant.
+    if (self->ap_mode) {
+        self->sta_mode = false;
+        return;
+    }
+    common_hal_wifi_radio_stop_scanning_networks(self);
+    atomic_set(&self->last_disconnect_status, -EINPROGRESS);
+    int res = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, self->sta_netif, NULL, 0);
+    if (res == 0) {
+        // The request may return before the event callback. Do not report a
+        // stopped station when the driver failed or never completed it.
+        int64_t deadline = k_uptime_get() + 2000;
+        while (atomic_get(&self->last_disconnect_status) == -EINPROGRESS) {
+            RUN_BACKGROUND_TASKS;
+            if (mp_hal_is_interrupted()) {
+                raise_zephyr_error(-EINTR);
+            }
+            if (k_uptime_get() >= deadline) {
+                raise_zephyr_error(-ETIMEDOUT);
+            }
+            k_msleep(50);
+        }
+        res = atomic_get(&self->last_disconnect_status);
+    }
+    if (res != 0 && res != -EALREADY && res != -ENOTCONN) {
+        raise_zephyr_error(res);
+    }
+    #if defined(CONFIG_NET_DHCPV4)
+    net_dhcpv4_stop(self->sta_netif);
+    #endif
+    self->connected = false;
+    self->current_ssid_len = 0;
+    self->sta_mode = false;
+    // Keep the radio/interface enabled, as on the native Pico port. The next
+    // connect() can join again without globally re-enabling the radio.
 }
 
 // ------------------------------------------------------------- access point
@@ -297,7 +339,7 @@ void common_hal_wifi_radio_stop_station(wifi_radio_obj_t *self) {
 // The AIROC (CYW43439) driver runs the access point on the same net_if as the
 // station and refuses NET_REQUEST_WIFI_AP_ENABLE with -EBUSY while the station
 // is associated, so unlike ESP32 there is no simultaneous AP+STA here: a
-// program that wants the portal must disconnect() first. The AP's IPv4
+// program that wants the portal must stop_station() first. The AP's IPv4
 // configuration, DHCPv4 server and station list are kept in the radio object
 // beside sta_netif.
 

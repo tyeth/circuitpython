@@ -116,7 +116,14 @@ static void _event_handler(struct net_mgmt_event_callback *cb, uint64_t mgmt_eve
         case NET_EVENT_WIFI_DISCONNECT_RESULT: {
             const struct wifi_status *status = cb->info;
             self->last_disconnect_reason = status != NULL ? (uint8_t)status->status : 0;
-            self->connected = false;
+            int result = status != NULL ? status->status : -EIO;
+            if (result == 0) {
+                self->connected = false;
+                self->current_ssid_len = 0;
+            }
+            // Publish completion after updating the connection state. A
+            // failed disconnect request does not mean the link went down.
+            atomic_set(&self->last_disconnect_status, result);
             LOG_DBG("NET_EVENT_WIFI_DISCONNECT_RESULT reason %d", self->last_disconnect_reason);
             // A disconnect can also be the failure result of a connect attempt,
             // so release any waiter rather than letting it sit until timeout.

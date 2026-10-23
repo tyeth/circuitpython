@@ -12,6 +12,7 @@
 #include "shared-bindings/wifi/Network.h"
 
 #include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/wifi.h>
 
@@ -44,6 +45,8 @@ typedef struct {
     uint8_t retries_left;
     uint8_t starting_retries;
     uint8_t last_disconnect_reason;
+    // Result of the latest station disconnect request, set by net_mgmt.
+    atomic_t last_disconnect_status;
     // Signalled from the net_mgmt event handler when a connect attempt
     // finishes, so common_hal_wifi_radio_connect() can wait on the result.
     struct k_sem connect_sem;
