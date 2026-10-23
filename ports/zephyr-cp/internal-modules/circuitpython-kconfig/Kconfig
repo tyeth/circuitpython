@@ -319,6 +319,14 @@ config NET_RX_STACK_SIZE
 config NET_MGMT_EVENT_STACK_SIZE
 	default 2048 if NETWORKING
 
+# DHCP server and DNS callbacks run on the socket-service dispatcher. Its
+# lowest-priority Zephyr default can be starved by the interpreter while it
+# waits at the raw REPL or runs Python without sleeping. Share the main
+# thread's priority so the normal scheduler timeslice can dispatch network
+# callbacks without requiring an application-level time.sleep().
+config NET_SOCKETS_SERVICE_THREAD_PRIO
+	default MAIN_THREAD_PRIORITY if NETWORKING
+
 # ... and the socket-service thread, whose poll() set includes the DNS
 # resolver's UDP sockets; its 1200 byte default overflows under DBG logs.
 config NET_SOCKETS_SERVICE_STACK_SIZE
