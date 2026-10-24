@@ -45,3 +45,7 @@ void bleio_gattc_write_sync(struct bt_conn *conn, uint16_t handle,
 // callback so discover_remote_services() fails cleanly instead of hanging
 // or NULL-dereferencing the cleared connection.
 void bleio_connection_discovery_abort(void);
+
+// Main-thread housekeeping, run from port_background_task(): enforces the scan
+// timeout on controllers whose legacy scan path cannot.
+void bleio_background(void);

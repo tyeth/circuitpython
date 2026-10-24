@@ -74,10 +74,17 @@ ifneq ($(CP_BOARD_CONSOLE_OVERLAY),)
 CP_BOARD_CONF := $(strip $(CP_BOARD_CONF) $(CURDIR)/console.conf)
 endif
 endif
+# When RTT=1, move the Zephyr console and log backend from UART0 to SEGGER RTT, so
+# printk/LOG_* can be read over the same SWD probe with OpenOCD (`rtt setup`,
+# `rtt start`, `rtt server start <port> 0`) even when USB CDC is down and no UART
+# is wired. Composable with DEBUG=1.
+RTT_CONF_FILE ?= $(CURDIR)/rtt.conf
+ifeq ($(RTT),1)
+CP_BOARD_CONF := $(strip $(CP_BOARD_CONF) $(RTT_CONF_FILE))
+endif
 CP_BOARD_CONF := $(subst $(eval) ,;,$(CP_BOARD_CONF))
-# Always pass the conf and console overlay files, even if empty. This undoes DEBUG=1 or CONSOLE=1
-# when it's omitted on a later run. Quoted because the conf value can be a semicolon-separated
-# list, and an unquoted semicolon would end the shell command.
+# Always pass both values, even if empty, to undo DEBUG/CONSOLE/RTT on a later run.
+# Quote the semicolon-separated configuration list for the shell.
 WEST_CMAKE_ARGS += -Dzephyr-cp_EXTRA_CONF_FILE="$(CP_BOARD_CONF)"
 WEST_CMAKE_ARGS += -Dzephyr-cp_EXTRA_DTC_OVERLAY_FILE="$(CP_BOARD_CONSOLE_OVERLAY)"
 

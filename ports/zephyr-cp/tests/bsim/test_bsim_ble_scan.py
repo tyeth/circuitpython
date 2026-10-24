@@ -159,3 +159,45 @@ def test_bsim_scan_passive(bsim_phy, circuitpython, zephyr_sample):
     assert "scan passive start" in output
     assert "found beacon passive" in output
     assert "scan passive done True" in output
+
+
+BSIM_SCAN_UNSUPPORTED_EXTENDED_CODE = """\
+import _bleio
+
+adapter = _bleio.adapter
+scan = adapter.start_scan(timeout=4.0, active=True)
+try:
+    adapter.start_scan(extended=True, timeout=4.0)
+except NotImplementedError:
+    print("extended rejected")
+else:
+    raise AssertionError("extended request was silently accepted")
+
+found = False
+for entry in scan:
+    if b"zephyrproject" in entry.advertisement_bytes:
+        found = True
+        break
+adapter.stop_scan()
+print("original scan survived", found)
+
+found = False
+for entry in adapter.start_scan(timeout=4.0, active=True):
+    if b"zephyrproject" in entry.advertisement_bytes:
+        found = True
+        break
+adapter.stop_scan()
+print("subsequent scan works", found)
+"""
+
+
+@pytest.mark.zephyr_sample("bluetooth/beacon")
+@pytest.mark.circuitpy_drive({"code.py": BSIM_SCAN_UNSUPPORTED_EXTENDED_CODE})
+def test_bsim_scan_rejects_extended_without_stopping_scan(bsim_phy, circuitpython, zephyr_sample):
+    """An unsupported extended request must preserve an ordinary scan."""
+    _ = zephyr_sample
+    circuitpython.wait_until_done()
+    output = circuitpython.serial.all_output
+    assert "extended rejected" in output
+    assert "original scan survived True" in output
+    assert "subsequent scan works True" in output

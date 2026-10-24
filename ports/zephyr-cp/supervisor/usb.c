@@ -140,48 +140,67 @@ int _zephyr_disk_status(struct disk_info *disk) {
     return DISK_STATUS_OK;
 }
 
+// Validate before touching a buffer or suspending autoreload. Subtraction
+// avoids wrapping start_sector + num_sector for a malformed request.
+static int zephyr_disk_check_range(fs_user_mount_t *root, uint32_t start_sector, uint32_t num_sector) {
+    if (root == NULL) {
+        return -ENODEV;
+    }
+    uint32_t disk_block_count;
+    if (disk_ioctl(root, GET_SECTOR_COUNT, &disk_block_count) != RES_OK ||
+        start_sector > disk_block_count || num_sector > disk_block_count - start_sector) {
+        return -EIO;
+    }
+    return 0;
+}
+
 int _zephyr_disk_read(struct disk_info *disk, uint8_t *data_buf, uint32_t start_sector, uint32_t num_sector) {
     supervisor_vfs_t *root_vfs = filesystem_circuitpy();
     fs_user_mount_t *root = root_vfs == NULL ? NULL : &root_vfs->fat;
-
-    uint32_t disk_block_count;
-    disk_ioctl(root, GET_SECTOR_COUNT, &disk_block_count);
-
-    if (start_sector + num_sector > disk_block_count) {
-        return -EIO;
+    int ret = zephyr_disk_check_range(root, start_sector, num_sector);
+    if (ret != 0) {
+        return ret;
     }
-    disk_read(root, data_buf, start_sector, num_sector);
-    return 0;
+    return disk_read(root, data_buf, start_sector, num_sector) == RES_OK ? 0 : -EIO;
 }
 
 int _zephyr_disk_write(struct disk_info *disk, const uint8_t *data_buf, uint32_t start_sector, uint32_t num_sector) {
     supervisor_vfs_t *root_vfs = filesystem_circuitpy();
     fs_user_mount_t *root = root_vfs == NULL ? NULL : &root_vfs->fat;
+    int ret = zephyr_disk_check_range(root, start_sector, num_sector);
+    if (ret != 0) {
+        return ret;
+    }
     int lun = 0;
     autoreload_suspend(AUTORELOAD_SUSPEND_USB);
-    disk_write(root, data_buf, start_sector, num_sector);
-    // Since by getting here we assume the mount is read-only to
-    // CircuitPython let's update the cached FatFs sector if it's the one
-    // we just wrote.
+    DRESULT result = disk_write(root, data_buf, start_sector, num_sector);
+    if (result != RES_OK) {
+        // Do not acknowledge a rejected block write or copy rejected data
+        // into FatFs's window. Balance suspension even for callers that
+        // do not issue CTRL_SYNC after the error.
+        autoreload_resume(AUTORELOAD_SUSPEND_USB);
+        return result == RES_WRPRT ? -EROFS : -EIO;
+    }
+    // The mount is read-only to CircuitPython. Refresh the cached FatFs
+    // sector when it lies anywhere within this successful multi-sector write.
     if
     #if FF_MAX_SS != FF_MIN_SS
     (root->fatfs.ssize == MSC_FLASH_BLOCK_SIZE)
     #else
-    // The compiler can optimize this away.
     (FF_MAX_SS == FILESYSTEM_BLOCK_SIZE)
     #endif
     {
-        if (start_sector == root->fatfs.winsect && start_sector > 0) {
+        if (root->fatfs.winsect > 0 && root->fatfs.winsect >= start_sector &&
+            root->fatfs.winsect - start_sector < num_sector) {
             memcpy(root->fatfs.win,
                 data_buf + MSC_FLASH_BLOCK_SIZE * (root->fatfs.winsect - start_sector),
                 MSC_FLASH_BLOCK_SIZE);
         }
     }
 
-    // A write to an lba below fatbase is in the filesystem metadata (BPB) area or the "Reserved Region",
-    // and is probably setting or clearing the dirty bit. This should not trigger auto-reload.
-    // All other writes will trigger auto-reload.
-    if (start_sector >= root->fatfs.fatbase) {
+    // A request beginning in the reserved region can still reach file or
+    // metadata sectors. The checked range above cannot overflow here.
+    if (num_sector > 0 && start_sector + num_sector > root->fatfs.fatbase) {
         content_write[lun] = true;
     }
     return 0;
@@ -192,13 +211,18 @@ int _zephyr_disk_ioctl(struct disk_info *disk, uint8_t cmd, void *buff) {
     supervisor_vfs_t *root_vfs = filesystem_circuitpy();
     fs_user_mount_t *root = root_vfs == NULL ? NULL : &root_vfs->fat;
     int lun = 0;
+    if (root == NULL) {
+        if (cmd == DISK_IOCTL_CTRL_SYNC) {
+            autoreload_resume(AUTORELOAD_SUSPEND_USB);
+            content_write[lun] = false;
+        }
+        return -ENODEV;
+    }
     switch (cmd) {
         case DISK_IOCTL_GET_SECTOR_COUNT:
-            disk_ioctl(root, GET_SECTOR_COUNT, buff);
-            return 0;
+            return disk_ioctl(root, GET_SECTOR_COUNT, buff) == RES_OK ? 0 : -EIO;
         case DISK_IOCTL_GET_SECTOR_SIZE:
-            disk_ioctl(root, GET_SECTOR_SIZE, buff);
-            return 0;
+            return disk_ioctl(root, GET_SECTOR_SIZE, buff) == RES_OK ? 0 : -EIO;
         case DISK_IOCTL_CTRL_SYNC:
             // Zephyr's MSC class sends this after every WRITE10. Don't flush
             // here; the background flush writes the cached page.

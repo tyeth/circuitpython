@@ -131,6 +131,7 @@ async def run_command(
     check_hash=[],
     extradeps=[],
     responsefile: Optional[pathlib.Path] = None,
+    always_run=False,
 ):
     """
     Runs a command asynchronously. The command should ideally be a list of strings
@@ -145,6 +146,10 @@ async def run_command(
     Paths in check_hash are hashed before and after the command. If the hash is
     the same, then the old mtimes are reset. This is helpful if a command may produce
     the same result and you don't want the rest of the build impacted
+
+    always_run bypasses the persistent timestamp cache for commands whose inputs
+    include external state, such as Git metadata. check_hash still preserves the
+    timestamp of unchanged outputs. Commands remain deduplicated within one build.
 
     responsefile is used to store the command line arguments if they are too long for the OS.
     The arguments will be replaced with @<responsefile> and tried again.
@@ -183,7 +188,7 @@ async def run_command(
 
     run_reason = None
     # If the path inputs are all older than the last time we ran them, then we don't have anything to do.
-    if command_hash in LAST_BUILD_TIMES and all((p.exists() for p in paths)):
+    if not always_run and command_hash in LAST_BUILD_TIMES and all((p.exists() for p in paths)):
         last_build_time = LAST_BUILD_TIMES[command_hash]
         # Check all paths in the command because one must be modified by the command.
         newest_file = max((0 if p.is_dir() else p.stat().st_mtime_ns for p in paths))

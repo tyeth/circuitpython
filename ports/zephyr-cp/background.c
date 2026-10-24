@@ -9,6 +9,10 @@
 #include "py/runtime.h"
 #include "supervisor/port.h"
 
+#if CIRCUITPY_BLEIO
+#include "common-hal/_bleio/__init__.h"
+#endif
+
 #include <zephyr/kernel.h>
 
 void port_start_background_tick(void) {
@@ -25,5 +29,8 @@ void port_background_task(void) {
     // Make sure time advances in the simulator.
     #if defined(CONFIG_ARCH_POSIX)
     k_busy_wait(100);
+    #endif
+    #if CIRCUITPY_BLEIO
+    bleio_background();
     #endif
 }
