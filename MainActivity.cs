@@ -38,6 +38,7 @@ public class MainActivity : Activity
     bool _armNow = true;
     int _keepaliveMs = 2000;
     volatile bool _stop;
+    int _probeStarted;
     int _probePort = 7;
     int _msgId = 1;
     long _dpUpAt = -1;
@@ -624,6 +625,15 @@ public class MainActivity : Activity
 
     void Probe(Network network, Inet6Address peer, int advertisedPort)
     {
+        // onCapabilitiesChanged fires more than once for the same network, so
+        // without this guard the probe and its keepalive loop start twice and
+        // the link carries double the configured traffic.
+        if (System.Threading.Interlocked.Exchange(ref _probeStarted, 1) != 0)
+        {
+            L("  (probe already running for this network; ignoring repeat callback)");
+            return;
+        }
+
         var port = advertisedPort > 0 ? advertisedPort : _probePort;
 
         if (_role == "publish")
