@@ -169,12 +169,24 @@ Avail: entry len %d too small
 
 The separate "no 2.4GHz channel overlap" message matters: because we did *not*
 get it, the failure is not the obvious "phone proposed 5 GHz and the ESP32 is
-2.4 GHz only". The ESP parsed the phone's Availability attribute and found no
-entry of type Committed or Conditional at all — Android offers Potential-only
-availability and expects the responder to counter-propose a committed schedule.
-The ESP has counter-propose logic, but does not reach it from a Potential-only
-offer. It then builds M2 anyway and transmits with no agreed NDL slot, so the
-frame goes out when the phone is not listening and the TX is never acked.
+2.4 GHz only".
+
+What the evidence supports: the ESP responder found no committed or conditional
+entry it could use, built and sent M2 anyway with no agreed NDL slot, and the
+phone never acknowledged it.
+
+What is still **inference, not established**: *why* there was no usable entry.
+The plausible reading is that Android offers Potential-only availability and
+expects the responder to counter-propose a committed schedule, which the ESP
+does not do from a Potential-only offer — it has counter-propose logic but
+never reaches it. The log does not actually show that, though. It shows the ESP
+found no *usable* committed or conditional entry, which is not the same as the
+phone having sent none: entries could be present and rejected over a map ID, a
+band, or a parsing limit.
+
+Two runs will settle it: a sniffer capture of the phone's NDP Request with its
+Availability entries decoded, and the role reversal below. Treat the
+Potential-only explanation as a hypothesis until both are in.
 
 That is an ESP-side interop gap, not an app bug. `nan_app.c`'s
 `esp_nan_ndp_tx_done_cb()` only logs the TX failure; the negotiation itself is
