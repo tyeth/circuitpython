@@ -381,15 +381,33 @@ prevented anything. It is a misleading log line, and the earlier worry that it
 might also corrupt the ESP's schedule state is answered: it does not prevent
 setup.
 
-**It also sharpens ask 1 and corrects an earlier reading here.** With direct
-ACK evidence the boundary is the **real 16.384 ms DW end**, not the ~10–13 ms
-early termination this document previously proposed: +15 ms was acknowledged,
-+16 and +17 ms were not. The mechanism is latency, not policy — the ESP takes
-about 16 ms to turn an NDP Request into an M2, which deposits the response
-exactly on the window edge and makes setup close to a coin flip. One earlier
-data point remains unexplained by a clean 16 ms edge (an off-AP burst whose
-first attempt at +13.12 ms failed); it is a single event and the direct-ACK
-evidence is better.
+**It also sharpens ask 1, and the mechanism is not what this document said.**
+An earlier version blamed processing latency — the ESP taking ~16 ms to turn
+M1 into M2. The capture refutes that. Run 3's two M2 bursts, measured against
+the phone's SDF:
+
+```
+burst 1 (5 frames)  off = +15.927 ms = 0.9721 slots
+burst 2 (5 frames)  off = +15.927 ms = 0.9721 slots
+gap between them    = 524.252 ms = 0.9999 DW periods
+```
+
+The retry lands at the **identical intra-window position**, to the
+microsecond, a full Discovery Window period later. Processing latency cannot
+produce that. The ESP is scheduling M2 **against the slot grid**, aiming at
+0.97 of a slot — the slot-0/slot-1 boundary, less a ~460 µs margin — rather
+than transmitting as early as it can inside the window.
+
+That fits the ESP's own NDL, which places the NDC in slot 1 (`ndc=[1,1]`,
+`crb1=[2,31]`). Before the NDP is confirmed the peer's slot 1 is only
+*conditional*, so a response aimed at slot 1 has no guaranteed listener. It is
+the signature of an off-by-one — slot+1 rather than end-of-slot-0 — though
+from outside the blob a deliberate "last possible moment" policy with no
+margin is indistinguishable, and the fix is the same either way.
+
+Collected starts, as a fraction of a slot: 0.25 and 0.56 acknowledged, 0.85–0.90
+acknowledged (run 7 retry), 0.93–1.05 not, 0.97 not, 0.97 not. One off-AP
+follow-up burst starting at 0.80 also failed and is not explained by this.
 
 **The control did not happen.** IDF refused the second publish —
 `Service name esp-nan-test already used!`, publish #2 id=0 — so this was
@@ -420,15 +438,21 @@ run.
 
 ## Asks
 
-1. **Answer an NDP Request well inside the same Discovery Window.** The ESP
-   takes about 16 ms from receiving M1 to transmitting M2, and the DW is
-   16.384 ms, so the response lands on the edge and whether the data path
-   comes up is close to chance. Measured with direct ACK capture in run 7:
-   a burst at +16/+17 ms was not acknowledged, a retry at +15 ms in the next
-   window was. Earlier runs failed the same way at +16 to +20 ms. Either cut
-   the response latency, or schedule the response into the peer's next
-   committed or conditional slot rather than emitting it late in the current
-   window.
+1. **Transmit an NDP Response — and any NAF to a peer with no confirmed NDL
+   — early in slot 0 of the Discovery Window, never at or after the slot
+   0/slot 1 boundary, and keep retries inside slot 0.**
+
+   The ESP currently aims at 0.97 of a slot. Run 3's two M2 bursts both
+   started at +15.927 ms, the identical intra-window position one full DW
+   period apart, so this is slot-grid scheduling rather than processing
+   latency. The ESP's NDL places its NDC in slot 1, and before the NDP is
+   confirmed the peer's slot 1 is only conditional, so there is no guaranteed
+   listener there. Measured starts: 0.25, 0.56 and 0.85–0.90 slots
+   acknowledged; 0.93–1.05 and 0.97 not.
+
+   Whether this is an off-by-one (slot+1 instead of end-of-slot-0) or a
+   deliberate last-moment policy with no margin cannot be told from outside
+   the Wi-Fi libraries, but the remedy is the same.
 
    This ask covers the data-path failures only. It does **not** explain the
    off-AP discovery failure, where 88 of 123 publish SDFs in run 5 landed at
