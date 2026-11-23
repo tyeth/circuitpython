@@ -8,7 +8,11 @@
 
 #include <stdbool.h>
 
+#if CIRCUITPY_MDNS_SHARED
+#include "shared-module/mdns/Server.h"
+#else
 #include "common-hal/mdns/Server.h"
+#endif
 
 #include "shared-bindings/mdns/RemoteService.h"
 

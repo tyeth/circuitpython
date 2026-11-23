@@ -495,6 +495,14 @@ CFLAGS += -DCIRCUITPY_MAX3421E=$(CIRCUITPY_MAX3421E)
 CIRCUITPY_MDNS ?= $(CIRCUITPY_WIFI)
 CFLAGS += -DCIRCUITPY_MDNS=$(CIRCUITPY_MDNS)
 
+# Use the portable DNS-SD browser in shared-module/mdns instead of a per-port
+# common-hal/mdns. It needs only socketpool, so it suits ports with an IP stack
+# but no native mDNS library. It is a browser only: advertise_service() raises
+# NotImplementedError. Ports with a native implementation leave this at 0.
+CIRCUITPY_MDNS_SHARED ?= 0
+CFLAGS += -DCIRCUITPY_MDNS_SHARED=$(CIRCUITPY_MDNS_SHARED)
+# The socketpool dependency is checked below, where CIRCUITPY_SOCKETPOOL is set.
+
 CIRCUITPY_MEMORYMAP ?= 0
 CFLAGS += -DCIRCUITPY_MEMORYMAP=$(CIRCUITPY_MEMORYMAP)
 
@@ -652,6 +660,13 @@ CFLAGS += -DCIRCUITPY_SKIP_SAFE_MODE_WAIT=$(CIRCUITPY_SKIP_SAFE_MODE_WAIT)
 
 CIRCUITPY_SOCKETPOOL ?= $(CIRCUITPY_NETWORK)
 CFLAGS += -DCIRCUITPY_SOCKETPOOL=$(CIRCUITPY_SOCKETPOOL)
+
+# The shared-module mDNS browser is built on socketpool.
+ifeq ($(CIRCUITPY_MDNS_SHARED),1)
+ifneq ($(CIRCUITPY_SOCKETPOOL),1)
+$(error CIRCUITPY_MDNS_SHARED requires CIRCUITPY_SOCKETPOOL)
+endif
+endif
 
 CIRCUITPY_SPITARGET ?= 0
 CFLAGS += -DCIRCUITPY_SPITARGET=$(CIRCUITPY_SPITARGET)

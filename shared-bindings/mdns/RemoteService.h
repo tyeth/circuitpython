@@ -9,7 +9,11 @@
 #pragma once
 
 #include "py/obj.h"
+#if CIRCUITPY_MDNS_SHARED
+#include "shared-module/mdns/RemoteService.h"
+#else
 #include "common-hal/mdns/RemoteService.h"
+#endif
 
 extern const mp_obj_type_t mdns_remoteservice_type;
 

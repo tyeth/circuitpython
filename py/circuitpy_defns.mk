@@ -659,6 +659,12 @@ SRC_COMMON_HAL_ALL = \
 	wifi/ScannedNetworks.c \
 	wifi/__init__.c \
 
+ifeq ($(CIRCUITPY_MDNS_SHARED),1)
+# The portable browser replaces the port's common-hal/mdns entirely; the
+# shared-module sources are added to SRC_SHARED_MODULE_ALL below.
+SRC_COMMON_HAL_ALL := $(filter-out mdns/%, $(SRC_COMMON_HAL_ALL))
+endif
+
 SRC_COMMON_HAL = $(filter $(SRC_PATTERNS), $(SRC_COMMON_HAL_ALL))
 
 ifeq ($(CIRCUITPY_BLEIO_HCI),1)
@@ -980,6 +986,23 @@ $(filter $(SRC_PATTERNS), \
 endif
 
 # All possible sources are listed here, and are filtered by SRC_PATTERNS.
+ifeq ($(CIRCUITPY_MDNS_SHARED),1)
+SRC_SHARED_MODULE_ALL += \
+	mdns/__init__.c \
+	mdns/Server.c \
+	mdns/RemoteService.c
+# Browser.c has no shared-bindings counterpart, so it belongs in the INTERNAL
+# list rather than SRC_SHARED_MODULE_ALL, which is prefixed with both paths.
+SRC_SHARED_MODULE_INTERNAL += \
+	mdns/Browser.c
+endif
+
+# A port with a native mDNS responder but no browser can get find() alone by
+# adding shared-module/mdns/Browser.c to its own sources and calling
+# shared_module_mdns_find() from its common-hal find(). Browser.c is a separate
+# translation unit precisely so that does not also pull in Server.c's
+# common_hal_mdns_server_* definitions.
+
 SRC_SHARED_MODULE = $(filter $(SRC_PATTERNS), $(SRC_SHARED_MODULE_ALL))
 
 SRC_COMMON_HAL_EXPANDED = $(addprefix shared-bindings/, $(SRC_COMMON_HAL)) \

@@ -439,6 +439,14 @@ async def build_circuitpython():  # noqa: C901
     translation = os.environ.get("TRANSLATION") or cmake_args["TRANSLATION"] or "en_US"
     for module in ALWAYS_ON_MODULES:
         circuitpython_flags.append(f"-DCIRCUITPY_{module.upper()}=1")
+    # mdns has two implementations: a port's native responder in common-hal, or
+    # the portable browser in shared-module. The source selection below already
+    # falls back to shared-module when a port has no common-hal for a module,
+    # but shared-bindings/mdns/*.h also need to know which struct to include,
+    # and that is a compile-time decision. Keep the two in step.
+    zephyr_common_hal = pathlib.Path(__file__).resolve().parents[1] / "common-hal"
+    if not (zephyr_common_hal / "mdns").is_dir():
+        circuitpython_flags.append("-DCIRCUITPY_MDNS_SHARED=1")
     lto = cmake_args.get("LTO", "n") == "y"
     # LVGL module enabled for this board. The flag comes from CONFIG_LVGL via
     # ExternalProject args so it stays in sync with the Kconfig choice. Any board that
