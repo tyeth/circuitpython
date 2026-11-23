@@ -1,20 +1,23 @@
-# NAN: data path with an Android peer never completes — NDP Response is never acknowledged
+# NAN: NDP Response straddles the Discovery Window end, and a spurious availability error
 
-**Status: draft, partially ready.** There are two distinct failures here and
-they need separating before anything is filed.
+**Status: draft, two asks ready, one question still open.** The data path
+*does* work — run 7 established an IPv6 data path between an Android phone and
+an ESP32 — so this is no longer "NAN is broken with Android". It is two
+specific defects plus an unexplained off-AP discovery failure.
 
-- **Runs 3 and 4** (data path never completes) have a probable cause: of six
-  ESP unicast transmission events, the two first sent at +4.2 and +9.2 ms were
-  delivered and the four first sent at +13.1 ms or later all failed, with the
-  same boundary on and off the AP. Suggestive and graded, but **two successes
-  is a small sample** — a deliberate offset sweep should precede filing.
-- **Runs 5 and 6** (discovery itself never happens, off-AP) are
-  **unexplained**. The frames are correct and in-window, and the phone's
-  firmware reports no match. Nothing here should be filed about them.
+- **Ask 1 (timing) is ready.** The ESP takes ~16 ms to answer an NDP Request
+  and the Discovery Window is 16.384 ms, so the response lands on the edge.
+  Measured with direct ACK capture: +15 ms acknowledged, +16/+17 ms not.
+- **Ask 2 (spurious error) is ready, and is now demonstrably cosmetic.**
+  `Avail: missing a conditional or committed entry` is logged on runs where
+  the NDP **succeeds**, so it never was a negotiation failure.
+- **Off-AP discovery** never completes and is **not explained**. Nothing
+  about it should be filed.
+- **A ~20 s data-path teardown** appeared in run 7 and is uninvestigated.
 
-Asks 2 and 3 are independent of both and stand. Four earlier explanations for
-the data-path failure were proposed and discarded; that history is kept in
-[What is NOT established](#what-is-not-established) deliberately.
+Four earlier explanations were proposed and discarded; that history is kept in
+[What is NOT established](#what-is-not-established) because each was dropped
+on evidence that constrains what remains.
 
 ## Summary
 
@@ -351,27 +354,91 @@ it is understood, no claim about the ESP's behaviour in either direction is
 safe. The alternating on/off-AP pair is the next experiment and requires the
 phone to be rejoined to its AP.
 
+### Run 7: the data path works
+
+Phone back on-AP, screen awake, ESP running a SOLICITED publisher. Captured
+with ACK frames recorded, so delivery is direct evidence rather than inferred
+from the retry bit.
+
+```
+4.779  DW+1       ESP solicited publish (unicast) -> phone     ACKED
+5.303  DW+0       phone follow-up "Hello" -> ESP               ACKED
+5.306  DW+3       ESP publish + "Welcome" -> phone             ACKED
+5.311  DW+8
+5.826  DW+0       phone NDP Request -> ESP                     ACKED
+5.842  DW+16..17  ESP M2 burst x5                              NOT acked
+6.365  DW+15      ESP M2 retry burst x3                        ACKED -> confirm
+6.382             phone broadcast NAF Schedule Update
+```
+
+The app reported `TCP connect to [fe80::240a:c4ff:fecb:7ddb%aware_data0]:7
+REFUSED => PASS` and `isReachable=true`; the ESP logged `NDP confirmed …
+Peer IPv6 FE80::281B:56FF:FE14:B87C`, NDL ch6, `ndc=[1,1]`, `crb1=[2,31]`.
+
+**This settles ask 2.** `Avail: missing a conditional or committed entry` was
+logged in this run too, and the NDP confirmed anyway. The error never
+prevented anything. It is a misleading log line, and the earlier worry that it
+might also corrupt the ESP's schedule state is answered: it does not prevent
+setup.
+
+**It also sharpens ask 1 and corrects an earlier reading here.** With direct
+ACK evidence the boundary is the **real 16.384 ms DW end**, not the ~10–13 ms
+early termination this document previously proposed: +15 ms was acknowledged,
++16 and +17 ms were not. The mechanism is latency, not policy — the ESP takes
+about 16 ms to turn an NDP Request into an M2, which deposits the response
+exactly on the window edge and makes setup close to a coin flip. One earlier
+data point remains unexplained by a clean 16 ms edge (an off-AP burst whose
+first attempt at +13.12 ms failed); it is a single event and the direct-ACK
+evidence is better.
+
+**The control did not happen.** IDF refused the second publish —
+`Service name esp-nan-test already used!`, publish #2 id=0 — so this was
+solicited-only and there is no within-run unsolicited comparison. Two
+instances need different service names. The off-AP discovery question is
+therefore untouched by run 7, which was on-AP and discovered via a *unicast*
+solicited publish ACKed at DW+1.
+
+### The 20 s teardown
+
+About 20 s after confirmation the link dropped. The phone reported
+`eventDataPathTerminated` for ndp 4 and the app logged `onLost` at 26.4 s; the
+ESP logged nothing.
+
+Two candidates, and they are cheaply separable:
+
+1. **Idle teardown.** The app connected once and then sent nothing. If an
+   unused NAN data path is reclaimed, this is not a defect at all.
+2. **An unsatisfiable NDL.** The ESP committed `crb1=[2,31]` — effectively
+   every slot on channel 6 — which a phone concurrently associated to an AP
+   on channel 64 cannot honour. If so this links back to the availability
+   handling: the ESP takes the peer's *conditional* offer as licence to commit
+   to everything, survives setup, and loses the link later.
+
+The test app now sends a keepalive probe every 2 s once the data path is up
+and reports how long the link survived, which distinguishes the two in one
+run.
+
 ## Asks
 
-1. **Transmit NAF responses in the first few milliseconds of the Discovery
-   Window, and do not let retries drift towards its end.** Measured against a
-   real Android peer: every ESP unicast at +4 or +9 ms was received, and all
-   37 attempts at +13 ms or later were not, across three runs and both roles.
-   Android can terminate the DW early (`enable_dw_early_termination`), so the
-   formal 16.384 ms window is not the deadline that matters. The ESP currently
-   retries *later* into the window, out to +22 ms, which is the worst possible
-   direction.
+1. **Answer an NDP Request well inside the same Discovery Window.** The ESP
+   takes about 16 ms from receiving M1 to transmitting M2, and the DW is
+   16.384 ms, so the response lands on the edge and whether the data path
+   comes up is close to chance. Measured with direct ACK capture in run 7:
+   a burst at +16/+17 ms was not acknowledged, a retry at +15 ms in the next
+   window was. Earlier runs failed the same way at +16 to +20 ms. Either cut
+   the response latency, or schedule the response into the peer's next
+   committed or conditional slot rather than emitting it late in the current
+   window.
 
-   This ask covers runs 3 and 4 only. It does **not** explain runs 5 and 6,
-   where **88 of 123** ESP publish SDFs in run 5, and 23 of 37 in run 6b,
-   landed at or before +10 ms — inside the band that demonstrably works for
-   unicast — and produced no match at all. That remains unexplained and is not
-   part of this ask.
+   This ask covers the data-path failures only. It does **not** explain the
+   off-AP discovery failure, where 88 of 123 publish SDFs in run 5 landed at
+   or before +10 ms with no match at all.
 
-2. **Parse every Availability attribute and map ID in the NDP Request, and do
-   not raise "missing a conditional or committed entry" for a map that
-   legitimately carries only Potential entries.** This one is independent of
-   the root cause and stands regardless. Per-map storage and lookup already
+2. **Do not log "missing a conditional or committed entry" for a map that
+   legitimately carries only Potential entries.** Run 7 confirms this error is
+   **cosmetic** — it is logged on runs where the NDP goes on to confirm
+   successfully. It is an error-level message for a non-error, and it cost two
+   independent investigations several days. Per-map storage and lookup already
    exist — `nan_get_avail_by_map_id` walks 92-byte records keyed on map ID —
    but it is called from `nan_sched_alloc_conditional`,
    `nan_sched_allocate_crbs` and `nan_dp_indicate_faw_start`, never from the
