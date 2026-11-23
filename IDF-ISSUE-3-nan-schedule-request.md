@@ -1,4 +1,4 @@
-# NAN: Schedule Request from a peer is never answered, and the peer tears the data path down
+# NAN: Schedule Request from a peer is never answered, and idle data paths are torn down
 
 **Status: draft, ready.** The mechanism is identified in the binary and the
 behaviour is reproduced in three runs under both AP conditions. The impact is
@@ -24,10 +24,11 @@ The ESP has **no handling for NAF subtypes 10–13 at all**.
 | Peer | Samsung Galaxy Note 9 (SM-N960F), Android 10 / SDK 29 |
 | Capture | ESP32-S2 monitor on channel 6, with ACK frames recorded |
 
-## Observed, in two runs with opposite AP state
+## Observed, in three runs under both AP conditions
 
-Run 7 (phone associated to an AP on channel 64) and run 8 (phone not
-associated at all) behave identically:
+Run 7 (phone associated to an AP on channel 64), run 8 (phone not associated
+at all) and run 9 (not associated, with keepalive traffic) all show the ESP
+never answering. Runs 7 and 8 were idle and both ended in a teardown:
 
 1. NDP confirms; the IPv6 data path works. A TCP probe to the peer's
    link-local address over `aware_data0` is refused, which proves the peer's
