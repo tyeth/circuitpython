@@ -1,0 +1,29 @@
+Subject: [PATCH] nan_usd: log entry to the action-frame Rx callback
+
+Diagnostic only; not a fix. NAN-USD discovery never completes because
+nan_de_rx_sdf() is never called, even though the subscriber's own radio
+counts 407 NAN SDFs in 60 s. Review of esp_nan_de_rx_action() shows every
+gate in it should pass for those frames, so the open question is whether the
+callback is entered at all.
+
+Never printed  -> frames are dropped below the supplicant, in the Wi-Fi
+                  libraries or the hardware Rx filter. Note that NAN SDFs
+                  carry the NAN Network ID 51:6f:9a:01:00:00 in A1 and A3,
+                  which is multicast but not broadcast.
+Printed        -> the loss is in the gate chain below, and is fixable here.
+
+MSG_ERROR rather than MSG_DEBUG so the result does not depend on the
+reporter's configured log level.
+
+--- a/components/wpa_supplicant/esp_supplicant/src/esp_nan_usd.c
++++ b/components/wpa_supplicant/esp_supplicant/src/esp_nan_usd.c
+@@ -141,6 +141,9 @@
+ 
+ int esp_nan_de_rx_action(uint8_t *hdr, uint8_t *payload, size_t len, uint8_t channel)
+ {
++    wpa_printf(MSG_ERROR, "NAN-USD: rx_action entered, len=%u chan=%u",
++               (unsigned)len, (unsigned)channel);
++
+     struct ieee80211_hdr *rx_hdr = (struct ieee80211_hdr *)hdr;
+     struct nan_de *nan_de = NULL;
+     int freq;
