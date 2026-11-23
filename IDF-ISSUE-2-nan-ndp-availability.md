@@ -507,12 +507,15 @@ Zero drops in every run; five of six established a data path.
 
 | run | first-window M2 | second-window M2 | outcome |
 |---|---|---|---|
-| 17 | 5 fr @ 1.59–1.69, no ACK | 2 fr @ 0.44–0.47, **ACK** | OK |
-| 18 | 2 fr @ 1.03–1.11, no ACK | 3 fr @ 0.66–0.74, **ACK** | OK |
+| 17 | 5 fr @ 1.58–1.68, none acked | 2 fr @ 0.42–0.46, **1st acked** | OK |
+| 18 | 2 fr @ 0.96–1.04, none acked | 3 fr @ 0.75–0.83, **3rd acked** | OK |
 | 19 | **no M2 on air at all** | — | FAIL |
-| 20 | 5 fr @ 0.92–1.17, no ACK | 1 fr @ 0.26, **ACK** | OK |
-| 21 | 2 fr @ 0.93–0.97, **ACK** | — | OK |
-| 22 | 5 fr @ 2.02–2.12, no ACK | 5 fr @ 0.23–0.33, **ACK on the 5th** | OK |
+| 20 | 5 fr @ 0.96–1.21, none acked | 1 fr @ 0.24, **acked** | OK |
+| 21 | 2 fr @ 0.95–0.98, **2nd acked** | — | OK |
+| 22 | 5 fr @ 2.05–2.15, none acked | 5 fr @ 0.22–0.33, **5th acked** | OK |
+
+Offsets and acknowledgements re-derived from the pcaps, with each ACK matched
+to the frame it immediately follows.
 
 **Run 21 refutes "the first window never succeeds".** Its retry at 0.972
 slots, about 0.45 ms before the end of slot 0, was acknowledged and the data
@@ -520,32 +523,44 @@ path came up without a second window ever being needed. The ESP *can* close
 the exchange inside the window the request arrived in.
 
 The first *transmission attempt* has still never been acknowledged in any
-run, including run 21, where the frame at 0.934 went unacknowledged and only
-the retry at 0.972 was taken. That is the narrow claim ask 1 rests on.
+run. That is now **direct** evidence rather than inference: in all five clean
+runs that put an M2 on the air, the opening frame of the first burst has no
+ACK immediately following it. In run 21 the frame at 0.946 slots is followed
+617 µs later by its own retry, and it is that retry, at 0.984, which the
+phone acknowledges. This is the narrow claim ask 1 rests on.
 
 **The first-window offset is not fixed near one slot.** Across all runs it
 spans **0.92 to 2.12 slots** — runs 17 at 1.59 and 22 at 2.02 land past slot
 1 entirely. An earlier figure of 0.93–1.22 came from too few runs.
 
-### The peer misses the ESP's frames, including its ACKs
+### The ESP misses M1; the phone missing ACKs is not established
 
-In runs 18 (second window), 20 and 22 the **ESP acknowledged the phone's M1
-and the phone retransmitted it anyway**. A station is necessarily receiving
-during the SIFS immediately after its own transmission — that is when an ACK
-must arrive — so this cannot be the phone "not listening at that instant".
-The phone did not receive, or did not decode, the ESP's acknowledgement.
+This section previously claimed that the phone fails to receive the ESP's
+acknowledgements. Decoding the zero-drop captures directly, matching each ACK
+to the frame it immediately follows, that claim does not hold up and is
+withdrawn. Half of it does hold.
 
-The converse also happens: in run 18's first window the phone sent M1 seven
-times and the ESP acknowledged none, then acknowledged four copies in the
-next window.
+**The ESP does miss M1, repeatedly.** In run 18's first window the phone sent
+M1 seven times and the ESP acknowledged **none** of them; it acknowledged the
+third and fourth copies in the next window. Run 20's first M1 went
+unacknowledged and the second was taken; run 22's first three went
+unacknowledged and the fourth was taken. The ESP's receive side genuinely
+drops in-window frames, and that is not characterised.
 
-So **both ends intermittently fail to receive in-window frames from the
-other**, and on the phone's side it is demonstrably not a wake-state effect.
-That is a materially different model from "the ESP transmits too late and the
-peer has stopped listening", and it may underlie the unacknowledged M2s and
-follow-ups seen throughout. It is not characterised and nothing should be
-filed about it yet.
+**The phone retransmitting after an acknowledgement is a single instance.**
+It happens once, in run 18's second window, where M1 #10 was acknowledged and
+the phone still sent #11 about 180 µs later. In runs 20 and 22 the phone
+stopped transmitting immediately on receiving an acknowledgement, which is
+correct behaviour. One extra frame at 180 µs is far better explained as a
+retry already queued in hardware and no longer cancellable than as a
+reception failure, so the "the phone cannot decode the ESP's frames" model
+built on it is not supported.
 
+A methodological note, because it produced the error. An ACK must be the
+frame *immediately* following the one it acknowledges. Matching "any ACK to
+this transmitter within 1 ms" credits a single ACK to two frames of a burst,
+and in run 21 that made the first M2 attempt appear acknowledged when the
+frame actually following it, 617 µs later, was its own retry.
 ### Run 19: M2 constructed and never transmitted
 
 The only failure in the clean block failed differently. With **zero capture
