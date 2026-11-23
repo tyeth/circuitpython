@@ -96,11 +96,18 @@ jobs:
       with:
         action: cache
         port: ${{ steps.board-to-port.outputs.port }}
+    # The submodules step is called without version: true, so its version
+    # output is empty, and an empty CP_VERSION makes py/version.py give up
+    # instead of running git describe. The clone above already has the
+    # history and tags, so read the version from it here.
+    - name: CircuitPython version
+      id: cp-version
+      run: echo "cp-version=$(python py/version.py)" >> $GITHUB_OUTPUT
     - name: Set up mpy-cross
       if: steps.set-up-submodules.outputs.frozen == 'True'
       uses: ./.github/actions/mpy_cross
       with:
-        cp-version: ${{ steps.set-up-submodules.outputs.version }}
+        cp-version: ${{ steps.cp-version.outputs.cp-version }}
         download: false
     - name: Versions
       run: |
