@@ -108,7 +108,13 @@ static void socket_select_task(void *arg) {
             continue;
         }
 
-        assert(num_triggered > 0);
+        // lwIP's select() checks the sockets again after it wakes, so it can
+        // return 0 even with no timeout: the main task has already read the
+        // datagram that woke it (the shared mDNS browser reads its own system
+        // socket, for one). Nothing is ready, so just wait again.
+        if (num_triggered == 0) {
+            continue;
+        }
 
         // Notice event trigger
         if (FD_ISSET(socket_change_fd, &readfds)) {
