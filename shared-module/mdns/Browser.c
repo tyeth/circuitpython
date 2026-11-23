@@ -9,13 +9,16 @@
 // those with a native mDNS library.
 //
 // This is a "one-shot multicast DNS query" in the sense of RFC 6762 Section 5.1:
-// the query goes out from an ephemeral port with the unicast-response (QU) bit
-// set, so responders reply directly to us and we never have to join the
-// 224.0.0.251 multicast group. That matters because socketpool exposes
-// IP_MULTICAST_TTL but has no IP_ADD_MEMBERSHIP, so a group-joining browser is
-// not portable today. The cost is that responses a responder chooses to
-// multicast instead (RFC 6762 Section 5.4 permits this when it has not answered
-// recently) are missed; a repeat find() generally picks them up.
+// the query goes to 224.0.0.251 from an ephemeral port. Because that source
+// port is not 5353, RFC 6762 Section 6.7 requires responders to answer by
+// unicast straight back to it, so we never have to join the multicast group or
+// share port 5353. That matters because socketpool exposes IP_MULTICAST_TTL but
+// has no IP_ADD_MEMBERSHIP, so a group-joining browser is not portable today.
+// The unicast-response (QU) bit is set as well; it asks for the same thing.
+//
+// Multicast on Wi-Fi gets no link-layer retries, so the query or a reply is
+// easily lost. find() therefore repeats the query for as long as its timeout
+// allows, at the intervals RFC 6762 Section 5.2 sets for repeated queries.
 
 
 // The portable DNS-SD browser.
@@ -57,6 +60,10 @@
 // mDNS responses may be larger, but a single DNS-SD service rarely needs more
 // and anything truncated is simply re-queried by calling find() again.
 #define MDNS_PACKET_SIZE (1460)
+
+// When to repeat the PTR query: 1 s after the first, then with the gap doubling
+// each time (RFC 6762 Section 5.2 requires at least 1 s between the first two).
+#define MDNS_FIRST_REPEAT_MS (1000)
 
 // How long to wait between polls of the socket while a browse is running.
 #define MDNS_POLL_INTERVAL_MS (10)
@@ -439,10 +446,24 @@ size_t shared_module_mdns_find(mp_obj_t network_interface, const char *service_t
         // chasing those the browse returns entries with port 0 and no address,
         // which looks like a flaky browser. Ask once, halfway through.
         bool chased = false;
+        // Repeat the PTR query at 1 s, 3 s, 7 s, ... in case the first query or
+        // its replies were lost. Responders answer again, and get_entry() merges
+        // the duplicates by instance name.
+        uint64_t repeat_gap_ms = MDNS_FIRST_REPEAT_MS;
+        uint64_t next_repeat_ms = MDNS_FIRST_REPEAT_MS;
         while (supervisor_ticks_ms64() - start_ticks < timeout_ms &&
                !mp_hal_is_interrupted()) {
             RUN_BACKGROUND_TASKS;
             uint64_t elapsed = supervisor_ticks_ms64() - start_ticks;
+            if (elapsed >= next_repeat_ms) {
+                repeat_gap_ms *= 2;
+                next_repeat_ms += repeat_gap_ms;
+                // buf holds the last packet received, so build the query again.
+                query_len = build_query(buf, MDNS_PACKET_SIZE, NULL, service_type, protocol,
+                    DNS_RRTYPE_PTR);
+                common_hal_socketpool_socket_sendto(&sock, MDNS_MULTICAST_IPV4,
+                    strlen(MDNS_MULTICAST_IPV4), MDNS_PORT, buf, query_len);
+            }
             if (!chased && elapsed > timeout_ms / 2) {
                 chased = true;
                 for (size_t i = 0; i < state.count; i++) {
