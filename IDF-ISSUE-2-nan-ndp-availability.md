@@ -6,11 +6,11 @@ an ESP32 — so this is no longer "NAN is broken with Android". It is two
 specific defects plus an unexplained off-AP discovery failure.
 
 - **Ask 1 (timing) is ready, as a reliability claim rather than a boundary.**
-  The ESP takes ~16 ms to answer an NDP Request and the Discovery Window is
-  16.384 ms, so the first response always lands at or past the edge and has
-  never been acknowledged. Setup succeeds only when a retry is heard: **3 runs
-  in 6** (7, 8, 9 succeeded; 10, 11, 12 failed). Retry positions overlap
-  across outcomes, so there is no threshold.
+  The ESP's first NDP Response attempt has never been acknowledged in any of
+  16 runs, and it starts anywhere from 0.92 to 2.12 slots after the request.
+  Setup therefore depends on a retry being taken, and succeeded **9 times in
+  16** — 5 of 6 in the zero-drop block. Acknowledged and unacknowledged
+  attempts overlap throughout the range, so there is no threshold.
 - **Ask 2 (spurious error) is ready, and is now demonstrably cosmetic.**
   `Avail: missing a conditional or committed entry` is logged on runs where
   the NDP **succeeds**, so it never was a negotiation failure.
@@ -443,11 +443,25 @@ Discovery Window start, median 0.00 ms and standard deviation 0.40 ms across
 593 windows. The proxy anchor is sound and the measurements are not drifting;
 the erratic outcomes are real.
 
-### Every M2 burst, decoded from the raw captures
+### Capture reliability
 
-Read directly from the pcaps for runs 8 to 16 rather than from summaries,
-filtering on NAF OUI type `0x18` subtype `0x06`. Offsets are in slots from the
-preceding group-addressed frame from the phone.
+From run 7 the monitor also recorded ACK frames, which overflowed its
+24-entry queue with neighbouring-BSS traffic. Drops per run: run 3 **0**,
+run 7 55, run 8 84, run 9 1761, run 10 141, run 11 8, run 12 1203. **Runs 3
+to 6 are reliable**, predating ACK capture; runs 7 to 16 are not — a missing
+frame or ACK there is not evidence it never happened, and burst sizes are
+lower bounds.
+
+Runs 17 to 22 used a rebuilt sniffer, PSRAM queue with ACKs filtered to known
+NAN NMIs, and recorded **zero drops in every run**. Those are the runs to
+trust.
+
+### Every M2 burst, runs 8 to 16
+
+Decoded from the pcaps rather than from summaries, filtering on NAF OUI type
+`0x18` subtype `0x06`. Offsets in slots from the preceding group-addressed
+frame from the phone. These runs all have capture loss, so burst sizes are
+lower bounds.
 
 | run | first M2 | second M2 | outcome |
 |---|---|---|---|
@@ -455,92 +469,41 @@ preceding group-addressed frame from the phone.
 | 9 | 5 fr @ 1.028 | 1 fr @ 0.724 | OK |
 | 10 | 5 fr @ 0.924 | 5 fr @ 0.803 | FAIL |
 | 11 | 5 fr @ 1.001 | 5 fr @ 0.740 | FAIL |
-| 12 | 1 fr @ 0.554 *(w0 burst dropped)* | — | FAIL |
+| 12 | 1 fr @ 0.554 *(w0 dropped)* | — | FAIL |
 | 13 | 3 fr @ 1.208 *(truncated)* | 5 fr @ 0.548 | FAIL |
 | 14 | 1 fr @ 0.899 *(truncated)* | — | FAIL |
 | 15 | 5 fr @ 0.925 | 2 fr @ 0.816 | FAIL |
 | 16 | 5 fr @ 1.165 | 1 fr @ 0.395 | OK |
 
-Three things fall out of this that the summaries did not show.
+Position does not predict outcome: run 11's second burst at 0.740 failed
+where run 9's at 0.724 succeeded, and run 13's at 0.548 failed where run 8's
+at 0.581 succeeded. Adjacent offsets, opposite outcomes.
 
-**The retry limit of five is now well supported.** Six independently captured
-first-window bursts — runs 8, 9, 10, 11, 15, 16 — are *exactly* five frames.
-Never four, never six. Adding the second-window bursts in runs 10, 11 and 13
-gives nine bursts of exactly five. Runs 12, 13 and 14 show short first bursts
-and all three had heavy capture loss.
+Also visible here: the phone retransmits its own M1 when the ESP does not
+acknowledge it — 8 frames in run 10 and 3 in run 9 against 1 elsewhere.
 
-**The first M2 is never acknowledged, in any run.** Every fully captured
-first burst exhausts its five attempts. Measured first-M2 offsets: 0.924,
-0.925, 1.001, 1.027, 1.028, 1.165 slots, plus truncated bursts at 0.899 and
-1.208.
+### The burst-length oracle is withdrawn
 
-**Success tracks the second burst being acknowledged immediately.** Runs 8, 9
-and 16 each have a single-frame second burst — acknowledged first try. Runs
-10, 11 and 13 run to five again and fail. But position still does not explain
-which: run 11's second burst at 0.740 failed while run 9's at 0.724 succeeded,
-and run 13's at 0.548 failed while run 8's at 0.581 succeeded. Adjacent
-offsets, opposite outcomes. **The threshold stays dead.**
-
-One further observation from the same decode: the phone retransmits its own
-M1 when the ESP does not acknowledge it — 8 frames in run 10 and 3 in run 9
-against 1 elsewhere. The ESP's receive side misses frames in the window too,
-and that is not characterised at all.
-
-### A capture caveat, and why the central claim survives it
-
-From run 7 onward the monitor also recorded ACK frames, which overflowed its
-24-entry queue with neighbouring-BSS traffic. Its own drop counter per run:
-run 3 **0**, run 7 55, run 8 84, run 9 1761, run 10 141, run 11 8, run 12
-1203. **Runs 3 to 6 are fully reliable**, predating ACK capture; runs 7 onward are
-not. For every other run, a
-missing frame or a missing ACK is not evidence that it never happened, burst
-sizes are lower bounds, and any per-frame "not acknowledged" column is
-unsafe.
-
-That would be fatal to the central claim if the claim depended on observing
-ACKs. It does not. The evidence is the **802.11 retry bit, carried in the
-transmitted frames themselves**, which no amount of ACK loss can affect.
-
-In run 3, the drop-free capture, the ESP's unicast bursts decode as:
-
-```
-0 1 1          3 frames  — the follow-up. Phone logged it received "Welcome".
-0 1 1 1 1      5 frames  — M2, first window
-0 1 1 1 1      5 frames  — M2, retry window
-```
-
-Frames 2..n carry the retry bit, so attempts 1..n−1 were each unacknowledged
-by the ESP's own MAC. A burst that **stops below the limit** was acknowledged
-on its last frame; a burst that runs to **five** exhausted the retry limit and
-was never acknowledged at all. For M2 every observed burst is five or fewer,
-and the failing ones are exactly five.
-
-**The burst-length oracle is withdrawn.** An earlier revision of this
-document argued that a burst running to five meant the retry limit was
-exhausted and the frame was never acknowledged, while a burst stopping short
-had been acknowledged on its last frame. Six clean runs with a zero-drop
-capture refute both halves:
+An earlier revision argued that a burst running to five meant the retry limit
+was exhausted and the frame went unacknowledged, while a burst stopping short
+had been acknowledged on its last frame. The zero-drop runs refute both
+halves:
 
 - **Run 22, second window:** five frames, and the **fifth was acknowledged**.
   A five-frame burst can succeed.
 - **Run 18, first window:** two frames, **no acknowledgement**, no success,
-  in a capture with zero drops. A burst can stop short without being
+  with zero drops in that capture. A burst can stop short without being
   acknowledged.
 
-Burst length is not an outcome oracle. It was a reasonable inference from the
-drop-afflicted captures, where it was the only signal immune to the loss, and
-it is simply wrong. Why the ESP sometimes stops at two and sometimes runs to
-five is not known.
+Burst length is not an outcome oracle. It was a reasonable inference when
+capture loss made it the only signal immune to the drops, and it is wrong.
+Why the ESP sometimes stops at two and sometimes runs to five is unknown.
+**ACK-by-RA from the rebuilt sniffer is the oracle**, corroborated by the ESP
+and phone logs.
 
-With a zero-drop sniffer filtering ACKs to known NAN NMIs, **ACK-by-RA is now
-the oracle**, corroborated by the ESP and phone logs. Everything below that
-depends on burst length has been restated accordingly.
+### The clean runs, 17 to 22
 
-### The clean runs
-
-Runs 17 to 22 used a rebuilt sniffer — PSRAM queue, ACKs filtered to known
-NAN NMIs — and recorded **zero drops in every run**. Five of six established
-a data path.
+Zero drops in every run; five of six established a data path.
 
 | run | first-window M2 | second-window M2 | outcome |
 |---|---|---|---|
@@ -552,86 +515,50 @@ a data path.
 | 22 | 5 fr @ 2.02–2.12, no ACK | 5 fr @ 0.23–0.33, **ACK on the 5th** | OK |
 
 **Run 21 refutes "the first window never succeeds".** Its retry at 0.972
-slots — about 0.45 ms before the end of slot 0 — was acknowledged, and the
-data path came up without ever needing a second window. The ESP *can* close
-the exchange inside the Discovery Window the request arrived in.
+slots, about 0.45 ms before the end of slot 0, was acknowledged and the data
+path came up without a second window ever being needed. The ESP *can* close
+the exchange inside the window the request arrived in.
 
 The first *transmission attempt* has still never been acknowledged in any
 run, including run 21, where the frame at 0.934 went unacknowledged and only
-the retry at 0.972 was taken. That is the narrow claim ask 1 now rests on.
+the retry at 0.972 was taken. That is the narrow claim ask 1 rests on.
 
 **The first-window offset is not fixed near one slot.** Across all runs it
-spans **0.92 to 2.12 slots** — run 17 at 1.59 and run 22 at 2.02 land well
-past slot 1 entirely. An earlier figure of 0.93–1.22 here was taken from too
-few runs.
+spans **0.92 to 2.12 slots** — runs 17 at 1.59 and 22 at 2.02 land past slot
+1 entirely. An earlier figure of 0.93–1.22 came from too few runs.
 
-### A capture caveat, and why the central claim survives it
+### The peer misses the ESP's frames, including its ACKs
 
-From run 7 onward the monitor also recorded ACK frames, which overflowed its
-24-entry queue with neighbouring-BSS traffic. Its own drop counter per run:
-run 3 **0**, run 7 55, run 8 84, run 9 1761, run 10 141, run 11 8, run 12
-1203. **Runs 3 to 6 are fully reliable**, predating ACK capture; runs 7 onward are
-not. For every other run, a
-missing frame or a missing ACK is not evidence that it never happened, burst
-sizes are lower bounds, and any per-frame "not acknowledged" column is
-unsafe.
+In runs 18 (second window), 20 and 22 the **ESP acknowledged the phone's M1
+and the phone retransmitted it anyway**. A station is necessarily receiving
+during the SIFS immediately after its own transmission — that is when an ACK
+must arrive — so this cannot be the phone "not listening at that instant".
+The phone did not receive, or did not decode, the ESP's acknowledgement.
 
-That would be fatal to the central claim if the claim depended on observing
-ACKs. It does not. The evidence is the **802.11 retry bit, carried in the
-transmitted frames themselves**, which no amount of ACK loss can affect.
+The converse also happens: in run 18's first window the phone sent M1 seven
+times and the ESP acknowledged none, then acknowledged four copies in the
+next window.
 
-In run 3, the drop-free capture, the ESP's unicast bursts decode as:
+So **both ends intermittently fail to receive in-window frames from the
+other**, and on the phone's side it is demonstrably not a wake-state effect.
+That is a materially different model from "the ESP transmits too late and the
+peer has stopped listening", and it may underlie the unacknowledged M2s and
+follow-ups seen throughout. It is not characterised and nothing should be
+filed about it yet.
 
-```
-0 1 1          3 frames  — the follow-up. Phone logged it received "Welcome".
-0 1 1 1 1      5 frames  — M2, first window
-0 1 1 1 1      5 frames  — M2, retry window
-```
+### Run 19: M2 constructed and never transmitted
 
-Frames 2..n carry the retry bit, so attempts 1..n−1 were each unacknowledged
-by the ESP's own MAC. A burst that **stops below the limit** was acknowledged
-on its last frame; a burst that runs to **five** exhausted the retry limit and
-was never acknowledged at all. For M2 every observed burst is five or fewer,
-and the failing ones are exactly five.
+The only failure in the clean block failed differently. With **zero capture
+drops** there is **no M2 on the air at all**, while the ESP's own log says it
+built M2 twice, reported `TX Confirm failed`, and rejected the request. In
+its place the ESP transmitted **unicast Service Discovery Frames** to the
+phone: 14 frames at roughly M1 + 529–548 ms, all retries after the first,
+none acknowledged, then 3 more at about +1050 ms.
 
-**The burst-length oracle is withdrawn.** An earlier revision of this
-document argued that a burst running to five meant the retry limit was
-exhausted and the frame was never acknowledged, while a burst stopping short
-had been acknowledged on its last frame. Six clean runs with a zero-drop
-capture refute both halves:
-
-- **Run 22, second window:** five frames, and the **fifth was acknowledged**.
-  A five-frame burst can succeed.
-- **Run 18, first window:** two frames, **no acknowledgement**, no success,
-  in a capture with zero drops. A burst can stop short without being
-  acknowledged.
-
-Burst length is not an outcome oracle. It was a reasonable inference from the
-drop-afflicted captures, where it was the only signal immune to the loss, and
-it is simply wrong. Why the ESP sometimes stops at two and sometimes runs to
-five is not known.
-
-With a zero-drop sniffer filtering ACKs to known NAN NMIs, **ACK-by-RA is now
-the oracle**, corroborated by the ESP and phone logs. Everything below that
-depends on burst length has been restated accordingly.
-
-Applying that to the per-run table, the window-0 M2 burst is five frames in
-runs 3, 7, 8, 9, 10 and 11. All six therefore exhausted their retries and went
-unacknowledged — including in runs 7, 8 and 9, which went on to succeed on a
-later window. Run 12's window-0 burst was not captured at all, which its 1203
-drops amply explain.
-
-This also resolves an ambiguity in the ESP's logging. Successful runs emit no
-`NDP TX Confirm: msg_type=2 transmission failed` for their window-0 burst even
-though the retry bits show that burst failed, so the ESP logs that line only
-when the NDP finally gives up, not per burst. **Absence of the log is not
-evidence that a burst succeeded.**
-
-Two observations constrain what is left. Run 10 saw the **ESP** fail to
-acknowledge the phone's M1 seven times in one window before accepting it in
-the next, so intermittent in-window deafness is not one-sided. And runs 10 and
-11 carried a confound: a "Google Play isn't responding" dialog may have taken
-the test app out of the foreground for part of them.
+A response constructed and then never transmitted is a different defect from
+one transmitted too late, and substituting SDF retries for it is stranger
+still. Single observation; it needs repeats. It is only visible because the
+capture had no losses.
 
 ### The 20 s teardown
 
