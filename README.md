@@ -67,10 +67,32 @@ Extras, all optional:
 
 | extra | type | default | meaning |
 |---|---|---|---|
-| `service` | string | `esp-nan-test` | NAN service name to subscribe to |
-| `msg` | string | `Hello` | follow-up message body |
-| `ndp` | bool | `true` | request a data path after discovery |
+| `role` | string | `subscribe` | `subscribe` (phone initiates) or `publish` (phone responds) |
+| `service` | string | `esp-nan-test` | NAN service name |
+| `msg` | string | `Hello` | follow-up body sent in subscribe mode |
+| `reply` | string | `Welcome` | reply sent in publish mode |
+| `ndp` | bool | `true` | request a data path |
 | `port` | int | `7` | TCP port to probe when the peer advertises none |
+
+### Role reversal
+
+`role=publish` exists to test around the ESP's availability-negotiation gap
+described below. The phone publishes and acts as the NDP **responder**, so the
+ESP builds the committed availability itself instead of having to derive one
+from Android's Potential-only offer.
+
+```
+adb shell am start -n com.example.nantest/.MainActivity --es role publish --es service esp-nan-test
+```
+
+The phone then publishes `PUBLISH_TYPE_UNSOLICITED` and waits. When the ESP
+discovers it and sends a follow-up, the app logs it, replies (`reply`, default
+`Welcome`), and immediately stands up an open `requestNetwork` built from the
+*publish* session, holding it open so it is listening when the ESP calls
+`esp_wifi_nan_datapath_req()`. Nothing else happens until the ESP initiates.
+
+In this mode the TCP probe is expected to be refused or to time out — the ESP
+runs no listener. The ESP's own pings across the data path are the proof.
 
 The sessions stay open until the activity is destroyed. Stop with:
 
@@ -158,9 +180,9 @@ That is an ESP-side interop gap, not an app bug. `nan_app.c`'s
 `esp_nan_ndp_tx_done_cb()` only logs the TX failure; the negotiation itself is
 all inside the blob.
 
-Worth trying: reverse the roles. Publish from the phone and have the ESP
-subscribe and initiate the data path, so the ESP builds the committed
-availability itself. This app only subscribes today.
+Worth trying: reverse the roles, which `role=publish` now supports. Publish
+from the phone and have the ESP subscribe and initiate, so the ESP builds the
+committed availability itself. Untested at the time of writing.
 
 ## Untested
 

@@ -25,12 +25,15 @@ public class MainActivity : Activity
     WifiAwareManager? _aware;
     ConnectivityManager? _cm;
     WifiAwareSession? _session;
-    SubscribeDiscoverySession? _subscribe;
+    DiscoverySession? _discovery;   // subscribe or publish session
+    bool _ndpRequested;
     PeerHandle? _peer;
     ConnectivityManager.NetworkCallback? _netCb;
 
+    string _role = "subscribe";
     string _service = "esp-nan-test";
     string _message = "Hello";
+    string _reply = "Welcome";
     bool _wantNdp = true;
     int _probePort = 7;
     int _msgId = 1;
@@ -95,12 +98,23 @@ public class MainActivity : Activity
         _scroll.AddView(_view);
         SetContentView(_scroll);
 
+        _role = (Intent?.GetStringExtra("role") ?? _role).Trim().ToLowerInvariant();
+        if (_role != "subscribe" && _role != "publish")
+        {
+            L($"unknown role \"{_role}\"; falling back to subscribe.");
+            _role = "subscribe";
+        }
         _service = Intent?.GetStringExtra("service") ?? _service;
         _message = Intent?.GetStringExtra("msg") ?? _message;
+        _reply = Intent?.GetStringExtra("reply") ?? _reply;
         _wantNdp = Intent?.GetBooleanExtra("ndp", true) ?? true;
         _probePort = Intent?.GetIntExtra("port", 7) ?? 7;
 
-        L($"start: service=\"{_service}\" msg=\"{_message}\" ndp={_wantNdp} probe_port={_probePort}");
+        L($"start: role={_role} service=\"{_service}\" msg=\"{_message}\" reply=\"{_reply}\" " +
+          $"ndp={_wantNdp} probe_port={_probePort}");
+        L(_role == "publish"
+            ? "  publish mode: we are the NDP RESPONDER. The ESP subscribes, sends a follow-up, then initiates."
+            : "  subscribe mode: we are the NDP INITIATOR.");
         L($"device: {Build.Manufacturer} {Build.Model}, Android {Build.VERSION.Release} (SDK {(int)Build.VERSION.SdkInt})");
 
         if (CheckSelfPermission(Android.Manifest.Permission.AccessFineLocation) != Permission.Granted)
@@ -201,7 +215,7 @@ public class MainActivity : Activity
         {
             L($"  unregisterNetworkCallback: {e.Message}");
         }
-        _subscribe?.Close();
+        _discovery?.Close();
         _session?.Close();
         base.OnDestroy();
     }
@@ -219,12 +233,54 @@ public class MainActivity : Activity
                 return;
             }
             a._session = session;
-            a.StartSubscribe(session);
+            a.StartDiscovery(session);
         }
 
         public override void OnAttachFailed()
         {
             a.L("FAIL: onAttachFailed");
+        }
+    }
+
+    void StartDiscovery(WifiAwareSession session)
+    {
+        if (_role == "publish")
+        {
+            StartPublish(session);
+        }
+        else
+        {
+            StartSubscribe(session);
+        }
+    }
+
+    void StartPublish(WifiAwareSession session)
+    {
+        var cfg = new PublishConfig.Builder()
+            .SetServiceName(_service)!
+            .SetPublishType(PublishType.Unsolicited)!
+            .Build();
+
+        if (cfg is null)
+        {
+            L("FAIL: PublishConfig.Builder().build() returned null.");
+            return;
+        }
+
+        L($"publish(serviceName=\"{_service}\", PUBLISH_TYPE_UNSOLICITED)...");
+        try
+        {
+            session.Publish(cfg, new DiscoveryCb(this), null);
+        }
+        catch (Java.Lang.SecurityException e)
+        {
+            L($"FAIL: publish() threw SecurityException: {e.Message}");
+            L("  Grant ACCESS_FINE_LOCATION, switch location services on, then force-stop");
+            L("  and relaunch.");
+        }
+        catch (Java.Lang.Exception e)
+        {
+            L($"FAIL: publish() threw {e.GetType().Name}: {e.Message}");
         }
     }
 
@@ -267,7 +323,13 @@ public class MainActivity : Activity
         public override void OnSubscribeStarted(SubscribeDiscoverySession? session)
         {
             a.L("onSubscribeStarted");
-            a._subscribe = session;
+            a._discovery = session;
+        }
+
+        public override void OnPublishStarted(PublishDiscoverySession? session)
+        {
+            a.L("onPublishStarted — waiting for the ESP to discover us and send a follow-up.");
+            a._discovery = session;
         }
 
         public override void OnSessionConfigFailed()
@@ -313,6 +375,12 @@ public class MainActivity : Activity
         public override void OnMessageSendSucceeded(int messageId)
         {
             a.L($"onMessageSendSucceeded: id={messageId}");
+            // In publish mode the datapath request is already in flight from
+            // OnMessageReceived; only the initiator chains off its own send.
+            if (a._role != "subscribe")
+            {
+                return;
+            }
             if (a._wantNdp)
             {
                 a.RequestDatapath();
@@ -326,6 +394,10 @@ public class MainActivity : Activity
         public override void OnMessageSendFailed(int messageId)
         {
             a.L($"FAIL: onMessageSendFailed id={messageId}");
+            if (a._role != "subscribe")
+            {
+                return;
+            }
             // The datapath is worth trying even if the follow-up was dropped.
             if (a._wantNdp)
             {
@@ -336,39 +408,72 @@ public class MainActivity : Activity
         public override void OnMessageReceived(PeerHandle? peerHandle, byte[]? message)
         {
             a.L($"onMessageReceived from {peerHandle}: hex={Hex(message)} utf8={Utf8(message)}");
+
+            if (a._role != "publish" || peerHandle is null)
+            {
+                return;
+            }
+
+            // Responder path: the ESP has found us and sent its follow-up. Reply,
+            // then stand up the network request so we are listening when it calls
+            // esp_wifi_nan_datapath_req() a few seconds later.
+            a._peer = peerHandle;
+            a.SendFollowUp(peerHandle, a._reply);
+            if (a._wantNdp)
+            {
+                a.RequestDatapath();
+            }
+            else
+            {
+                a.L("ndp=false; replying only.");
+            }
         }
     }
 
-    void SendFollowUp(PeerHandle peer)
+    void SendFollowUp(PeerHandle peer) => SendFollowUp(peer, _message);
+
+    void SendFollowUp(PeerHandle peer, string text)
     {
         var id = _msgId++;
-        var bytes = Encoding.UTF8.GetBytes(_message);
-        L($"sendMessage(id={id}, \"{_message}\")...");
-        _subscribe?.SendMessage(peer, id, bytes);
+        var bytes = Encoding.UTF8.GetBytes(text);
+        L($"sendMessage(id={id}, \"{text}\")...");
+        _discovery?.SendMessage(peer, id, bytes);
     }
 
     // ---------- datapath ----------
 
     void RequestDatapath()
     {
-        if (_subscribe is null || _peer is null)
+        if (_discovery is null || _peer is null)
         {
-            L("FAIL: no subscribe session or peer; cannot request a datapath.");
+            L("FAIL: no discovery session or peer; cannot request a datapath.");
             return;
         }
+
+        if (_ndpRequested)
+        {
+            L("  (datapath already requested; not requesting again)");
+            return;
+        }
+        _ndpRequested = true;
 
         NetworkSpecifier spec;
         if ((int)Build.VERSION.SdkInt >= 29)
         {
             // No passphrase and no PMK => open/unsecured NDP, matching the ESP
             // publisher with NAN security off.
-            spec = new WifiAwareNetworkSpecifier.Builder(_subscribe, _peer).Build();
-            L("requestNetwork: WifiAwareNetworkSpecifier.Builder(...).build() — OPEN (no passphrase, no PMK)");
+            spec = new WifiAwareNetworkSpecifier.Builder(_discovery, _peer).Build();
+            L($"requestNetwork as {(_role == "publish" ? "RESPONDER" : "INITIATOR")}: " +
+              "WifiAwareNetworkSpecifier.Builder(...).build() — OPEN (no passphrase, no PMK)");
+            if (_role == "publish")
+            {
+                L("  holding the request open; nothing happens until the ESP initiates.");
+            }
         }
         else
         {
 #pragma warning disable CA1422, CS0618
-            spec = _subscribe.CreateNetworkSpecifierOpen(_peer)!;
+            spec = _discovery.CreateNetworkSpecifierOpen(_peer)!;
 #pragma warning restore CA1422, CS0618
             L("requestNetwork: createNetworkSpecifierOpen() (pre-29 path)");
         }
@@ -449,6 +554,12 @@ public class MainActivity : Activity
     void Probe(Network network, Inet6Address peer, int advertisedPort)
     {
         var port = advertisedPort > 0 ? advertisedPort : _probePort;
+
+        if (_role == "publish")
+        {
+            L("probe: in publish mode a refusal or timeout is expected — the ESP runs no");
+            L("  TCP listener. Its own pings over the datapath are the real proof.");
+        }
 
         Task.Run(() =>
         {
