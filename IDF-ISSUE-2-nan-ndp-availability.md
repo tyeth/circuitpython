@@ -13,7 +13,13 @@ specific defects plus an unexplained off-AP discovery failure.
   the NDP **succeeds**, so it never was a negotiation failure.
 - **Off-AP discovery** never completes and is **not explained**. Nothing
   about it should be filed.
-- **A ~20 s data-path teardown** appeared in run 7 and is uninvestigated.
+- **A ~20 s data-path teardown** appeared in runs 7 and 8. It now has a
+  mechanism and its own write-up: the ESP never answers the peer's NAF
+  Schedule Request. See `IDF-ISSUE-3-nan-schedule-request.md`.
+- **Off-AP discovery works with a *solicited* (unicast) publish** — run 8
+  discovered in 1.25 s. The runs 5/6 failure was specific to the
+  **unsolicited, group-addressed** publish, which supports the
+  unicast-versus-group-addressed split recorded below.
 
 Four earlier explanations were proposed and discarded; that history is kept in
 [What is NOT established](#what-is-not-established) because each was dropped
@@ -381,33 +387,33 @@ prevented anything. It is a misleading log line, and the earlier worry that it
 might also corrupt the ESP's schedule state is answered: it does not prevent
 setup.
 
-**It also sharpens ask 1, and the mechanism is not what this document said.**
-An earlier version blamed processing latency — the ESP taking ~16 ms to turn
-M1 into M2. The capture refutes that. Run 3's two M2 bursts, measured against
-the phone's SDF:
+**It also sharpens ask 1, though the mechanism is still open.** An earlier
+revision of this document argued that because run 3's two M2 bursts started
+at the identical offset (+15.927 ms, 0.9721 slots, one DW period apart to
+within 0.0001 of a period), the transmission must be anchored to the slot grid
+rather than to processing latency. **That argument is withdrawn.** Run 3's
+coincidence does not generalise: the successful retries in later runs started
+at 0.85–0.90 slots (run 7) and 0.569 slots (run 8), nowhere near the first
+attempt's position.
 
-```
-burst 1 (5 frames)  off = +15.927 ms = 0.9721 slots
-burst 2 (5 frames)  off = +15.927 ms = 0.9721 slots
-gap between them    = 524.252 ms = 0.9999 DW periods
-```
+What *is* consistent is the **first** attempt, across every run:
 
-The retry lands at the **identical intra-window position**, to the
-microsecond, a full Discovery Window period later. Processing latency cannot
-produce that. The ESP is scheduling M2 **against the slot grid**, aiming at
-0.97 of a slot — the slot-0/slot-1 boundary, less a ~460 µs margin — rather
-than transmitting as early as it can inside the window.
+| run | first M2 after M1 |
+|---|---|
+| 3 | 0.98 slots |
+| 7 | 0.93 slots |
+| 8 | 1.03 slots |
 
-That fits the ESP's own NDL, which places the NDC in slot 1 (`ndc=[1,1]`,
-`crb1=[2,31]`). Before the NDP is confirmed the peer's slot 1 is only
-*conditional*, so a response aimed at slot 1 has no guaranteed listener. It is
-the signature of an off-by-one — slot+1 rather than end-of-slot-0 — though
-from outside the blob a deliberate "last possible moment" policy with no
-margin is indistinguishable, and the fix is the same either way.
+Because the phone always sends its NDP Request at DW+0, "about one slot after
+M1" and "the slot-0/slot-1 boundary" are the same instant, so first attempts
+alone **cannot** separate ~16 ms of processing latency from deliberate
+slot-grid scheduling. Off-by-one remains a hypothesis.
 
-Collected starts, as a fraction of a slot: 0.25 and 0.56 acknowledged, 0.85–0.90
-acknowledged (run 7 retry), 0.93–1.05 not, 0.97 not, 0.97 not. One off-AP
-follow-up burst starting at 0.80 also failed and is not explained by this.
+The defensible statement is the one that does not depend on the mechanism: the
+first NDP Response consistently goes out about 16 ms after the request, which
+is at or past the end of the Discovery Window, and setup only succeeds when a
+retry happens to land earlier in a later window. That is a coin flip, and it
+is what ask 1 asks to fix.
 
 **The control did not happen.** IDF refused the second publish —
 `Service name esp-nan-test already used!`, publish #2 id=0 — so this was
@@ -438,25 +444,26 @@ run.
 
 ## Asks
 
-1. **Transmit an NDP Response — and any NAF to a peer with no confirmed NDL
-   — early in slot 0 of the Discovery Window, never at or after the slot
-   0/slot 1 boundary, and keep retries inside slot 0.**
+1. **Answer an NDP Request early in slot 0 of the Discovery Window, well
+   before the slot 0/slot 1 boundary, and keep retries there too.**
 
-   The ESP currently aims at 0.97 of a slot. Run 3's two M2 bursts both
-   started at +15.927 ms, the identical intra-window position one full DW
-   period apart, so this is slot-grid scheduling rather than processing
-   latency. The ESP's NDL places its NDC in slot 1, and before the NDP is
-   confirmed the peer's slot 1 is only conditional, so there is no guaranteed
-   listener there. Measured starts: 0.25, 0.56 and 0.85–0.90 slots
-   acknowledged; 0.93–1.05 and 0.97 not.
+   The first NDP Response goes out about 16 ms after the request in every run
+   measured — 0.98, 0.93 and 1.03 slots — which places it at or past the end
+   of the 16.384 ms window. Setup then succeeds only when a retry happens to
+   land earlier in a later window, which it did in runs 7 and 8 (0.85–0.90 and
+   0.569 slots) and never did in run 3 (0.97 twice). Measured starts
+   acknowledged: 0.25, 0.56, 0.569, 0.85–0.90. Not acknowledged: 0.93–1.05,
+   0.97, 0.97.
 
-   Whether this is an off-by-one (slot+1 instead of end-of-slot-0) or a
-   deliberate last-moment policy with no margin cannot be told from outside
-   the Wi-Fi libraries, but the remedy is the same.
+   Whether the 16 ms is processing latency or scheduling aimed at the slot
+   boundary cannot be told from outside the Wi-Fi libraries — the phone sends
+   its request at DW+0, so the two coincide. The remedy is the same either
+   way. Note also that the ESP's own NDL places its NDC in slot 1 while the
+   peer's slot 1 is still only conditional before confirmation, so a response
+   arriving there has no guaranteed listener.
 
-   This ask covers the data-path failures only. It does **not** explain the
-   off-AP discovery failure, where 88 of 123 publish SDFs in run 5 landed at
-   or before +10 ms with no match at all.
+   This ask covers data-path setup only. It does not explain the off-AP
+   discovery failure in runs 5 and 6.
 
 2. **Do not log "missing a conditional or committed entry" for a map that
    legitimately carries only Potential entries.** Run 7 confirms this error is
