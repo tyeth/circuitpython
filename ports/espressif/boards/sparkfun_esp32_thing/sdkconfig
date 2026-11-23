@@ -1,0 +1,5 @@
+# The ESP32 Thing has a 26 MHz crystal, not the 40 MHz ESP-IDF assumes.
+# Auto-detect so the same image also boots on 40 MHz boards.
+CONFIG_XTAL_FREQ_AUTO=y
+# CONFIG_XTAL_FREQ_26 is not set
+# CONFIG_XTAL_FREQ_40 is not set

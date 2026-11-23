@@ -27,3 +27,8 @@ typedef struct {
     bool workflow;
     bool inited;
 } mdns_server_obj_t;
+
+// Called by a port's wifi code before the radio stops, as the native
+// responders need. The browser holds no state between find() calls, so it has
+// nothing to release; it exists so those ports still link with the browser.
+void mdns_server_deinit_singleton(void);
