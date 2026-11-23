@@ -20,9 +20,20 @@ an error.
 | | |
 |---|---|
 | ESP-IDF | `v6.1-dev-6107` (`cb73317`), `esp_wifi/lib` at `7cd4d7b2` |
-| Target | ESP32 (classic, rev0), `wifi_aware/nan_publisher`, SOLICITED |
+| Target | ESP32-D0WDQ6 **rev v0.0 (ECO0)**, `wifi_aware/nan_publisher`, SOLICITED |
 | Peer | Samsung Galaxy Note 9 (SM-N960F), Android 10 / SDK 29 |
 | Capture | ESP32-S2 monitor on channel 6 with ACK frames recorded |
+
+> **Chip revision.** The ESP32 under test is a SparkFun ESP32 Thing carrying
+> an **ESP32-D0WDQ6 revision v0.0 (ECO0)**, 26 MHz crystal — first silicon.
+> This is still supported by this IDF (`CONFIG_ESP32_REV_MIN` defaults to
+> `ESP32_REV_MIN_0`), and `esp_wifi`, `esp_phy` and `esp_coex` contain **no
+> revision-conditional code at all** — the only rev-0 workaround anywhere in
+> IDF is the brownout interrupt. So a software-side cause would not be
+> revision-specific. An analogue or RF difference in first silicon cannot be
+> excluded from here, and reproduction on current silicon (v3.x) is a
+> reasonable thing to ask for before treating timing or receive anomalies as
+> firmware defects.
 
 ESP-to-ESP NAN-Sync on the same build works end to end — cluster 3.35 s,
 match 4.40 s, IPv6 data path 4.93 s, ICMPv6 at 2 ms RTT. Only the Android

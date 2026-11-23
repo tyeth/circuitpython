@@ -19,10 +19,21 @@ The subscriber's NIC counted **407 NAN SDFs** during a 60 s window in which
 | | |
 |---|---|
 | ESP-IDF | `v6.1-dev-6096` (also reproduced on `v6.1-dev-6107`, `cb73317`) |
-| Targets | ESP32 (classic, rev0) and ESP32-S3 |
+| Targets | ESP32-D0WDQ6 **rev v0.0 (ECO0)** and ESP32-S3 |
 | Config | `CONFIG_IDF_EXPERIMENTAL_FEATURES=y`, `CONFIG_ESP_WIFI_NAN_USD_ENABLE=y` |
 | Logging | `CONFIG_WPA_DEBUG_PRINT=y` plus `esp_log_level_set("wpa", ESP_LOG_DEBUG)` |
 | Regulatory | `cc=01`, resolved to `GB` MANUAL |
+
+> **Chip revision.** The ESP32 under test is a SparkFun ESP32 Thing carrying
+> an **ESP32-D0WDQ6 revision v0.0 (ECO0)**, 26 MHz crystal — first silicon.
+> This is still supported by this IDF (`CONFIG_ESP32_REV_MIN` defaults to
+> `ESP32_REV_MIN_0`), and `esp_wifi`, `esp_phy` and `esp_coex` contain **no
+> revision-conditional code at all** — the only rev-0 workaround anywhere in
+> IDF is the brownout interrupt. So a software-side cause would not be
+> revision-specific. An analogue or RF difference in first silicon cannot be
+> excluded from here, and reproduction on current silicon (v3.x) is a
+> reasonable thing to ask for before treating timing or receive anomalies as
+> firmware defects.
 
 Both boards publish/subscribe the service name `ESP-USD-TEST` with
 `ESP_USD_PUBLISH_DEFAULT_PARAMS()` / `ESP_USD_SUBSCRIBE_DEFAULT_PARAMS()`,
