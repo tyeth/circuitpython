@@ -74,6 +74,7 @@ Extras, all optional:
 | `ndp` | bool | `true` | request a data path |
 | `armnow` | bool | `true` | publish mode: arm an any-peer responder at publish time instead of waiting for a follow-up |
 | `port` | int | `7` | TCP port to probe when the peer advertises none |
+| `keepalive` | int | `2000` | ms between keepalive probes once the data path is up; `0` disables |
 
 ### Role reversal
 
@@ -146,32 +147,35 @@ The oracle is the TCP connect that follows, which classifies three ways:
 - `targetSdkVersion` 29 against a compile SDK of 37 raises warnings XA1006 and
   XA4211 at build time. Both are expected and harmless here.
 
-## Bench results so far (Samsung Note 9, Android 10, vs ESP32 rev0)
+## Bench results so far
 
-Discovery and messaging work: `onSubscribeStarted` at 0.9 s,
-`onServiceDiscovered` at 10.0 s in one run and 22.6 s in another, follow-up
-delivered, publisher's reply received. **The data path does not come up, and
-the root cause is still open.**
+**The data path works.** Run 7, phone on-AP, ESP running a SOLICITED
+publisher: discovery via a unicast solicited publish ACKed at DW+1, follow-up
+exchange, NDP Request, and an IPv6 data path confirmed. The app's probe
+reported `TCP connect to [fe80::…%aware_data0]:7 REFUSED => PASS` — a reset
+proves the peer's stack answered — and the ESP logged
+`NDP confirmed … Peer IPv6 FE80::281B:56FF:FE14:B87C`.
 
-A channel-6 monitor capture shows the phone's NDP Request is well formed —
-map 0 carries a conditional, all-slot, channel-6 entry — and the ESP answers
-ACCEPTED. That response is never acknowledged: ten attempts across two
-Discovery Windows, all landing 16–20 ms into a 16.384 ms window.
+Three things that cost a lot of time, recorded so nobody repeats them:
 
-The obvious reading, that the ESP transmits too late, is **not yet
-established**. The phone was simultaneously associated to an AP on channel 64
-throughout, and Android time-shares the radio back to its AP channel between
-Discovery Windows, so the phone may simply not have been on channel 6 to hear
-those frames. A rerun with the phone off its AP decides whether there is an
-ESP defect here at all.
+- `Avail: missing a conditional or committed entry` is logged by the ESP even
+  on runs where the data path **succeeds**. It is misleading, not fatal.
+- The NDP Response straddles the end of the Discovery Window. The ESP takes
+  about 16 ms to answer an NDP Request, and the DW is 16.384 ms, so whether
+  setup works is close to a coin flip. In run 7 a burst at +16/+17 ms was not
+  acknowledged and a retry at +15 ms in the following window was.
+- Off-AP the phone's firmware never matched the ESP's group-addressed publish
+  SDFs at all, across roughly 60 windows in two runs, despite correct service
+  ID, cluster and timing. Unexplained; every success so far has been on-AP.
 
-Three explanations written here previously were wrong and have been
-withdrawn: that Android offers Potential-only availability, that a 5 GHz-only
-offer was excluded, and that the ESP's committed channel-6 bitmap proved it
-had honoured the phone's entry.
+**The link then dropped about 20 s after it came up**, with the phone
+reporting `eventDataPathTerminated` and the ESP logging nothing. The
+`keepalive` extra exists to test whether an idle data path is simply torn
+down: it runs a refused-TCP probe every two seconds, which is a SYN out and
+an RST back, and logs how long the link survived.
 
-Full write-up, with the decoded frame and the disassembly, is in
-`IDF-ISSUE-2-nan-ndp-availability.md` in the CircuitPython research worktree.
+Full write-up in `IDF-ISSUE-2-nan-ndp-availability.md` in the CircuitPython
+research worktree.
 
 ## Untested
 

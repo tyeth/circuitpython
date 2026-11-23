@@ -36,8 +36,11 @@ public class MainActivity : Activity
     string _reply = "Welcome";
     bool _wantNdp = true;
     bool _armNow = true;
+    int _keepaliveMs = 2000;
+    volatile bool _stop;
     int _probePort = 7;
     int _msgId = 1;
+    long _dpUpAt = -1;
 
     // ---------- logging ----------
 
@@ -110,10 +113,11 @@ public class MainActivity : Activity
         _reply = Intent?.GetStringExtra("reply") ?? _reply;
         _wantNdp = Intent?.GetBooleanExtra("ndp", true) ?? true;
         _armNow = Intent?.GetBooleanExtra("armnow", true) ?? true;
+        _keepaliveMs = Intent?.GetIntExtra("keepalive", 2000) ?? 2000;
         _probePort = Intent?.GetIntExtra("port", 7) ?? 7;
 
         L($"start: role={_role} service=\"{_service}\" msg=\"{_message}\" reply=\"{_reply}\" " +
-          $"ndp={_wantNdp} probe_port={_probePort}");
+          $"ndp={_wantNdp} probe_port={_probePort} keepalive={_keepaliveMs}ms");
         L(_role == "publish"
             ? $"  publish mode: we are the NDP RESPONDER (armnow={_armNow})."
             : "  subscribe mode: we are the NDP INITIATOR.");
@@ -205,6 +209,7 @@ public class MainActivity : Activity
 
     protected override void OnDestroy()
     {
+        _stop = true;
         L("onDestroy: releasing");
         try
         {
@@ -568,6 +573,7 @@ public class MainActivity : Activity
     {
         public override void OnAvailable(Network network)
         {
+            a._dpUpAt = a._clock.ElapsedMilliseconds;
             a.L($"NDP onAvailable: network={network}");
         }
 
@@ -608,7 +614,9 @@ public class MainActivity : Activity
 
         public override void OnLost(Network network)
         {
-            a.L("NDP onLost");
+            a._stop = true;
+            var up = a._dpUpAt > 0 ? (a._clock.ElapsedMilliseconds - a._dpUpAt) : -1;
+            a.L($"NDP onLost — the data path lasted {up} ms after it came up.");
         }
     }
 
@@ -671,7 +679,42 @@ public class MainActivity : Activity
                 }
             }
 
-            L("probe finished. Session stays open until the activity is destroyed.");
+            if (_keepaliveMs <= 0)
+            {
+                L("probe finished, keepalive disabled. Session stays open until destroyed.");
+                return;
+            }
+
+            // Does the data path survive only while carrying traffic? A refused
+            // TCP connect is still a SYN out and an RST back, so it exercises
+            // the link in both directions without needing a listener on the peer.
+            L($"keepalive: probing every {_keepaliveMs} ms to see whether traffic keeps the link up.");
+            var n = 0;
+            while (!_stop)
+            {
+                Java.Lang.Thread.Sleep(_keepaliveMs);
+                if (_stop)
+                {
+                    break;
+                }
+                n++;
+                var up = _dpUpAt > 0 ? _clock.ElapsedMilliseconds - _dpUpAt : -1;
+                try
+                {
+                    var sk = network.SocketFactory!.CreateSocket()!;
+                    sk.Connect(new InetSocketAddress(peer, port), 1500);
+                    sk.Close();
+                    L($"keepalive #{n} at t+{up} ms: connected");
+                }
+                catch (Java.Lang.Exception e)
+                {
+                    var m = e.Message ?? "";
+                    var ok = m.Contains("ECONNREFUSED", StringComparison.OrdinalIgnoreCase)
+                             || m.Contains("refused", StringComparison.OrdinalIgnoreCase);
+                    L($"keepalive #{n} at t+{up} ms: {(ok ? "refused — link alive" : "FAILED — " + e.GetType().Name + ": " + m)}");
+                }
+            }
+            L("keepalive stopped.");
         });
     }
 }
