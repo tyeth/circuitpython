@@ -63,17 +63,24 @@ it.
 NAN Action Frames are Public Action / Vendor Specific / WFA OUI with **OUI
 type `0x18`** and the subtype in the following byte. (The Service Discovery
 Frame uses OUI type `0x13` instead, and carries attributes directly.)
-Counting subtypes by sender across all ten captures — runs 3 and 8 to 16:
+Counting subtypes by sender across every capture — runs 3 to 16:
 
 | sender | subtypes ever transmitted |
 |---|---|
-| phone | `0x05` M1, `0x09` NDP-Term, **`0x0a` Schedule Request**, `0x0d` Schedule Update Notification |
-| ESP | **`0x06` M2 — and nothing else, in any run** |
+| phone | `0x05` M1, `0x06` M2, `0x09` NDP-Term, **`0x0a` Schedule Request**, `0x0d` Schedule Update Notification |
+| ESP | `0x05` M1, `0x06` M2, `0x09` NDP-Term — **and nothing else, in any run** |
 
-**Subtype `0x0b`, Schedule Response, appears zero times in any capture.** The
-ESP transmits exactly one NAF subtype across every run: the NDP Response. It
-never sends a Schedule Response, never a Schedule Confirm, and never an NDP
-Termination of its own.
+The ESP sends only NDP **setup and teardown** frames: M1 when it initiates
+(run 4, as subscriber), M2 when it responds, and one NDP Termination (run 7).
+**It never transmits any subtype in the range `0x0a`–`0x0d`.**
+
+That set — 5, 6, 9 — is exactly the set the binary has handlers for. The
+dispatcher `nan_rx_naf` parses 5 to 9 and the object carries construct and
+send functions for the same range, so the on-air behaviour and the binary
+agree precisely about what this implementation can do.
+
+**Subtype `0x0b`, Schedule Response, appears zero times in any capture**,
+while the phone sends Schedule Requests repeatedly.
 
 Schedule Requests appear only in the three runs that established a data path,
 which is expected — runs 8 (2 frames), 9 (17) and 16 (1). The phone also sends
