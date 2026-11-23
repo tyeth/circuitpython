@@ -66,6 +66,12 @@ void common_hal_mdns_server_deinit(mdns_server_obj_t *self) {
     self->inited = false;
 }
 
+void mdns_server_deinit_singleton(void) {
+    // find() opens and closes its own socket, so nothing outlives a call and
+    // there is nothing to tear down when the radio stops. espressif's
+    // common_hal_wifi_radio_set_enabled() calls this unconditionally.
+}
+
 bool common_hal_mdns_server_deinited(mdns_server_obj_t *self) {
     return !self->inited;
 }
