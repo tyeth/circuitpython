@@ -5,9 +5,11 @@
 an ESP32 — so this is no longer "NAN is broken with Android". It is two
 specific defects plus an unexplained off-AP discovery failure.
 
-- **Ask 1 (timing) is ready.** The ESP takes ~16 ms to answer an NDP Request
-  and the Discovery Window is 16.384 ms, so the response lands on the edge.
-  Measured with direct ACK capture: +15 ms acknowledged, +16/+17 ms not.
+- **Ask 1 (timing) is ready, as a reliability claim rather than a boundary.**
+  The ESP takes ~16 ms to answer an NDP Request and the Discovery Window is
+  16.384 ms, so the first response always lands at or past the edge and has
+  never been acknowledged. Setup succeeds only when a retry is heard: 3 runs
+  in 5. Retry positions overlap across outcomes, so there is no threshold.
 - **Ask 2 (spurious error) is ready, and is now demonstrably cosmetic.**
   `Avail: missing a conditional or committed entry` is logged on runs where
   the NDP **succeeds**, so it never was a negotiation failure.
@@ -423,6 +425,28 @@ instances need different service names. The off-AP discovery question is
 therefore untouched by run 7, which was on-AP and discovered via a *unicast*
 solicited publish ACKed at DW+1.
 
+### Why there is no boundary, and a check on the measurements
+
+Runs 10 and 11 both failed to establish a data path, with retries at 0.81–0.91
+and 0.76 slots — positions where earlier runs had succeeded. Collected across
+every run with the solicited publisher: **runs 7, 8 and 9 succeeded, runs 10
+and 11 failed.** Acknowledged retries at 0.57 and 0.85–0.90 sit *inside* the
+range of unacknowledged ones at 0.76 to 0.91. The ranges overlap, so the
+earlier "late equals lost" boundary is not supportable.
+
+Before concluding that, the anchor itself was checked, because every offset in
+this document is measured from the phone's SDF rather than from a true
+timebase. In run 3 the phone's SDF falls within **1.31 ms** of a beacon at
+Discovery Window start, median 0.00 ms and standard deviation 0.40 ms across
+593 windows. The proxy anchor is sound and the measurements are not drifting;
+the erratic outcomes are real.
+
+Two observations constrain what is left. Run 10 saw the **ESP** fail to
+acknowledge the phone's M1 seven times in one window before accepting it in
+the next, so intermittent in-window deafness is not one-sided. And runs 10 and
+11 carried a confound: a "Google Play isn't responding" dialog may have taken
+the test app out of the foreground for part of them.
+
 ### The 20 s teardown
 
 About 20 s after confirmation the link dropped. The phone reported
@@ -445,26 +469,26 @@ run.
 
 ## Asks
 
-1. **Answer an NDP Request early in slot 0 of the Discovery Window, well
-   before the slot 0/slot 1 boundary, and keep retries there too.**
+1. **Answer an NDP Request promptly, well before the end of the Discovery
+   Window in which it arrived.**
 
    The first NDP Response goes out about 16 ms after the request in every run
-   measured — 0.98, 0.93 and 1.03 slots — which places it at or past the end
-   of the 16.384 ms window. Setup then succeeds only when a retry happens to
-   land earlier in a later window, which it did in runs 7 and 8 (0.85–0.90 and
-   0.569 slots) and never did in run 3 (0.97 twice). Measured starts
-   acknowledged: 0.25, 0.56, 0.569, 0.85–0.90. Not acknowledged: 0.93–1.05,
-   0.97, 0.97.
+   measured — 0.93, 0.95, 0.97, 1.03 slots — which places it at or past the
+   end of the 16.384 ms window, where the peer is not reliably listening. The
+   first attempt has **never** been acknowledged in any run. Setup succeeds
+   only when one of the retries happens to be heard, which makes it erratic:
+   **3 successes in 5 runs** with the solicited publisher.
 
-   Whether the 16 ms is processing latency or scheduling aimed at the slot
-   boundary cannot be told from outside the Wi-Fi libraries — the phone sends
-   its request at DW+0, so the two coincide. The remedy is the same either
-   way. Note also that the ESP's own NDL places its NDC in slot 1 while the
-   peer's slot 1 is still only conditional before confirmation, so a response
-   arriving there has no guaranteed listener.
+   **There is no clean position threshold, and this document previously
+   claimed one.** Retry positions overlap across outcomes: retries at 0.57 and
+   0.85–0.90 slots were acknowledged, while retries at 0.76 and 0.81–0.91 were
+   not. Position within the window does not by itself determine whether a
+   frame is heard.
 
-   This ask covers data-path setup only. It does not explain the off-AP
-   discovery failure in runs 5 and 6.
+   The ask therefore rests on the first attempt being consistently too late
+   and on the resulting unreliability, not on a boundary. Reducing the
+   response latency so M2 lands early in the window it belongs to would make
+   setup deterministic instead of depending on a retry being lucky.
 
 2. **Do not log "missing a conditional or committed entry" for a map that
    legitimately carries only Potential entries.** Run 7 confirms this error is
