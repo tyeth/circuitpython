@@ -139,79 +139,31 @@ The oracle is the TCP connect that follows, which classifies three ways:
 
 ## Bench results so far (Samsung Note 9, Android 10, vs ESP32 rev0)
 
-Discovery and messaging work. `onSubscribeStarted` at 0.9 s, `onServiceDiscovered`
-at 10.0 s in one run and 22.6 s in another, follow-up message delivered, and the
-publisher's reply received. **The data path does not come up.**
+Discovery and messaging work. `onSubscribeStarted` at 0.9 s,
+`onServiceDiscovered` at 10.0 s in one run and 22.6 s in another, follow-up
+delivered, publisher's reply received. The data path does not come up.
 
-The ESP rejects it, and the reason is in the closed Wi-Fi blob's availability
-negotiator:
+A channel-6 monitor capture settled the cause, and it is **not** the
+availability negotiation. The phone's NDP Request carries a conditional,
+all-slot, channel-6 entry in map 0, and the ESP accepted it — its NDP Response
+has status `0x11` with a committed channel-6 bitmap. The failure is transmit
+timing: a Discovery Window is 16.384 ms, the ESP's SDF (+14 ms) and follow-up
+(+9 ms) were delivered, and all ten NDP Response attempts went out at +16 to
++20 ms, past the window's end, where the phone is not listening. The phone
+timed out at 20 s.
 
-```
-wifi:Avail: missing a conditional or committed entry
-nan_construct_ndp_resp: M2 frame OK
-NDP TX Confirm: msg_type=2 transmission failed
-```
+The ESP also logs `Avail: missing a conditional or committed entry`, which on
+this evidence is a false alarm raised while parsing the phone's *second*
+Availability attribute (map 1, Potential-only 5 GHz — which is what Potential
+entries are for).
 
-`libnet80211.a` carries exactly nine `Avail:` messages, and which one you get is
-diagnostic:
+Full write-up, with the decoded frame and the disassembly, is in
+`IDF-ISSUE-2-nan-ndp-availability.md` in the CircuitPython research worktree.
 
-```
-Avail: direct_accept committed=0x%lx pot=0x%lx ch=%d   <- success
-Avail: counter_propose committed=0x%lx pot=0x%lx ch=%d <- success, counter-offer
-Avail: missing a conditional or committed entry        <- what we hit
-Avail: no 2.4GHz channel overlap in potential
-Avail: no time overlap in potential
-Avail: counter doesn't satisfy immutable
-Avail: failed to allocate counter CRBs
-Avail: entry len %d exceeds remaining %d
-Avail: entry len %d too small
-```
-
-An earlier version of this file argued that because we did *not* get the
-separate "no 2.4GHz channel overlap in potential" message, the failure could
-not be "phone proposed 5 GHz at a 2.4-only ESP32". **That argument is wrong**
-and has been withdrawn. Disassembling `nan_dp_parse_availability` in
-`ieee80211_nan_datapath.o` settles it: all four strings belong to that one
-function, and the committed/conditional check comes first and returns.
-
-```
-19e: l32i   a8, a4, 0x140
-1a1: bnez.n a8, 1e1          ; entry found -> skip
-1a5: movi   a2, 0x106        ; return value 262
-1a8: l32r   a13, c           ; "missing a conditional or committed entry"
-1b1: callx8 a8               ; log it
-1b4: j      41f              ; -> 41f, two instructions before retw.n at 422
-```
-
-The 2.4 GHz overlap check sits at `0x2bd`, far downstream, and is unreachable
-once that branch is taken. So the absent string says nothing about band: a
-5 GHz-only offer that failed the first check would look exactly like this.
-Band remains an open possibility until the capture decodes the entries.
-
-What the evidence supports: the ESP responder found no committed or conditional
-entry it could use, built and sent M2 anyway with no agreed NDL slot, and the
-phone never acknowledged it.
-
-What is still **inference, not established**: *why* there was no usable entry.
-The plausible reading is that Android offers Potential-only availability and
-expects the responder to counter-propose a committed schedule, which the ESP
-does not do from a Potential-only offer — it has counter-propose logic but
-never reaches it. The log does not actually show that, though. It shows the ESP
-found no *usable* committed or conditional entry, which is not the same as the
-phone having sent none: entries could be present and rejected over a map ID, a
-band, or a parsing limit.
-
-Two runs will settle it: a sniffer capture of the phone's NDP Request with its
-Availability entries decoded, and the role reversal below. Treat the
-Potential-only explanation as a hypothesis until both are in.
-
-That is an ESP-side interop gap, not an app bug. `nan_app.c`'s
-`esp_nan_ndp_tx_done_cb()` only logs the TX failure; the negotiation itself is
-all inside the blob.
-
-Worth trying: reverse the roles, which `role=publish` now supports. Publish
-from the phone and have the ESP subscribe and initiate, so the ESP builds the
-committed availability itself. Untested at the time of writing.
+Earlier versions of this file carried two explanations that the capture
+disproved: that Android offers Potential-only availability, and that the offer
+might be 5 GHz-only. Both are wrong. They are noted here only so anyone who
+read them knows they were withdrawn.
 
 ## Untested
 
