@@ -139,31 +139,30 @@ The oracle is the TCP connect that follows, which classifies three ways:
 
 ## Bench results so far (Samsung Note 9, Android 10, vs ESP32 rev0)
 
-Discovery and messaging work. `onSubscribeStarted` at 0.9 s,
+Discovery and messaging work: `onSubscribeStarted` at 0.9 s,
 `onServiceDiscovered` at 10.0 s in one run and 22.6 s in another, follow-up
-delivered, publisher's reply received. The data path does not come up.
+delivered, publisher's reply received. **The data path does not come up, and
+the root cause is still open.**
 
-A channel-6 monitor capture settled the cause, and it is **not** the
-availability negotiation. The phone's NDP Request carries a conditional,
-all-slot, channel-6 entry in map 0, and the ESP accepted it — its NDP Response
-has status `0x11` with a committed channel-6 bitmap. The failure is transmit
-timing: a Discovery Window is 16.384 ms, the ESP's SDF (+14 ms) and follow-up
-(+9 ms) were delivered, and all ten NDP Response attempts went out at +16 to
-+20 ms, past the window's end, where the phone is not listening. The phone
-timed out at 20 s.
+A channel-6 monitor capture shows the phone's NDP Request is well formed —
+map 0 carries a conditional, all-slot, channel-6 entry — and the ESP answers
+ACCEPTED. That response is never acknowledged: ten attempts across two
+Discovery Windows, all landing 16–20 ms into a 16.384 ms window.
 
-The ESP also logs `Avail: missing a conditional or committed entry`, which on
-this evidence is a false alarm raised while parsing the phone's *second*
-Availability attribute (map 1, Potential-only 5 GHz — which is what Potential
-entries are for).
+The obvious reading, that the ESP transmits too late, is **not yet
+established**. The phone was simultaneously associated to an AP on channel 64
+throughout, and Android time-shares the radio back to its AP channel between
+Discovery Windows, so the phone may simply not have been on channel 6 to hear
+those frames. A rerun with the phone off its AP decides whether there is an
+ESP defect here at all.
+
+Three explanations written here previously were wrong and have been
+withdrawn: that Android offers Potential-only availability, that a 5 GHz-only
+offer was excluded, and that the ESP's committed channel-6 bitmap proved it
+had honoured the phone's entry.
 
 Full write-up, with the decoded frame and the disassembly, is in
 `IDF-ISSUE-2-nan-ndp-availability.md` in the CircuitPython research worktree.
-
-Earlier versions of this file carried two explanations that the capture
-disproved: that Android offers Potential-only availability, and that the offer
-might be 5 GHz-only. Both are wrong. They are noted here only so anyone who
-read them knows they were withdrawn.
 
 ## Untested
 
