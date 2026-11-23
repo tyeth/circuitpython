@@ -167,9 +167,26 @@ Avail: entry len %d exceeds remaining %d
 Avail: entry len %d too small
 ```
 
-The separate "no 2.4GHz channel overlap" message matters: because we did *not*
-get it, the failure is not the obvious "phone proposed 5 GHz and the ESP32 is
-2.4 GHz only".
+An earlier version of this file argued that because we did *not* get the
+separate "no 2.4GHz channel overlap in potential" message, the failure could
+not be "phone proposed 5 GHz at a 2.4-only ESP32". **That argument is wrong**
+and has been withdrawn. Disassembling `nan_dp_parse_availability` in
+`ieee80211_nan_datapath.o` settles it: all four strings belong to that one
+function, and the committed/conditional check comes first and returns.
+
+```
+19e: l32i   a8, a4, 0x140
+1a1: bnez.n a8, 1e1          ; entry found -> skip
+1a5: movi   a2, 0x106        ; return value 262
+1a8: l32r   a13, c           ; "missing a conditional or committed entry"
+1b1: callx8 a8               ; log it
+1b4: j      41f              ; -> 41f, two instructions before retw.n at 422
+```
+
+The 2.4 GHz overlap check sits at `0x2bd`, far downstream, and is unreachable
+once that branch is taken. So the absent string says nothing about band: a
+5 GHz-only offer that failed the first check would look exactly like this.
+Band remains an open possibility until the capture decodes the entries.
 
 What the evidence supports: the ESP responder found no committed or conditional
 entry it could use, built and sent M2 anyway with no agreed NDL slot, and the
