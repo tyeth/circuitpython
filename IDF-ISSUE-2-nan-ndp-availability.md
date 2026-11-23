@@ -8,8 +8,9 @@ specific defects plus an unexplained off-AP discovery failure.
 - **Ask 1 (timing) is ready, as a reliability claim rather than a boundary.**
   The ESP takes ~16 ms to answer an NDP Request and the Discovery Window is
   16.384 ms, so the first response always lands at or past the edge and has
-  never been acknowledged. Setup succeeds only when a retry is heard: 3 runs
-  in 5. Retry positions overlap across outcomes, so there is no threshold.
+  never been acknowledged. Setup succeeds only when a retry is heard: **3 runs
+  in 6** (7, 8, 9 succeeded; 10, 11, 12 failed). Retry positions overlap
+  across outcomes, so there is no threshold.
 - **Ask 2 (spurious error) is ready, and is now demonstrably cosmetic.**
   `Avail: missing a conditional or committed entry` is logged on runs where
   the NDP **succeeds**, so it never was a negotiation failure.
@@ -427,8 +428,9 @@ solicited publish ACKed at DW+1.
 
 ### Why there is no boundary, and a check on the measurements
 
-Runs 10 and 11 both failed to establish a data path, with retries at 0.81–0.91
-and 0.76 slots — positions where earlier runs had succeeded. Collected across
+Runs 10, 11 and 12 all failed to establish a data path, with retries at
+0.81–0.91, 0.76 and 0.575 slots — positions where earlier runs had succeeded.
+Run 12's 0.575 is the sharpest: run 8 succeeded at 0.569. Collected across
 every run with the solicited publisher: **runs 7, 8 and 9 succeeded, runs 10
 and 11 failed.** Acknowledged retries at 0.57 and 0.85–0.90 sit *inside* the
 range of unacknowledged ones at 0.76 to 0.91. The ranges overlap, so the
@@ -440,6 +442,12 @@ timebase. In run 3 the phone's SDF falls within **1.31 ms** of a beacon at
 Discovery Window start, median 0.00 ms and standard deviation 0.40 ms across
 593 windows. The proxy anchor is sound and the measurements are not drifting;
 the erratic outcomes are real.
+
+A caution on absent frames: in run 12 the monitor did not capture a window-0
+M2 burst that the ESP's own logs imply was sent, so the sniffer drops frames.
+Nothing here treats "not in the capture" as "not transmitted"; the ESP's
+`NDP TX Confirm` logging is the authoritative signal for whether a
+transmission was acknowledged.
 
 Two observations constrain what is left. Run 10 saw the **ESP** fail to
 acknowledge the phone's M1 seven times in one window before accepting it in
@@ -477,7 +485,9 @@ run.
    end of the 16.384 ms window, where the peer is not reliably listening. The
    first attempt has **never** been acknowledged in any run. Setup succeeds
    only when one of the retries happens to be heard, which makes it erratic:
-   **3 successes in 5 runs** with the solicited publisher.
+   **3 successes in 6 runs** with the solicited publisher — runs 7, 8 and 9
+   succeeded, runs 10, 11 and 12 failed. This is not AP-driven: runs 8 and 9
+   succeeded off-AP, so off-AP is 2 of 5 and on-AP 1 of 1.
 
    **There is no clean position threshold, and this document previously
    claimed one.** Retry positions overlap across outcomes: retries at 0.57 and
