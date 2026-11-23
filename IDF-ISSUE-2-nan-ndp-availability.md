@@ -448,7 +448,8 @@ the erratic outcomes are real.
 From run 7 onward the monitor also recorded ACK frames, which overflowed its
 24-entry queue with neighbouring-BSS traffic. Its own drop counter per run:
 run 3 **0**, run 7 55, run 8 84, run 9 1761, run 10 141, run 11 8, run 12
-1203. **Run 3 is the only fully reliable capture.** For every other run, a
+1203. **Runs 3 to 6 are fully reliable**, predating ACK capture; runs 7 onward are
+not. For every other run, a
 missing frame or a missing ACK is not evidence that it never happened, burst
 sizes are lower bounds, and any per-frame "not acknowledged" column is
 unsafe.
@@ -470,6 +471,25 @@ by the ESP's own MAC. A burst that **stops below the limit** was acknowledged
 on its last frame; a burst that runs to **five** exhausted the retry limit and
 was never acknowledged at all. For M2 every observed burst is five or fewer,
 and the failing ones are exactly five.
+
+**Is five really the limit?** It is inferred from bursts stopping there, so
+it is worth testing. Two drop-free captures give the comparison — runs 3 to 6
+all predate ACK capture and so have no queue loss:
+
+```
+run 3  M2            5 frames   3.96 ms   0.99 ms/frame
+run 3  M2 retry      5 frames   3.68 ms
+run 4  M1 dialog 1   5 frames   2.99 ms
+run 4  follow-up    21 frames   8.96 ms   0.45 ms/frame
+run 3  follow-up     3 frames   1.00 ms   (acknowledged, phone confirmed)
+```
+
+Every NDP-frame burst that failed ran to exactly five, across two different
+frame types (M2 and M1) and two runs. The follow-up path demonstrably uses a
+different limit — 21 frames, at roughly twice the transmission rate — so five
+is not a universal ceiling that happens to be hit, it is specific to the NDP
+path. That is not proof of a hardcoded limit of five, which lives in the
+Wi-Fi libraries, but it is considerably better than coincidence.
 
 The asymmetry matters: dropped capture entries can only *hide* frames, never
 invent them. So **"five frames seen" is reliable evidence of failure**, while
@@ -518,16 +538,18 @@ run.
 1. **Answer an NDP Request promptly, well before the end of the Discovery
    Window in which it arrived.**
 
-   The first NDP Response goes out about 16 ms after the request in every run
-   measured — 0.93, 0.95, 0.97, 1.03 slots — which places it at or past the
-   end of the 16.384 ms window, where the peer is not reliably listening. The
-   first attempt has **never** been acknowledged in any run — established from
-   retry bits in the transmitted frames, not from captured ACKs, so it is
-   unaffected by the monitor's frame loss. Setup succeeds
-   only when one of the retries happens to be heard, which makes it erratic:
-   **3 successes in 6 runs** with the solicited publisher — runs 7, 8 and 9
-   succeeded, runs 10, 11 and 12 failed. This is not AP-driven: runs 8 and 9
-   succeeded off-AP, so off-AP is 2 of 5 and on-AP 1 of 1.
+   The first NDP Response goes out **0.93 to 1.22 slots** after the request in
+   every run measured — always at or past the end of the 16.384 ms window,
+   where the peer is not reliably listening. The first attempt has **never**
+   been acknowledged in any run, established from retry bits in the
+   transmitted frames rather than from captured ACKs, so it is unaffected by
+   the monitor's frame loss.
+
+   Setup succeeds only when one of the retries happens to be heard, which
+   makes it erratic: **4 successes in 10 runs** with the solicited publisher
+   (8, 9, 16 succeeded off-AP; 7 succeeded on-AP; 10–15 failed). It is not
+   AP-driven and not app-version driven — an A/B of two app builds differing
+   by one guard went 0 of 2 and 1 of 2.
 
    **There is no clean position threshold, and this document previously
    claimed one.** Retry positions overlap across outcomes: retries at 0.57 and

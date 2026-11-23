@@ -113,9 +113,10 @@ logs are visible in the same capture.**
 ## Impact
 
 **An idle NAN data path is torn down about 20 s after it is established.** A
-data path carrying traffic is not: in run 9, with the peer sending a probe
-every 2 s, the link stayed up for the full 100 s capture with no teardown and
-no `eventDataPathTerminated`.
+data path carrying traffic is not: in run 9 the link stayed up for the full
+100 s capture, and in run 16 — with the duplicate-probe bug fixed, so a
+single keepalive series every 2 s rather than two — it stayed up to the end
+of a 55 s capture. No teardown and no `eventDataPathTerminated` in either.
 
 Traffic also changes how often the peer asks. On an idle link the Schedule
 Requests came about 6 s apart (runs 7 and 8); with traffic they came about
