@@ -166,7 +166,10 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(mdns_server_find_obj, 1, _mdns_server_find);
 //|         If web workflow is active, the port it uses can't also be used to advertise a service.
 //|
 //|         **Limitations**: Publishing TXT records (up to 32) is supported only on RP2xxx.
-//|         There is currently no TXT record support on Espressif boards.
+//|         There is currently no TXT record support on Espressif boards. On boards that
+//|         use the portable DNS-SD browser rather than a native mDNS responder, this
+//|         raises `NotImplementedError`: those boards can discover services but not
+//|         advertise them.
 //|
 //|         :param str service_type: The service type such as "_http"
 //|         :param str protocol: The service protocol such as "_tcp"
