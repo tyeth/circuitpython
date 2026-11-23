@@ -283,6 +283,51 @@ go missing. That symmetry is suggestive but it is also exactly the kind of
 pattern-match that has produced four discarded theories in this
 investigation. It is written down as a question, not a finding.
 
+### Is the map-0/map-1 structure an artefact of the AP?
+
+Ask 2 rests on the two-map structure of an NDP Request that was only ever
+captured while the phone was associated to an AP. Decoding the phone's
+Availability attributes straight out of the captures answers most of that
+worry.
+
+The phone's **map-0 entry in its SDFs is byte-identical on-AP and off-AP**:
+
+```
+0e00 1a12 1800 04 03000000 11 51 2000 00    potential, op class 81, ch 6
+0b00 1a12 1800 04 fcffffff 10 02            potential, band 2.4 GHz
+```
+
+The map-1 entries are present in both conditions too, and the op class is the
+decisive detail: **op class 128, channel bitmap `0x0020`**. For class 128 the
+channel set is 42, 58, 106, 122, 138, 155, so bit 5 is the 80 MHz block
+centred on 155 — channels 149–161, containing **149, the NAN 5 GHz discovery
+channel**. The phone's AP was on channel 64, which sits in the block centred
+on 58 and would be bit 1. So map 1 is the phone's own NAN 5 GHz availability
+and has nothing to do with its AP association. An earlier reading of these
+entries as "matching the AP channel" was wrong.
+
+The two-map structure is therefore a property of the phone's NAN
+configuration, not of the AP, and **ask 2 does not rest on an AP artefact**.
+
+Two caveats, one of which matters.
+
+The AP does change the *content*: the 5 GHz potential time bitmap is
+`00f000ff` on-AP and `fff0ffff` off-AP, which is what one would expect from a
+radio that has to serve an association.
+
+The caveat that matters: all of the above is from **SDFs**, and the SDF map-0
+entry is **Potential** with slots `03000000`, whereas the on-AP **NDP
+Request** map-0 was **Conditional** with `ffffffff`. The phone upgrades its
+offer when it actually asks for a data path. So SDFs are weak evidence for
+what an off-AP NDP Request would contain, and no off-AP NDP Request has ever
+been captured — off-AP discovery has never completed, so the exchange never
+gets that far.
+
+**The availability parse failure has been observed twice, in runs 2 and 3,
+both on-AP, both with the ESP as NDP responder. There are zero off-AP
+observations.** Reproducing it needs either the AP back, or discovery working
+off-AP so the phone initiates an NDP there.
+
 ### The test that would settle it
 
 The phone subscribes **ACTIVE**, so it transmits subscribe SDFs that the ESP
