@@ -1,0 +1,5 @@
+bin/
+obj/
+*.apk
+*.aab
+*.idsig

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationId>com.example.nantest</ApplicationId>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <!-- Bench tool: keep the build quick and the assemblies un-trimmed so
+         nothing reachable only through reflection gets removed. -->
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+    <!-- Debug builds default to fast deployment, which keeps the managed
+         assemblies OUT of the APK and pushes them separately via
+         `dotnet build -t:Install`. This APK is sideloaded with `adb install`,
+         so it must be self-contained or it crashes at launch. -->
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
+    <!-- The NDP calls are API 29+ and are already guarded by a runtime SdkInt
+         check; the analyzer cannot follow that through the network callback. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+
+</Project>
