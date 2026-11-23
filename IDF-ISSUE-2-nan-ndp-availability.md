@@ -443,11 +443,49 @@ Discovery Window start, median 0.00 ms and standard deviation 0.40 ms across
 593 windows. The proxy anchor is sound and the measurements are not drifting;
 the erratic outcomes are real.
 
-A caution on absent frames: in run 12 the monitor did not capture a window-0
-M2 burst that the ESP's own logs imply was sent, so the sniffer drops frames.
-Nothing here treats "not in the capture" as "not transmitted"; the ESP's
-`NDP TX Confirm` logging is the authoritative signal for whether a
-transmission was acknowledged.
+### A capture caveat, and why the central claim survives it
+
+From run 7 onward the monitor also recorded ACK frames, which overflowed its
+24-entry queue with neighbouring-BSS traffic. Its own drop counter per run:
+run 3 **0**, run 7 55, run 8 84, run 9 1761, run 10 141, run 11 8, run 12
+1203. **Run 3 is the only fully reliable capture.** For every other run, a
+missing frame or a missing ACK is not evidence that it never happened, burst
+sizes are lower bounds, and any per-frame "not acknowledged" column is
+unsafe.
+
+That would be fatal to the central claim if the claim depended on observing
+ACKs. It does not. The evidence is the **802.11 retry bit, carried in the
+transmitted frames themselves**, which no amount of ACK loss can affect.
+
+In run 3, the drop-free capture, the ESP's unicast bursts decode as:
+
+```
+0 1 1          3 frames  — the follow-up. Phone logged it received "Welcome".
+0 1 1 1 1      5 frames  — M2, first window
+0 1 1 1 1      5 frames  — M2, retry window
+```
+
+Frames 2..n carry the retry bit, so attempts 1..n−1 were each unacknowledged
+by the ESP's own MAC. A burst that **stops below the limit** was acknowledged
+on its last frame; a burst that runs to **five** exhausted the retry limit and
+was never acknowledged at all. For M2 every observed burst is five or fewer,
+and the failing ones are exactly five.
+
+The asymmetry matters: dropped capture entries can only *hide* frames, never
+invent them. So **"five frames seen" is reliable evidence of failure**, while
+"one frame seen" is not evidence of success.
+
+Applying that to the per-run table, the window-0 M2 burst is five frames in
+runs 3, 7, 8, 9, 10 and 11. All six therefore exhausted their retries and went
+unacknowledged — including in runs 7, 8 and 9, which went on to succeed on a
+later window. Run 12's window-0 burst was not captured at all, which its 1203
+drops amply explain.
+
+This also resolves an ambiguity in the ESP's logging. Successful runs emit no
+`NDP TX Confirm: msg_type=2 transmission failed` for their window-0 burst even
+though the retry bits show that burst failed, so the ESP logs that line only
+when the NDP finally gives up, not per burst. **Absence of the log is not
+evidence that a burst succeeded.**
 
 Two observations constrain what is left. Run 10 saw the **ESP** fail to
 acknowledge the phone's M1 seven times in one window before accepting it in
@@ -483,7 +521,9 @@ run.
    The first NDP Response goes out about 16 ms after the request in every run
    measured — 0.93, 0.95, 0.97, 1.03 slots — which places it at or past the
    end of the 16.384 ms window, where the peer is not reliably listening. The
-   first attempt has **never** been acknowledged in any run. Setup succeeds
+   first attempt has **never** been acknowledged in any run — established from
+   retry bits in the transmitted frames, not from captured ACKs, so it is
+   unaffected by the monitor's frame loss. Setup succeeds
    only when one of the retries happens to be heard, which makes it erratic:
    **3 successes in 6 runs** with the solicited publisher — runs 7, 8 and 9
    succeeded, runs 10, 11 and 12 failed. This is not AP-driven: runs 8 and 9
