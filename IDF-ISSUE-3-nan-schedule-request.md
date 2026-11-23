@@ -1,8 +1,9 @@
 # NAN: Schedule Request from a peer is never answered, and the peer tears the data path down
 
-**Status: draft, strong.** The mechanism is identified in the binary and the
-behaviour is reproduced in two runs under opposite AP conditions. One
-confirmation is outstanding — see [One check](#one-check).
+**Status: draft, ready.** The mechanism is identified in the binary and the
+behaviour is reproduced in three runs under both AP conditions. The impact is
+narrower than first thought: idle data paths are torn down, data paths
+carrying traffic survive.
 
 ## Summary
 
@@ -88,30 +89,49 @@ NDP exchange, not NAF schedule negotiation.
 `nan_rx_naf` carries the string `Unknown NAN Action subtype - %d`, and that
 string lives in `.rodata_wlog_error.144` — it is an **error-level** message.
 
-## One check
+## No log is emitted
 
-The ESP reportedly logged nothing when the Schedule Requests arrived. If the
-dispatcher were reached, an error-level `Unknown NAN Action subtype - 10`
-should have appeared. So either that line was simply not captured, or the
-frame is dropped before `nan_rx_naf`, even though the MAC acknowledged it.
+`nan_rx_naf` carries the string `Unknown NAN Action subtype - %d`, and that
+string sits in `.rodata_wlog_error.144` — **error level**. If the dispatcher's
+default case were reached, that line should appear.
 
-Grepping an ESP log from a run that reaches this point for
-`Unknown NAN Action subtype` distinguishes the two, and should be done before
-filing. It does not change the conclusion — the handlers do not exist either
-way — but it changes whether the report says "unhandled and logged" or
-"silently discarded".
+It does not. Across runs 2, 3, 7, 8 and 9 there are **zero** occurrences of
+`Unknown NAN Action subtype` in any ESP log. In run 9 the console was captured
+continuously for about 110 s: the last line is `NDP confirmed` at 12.8 s,
+followed by 100 s of silence while three Schedule Requests arrived, at least
+the first of them MAC-acknowledged. Error-level `wifi:` lines are plainly not
+suppressed in these logs — `Avail: missing a conditional or committed entry`
+prints in the same runs.
+
+So the frames appear to be discarded somewhere before the dispatcher's default
+case, despite the MAC acknowledging them. This cannot be proved from outside
+the libraries — there may be a path into `nan_rx_naf` that skips the log — so
+the accurate statement is: **no log is emitted, although error-level `wifi:`
+logs are visible in the same capture.**
 
 ## Impact
 
-A NAN data path with an Android peer is **torn down roughly 20 s after it is
-established**, in both AP conditions. Schedule renegotiation after setup is
-normal behaviour for a peer whose availability changes, and on Android it
-appears to be routine rather than exceptional. Any long-lived use of Wi-Fi
-Aware between an ESP32 and a phone is therefore not possible today, even once
-the data path comes up.
+**An idle NAN data path is torn down about 20 s after it is established.** A
+data path carrying traffic is not: in run 9, with the peer sending a probe
+every 2 s, the link stayed up for the full 100 s capture with no teardown and
+no `eventDataPathTerminated`.
 
-This is also the most likely explanation for the teardown previously recorded
-as "cause unknown" in `IDF-ISSUE-2-nan-ndp-availability.md`.
+Traffic also changes how often the peer asks. On an idle link the Schedule
+Requests came about 6 s apart (runs 7 and 8); with traffic they came about
+30–36 s apart (run 9). The phone tolerates unanswered requests for at least
+100 s when the link is in use.
+
+So the teardown observed in runs 7 and 8 required **both** conditions: an idle
+link *and* an unanswered Schedule Request. State that as the observed
+correlation, not as cause. Whether a spec-compliant Schedule Response would
+by itself prevent the idle teardown cannot be known without a peer that
+answers one, and no such peer was available.
+
+What is certain either way is the first half: there is no code to answer a
+Schedule Request, so the ESP cannot participate in schedule renegotiation at
+all. The user-visible consequence today is that an idle data path does not
+survive, and that a peer's attempts to adjust the schedule are silently
+ignored however often it tries.
 
 ## Asks
 
@@ -121,9 +141,10 @@ as "cause unknown" in `IDF-ISSUE-2-nan-ndp-availability.md`.
    sent here.
 2. **Handle Schedule Update Notification (subtype 13)**, which the phone also
    broadcasts after confirm and which is likewise unhandled.
-3. **Do not silently discard unknown NAF subtypes on an active NDL.** If the
-   `Unknown NAN Action subtype` path is not being reached, something upstream
-   is dropping acknowledged frames.
+3. **Do not silently discard unknown NAF subtypes on an active NDL.** A
+   MAC-acknowledged frame that produces no log at all, while error-level
+   `wifi:` logging is demonstrably working, suggests something upstream of
+   `nan_rx_naf` is dropping it.
 
 ## Credit
 

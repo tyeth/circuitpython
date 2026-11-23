@@ -13,9 +13,10 @@ specific defects plus an unexplained off-AP discovery failure.
   the NDP **succeeds**, so it never was a negotiation failure.
 - **Off-AP discovery** never completes and is **not explained**. Nothing
   about it should be filed.
-- **A ~20 s data-path teardown** appeared in runs 7 and 8. It now has a
-  mechanism and its own write-up: the ESP never answers the peer's NAF
-  Schedule Request. See `IDF-ISSUE-3-nan-schedule-request.md`.
+- **A ~20 s data-path teardown** appeared in runs 7 and 8, on *idle* links
+  only; run 9 with keepalive traffic stayed up for 100 s. It has its own
+  write-up: the ESP never answers the peer's NAF Schedule Request. See
+  `IDF-ISSUE-3-nan-schedule-request.md`.
 - **Off-AP discovery works with a *solicited* (unicast) publish** — run 8
   discovered in 1.25 s. The runs 5/6 failure was specific to the
   **unsolicited, group-addressed** publish, which supports the
