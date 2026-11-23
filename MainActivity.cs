@@ -1,10 +1,12 @@
 using System.Text;
 using Android.App;
 using Android.Content;
+using Android.Locations;
 using Android.Content.PM;
 using Android.Net;
 using Android.Net.Wifi.Aware;
 using Android.OS;
+using Android.Runtime;
 using Android.Util;
 using Android.Widget;
 using Java.Net;
@@ -80,6 +82,12 @@ public class MainActivity : Activity
         base.OnCreate(savedInstanceState);
         _clock.Start();
 
+        AndroidEnvironment.UnhandledExceptionRaiser += (_, e) =>
+        {
+            Log.Error(Tag, $"UNHANDLED {e.Exception.GetType().Name}: {e.Exception}");
+            e.Handled = true;
+        };
+
         _view = new TextView(this) { Text = "" };
         _view.SetTextIsSelectable(true);
         _view.SetPadding(16, 16, 16, 16);
@@ -103,6 +111,20 @@ public class MainActivity : Activity
             return;
         }
         L("ACCESS_FINE_LOCATION granted");
+
+        if (GetSystemService(LocationService) is LocationManager lm)
+        {
+            var on = (int)Build.VERSION.SdkInt >= 28
+                ? lm.IsLocationEnabled
+                : lm.IsProviderEnabled(LocationManager.GpsProvider) ||
+                  lm.IsProviderEnabled(LocationManager.NetworkProvider);
+            L($"location services enabled = {on}");
+            if (!on)
+            {
+                L("  WARNING: with location services off, Aware attaches and subscribes but");
+                L("  never discovers anything, and reports no error. Turn them on.");
+            }
+        }
 
         Begin();
     }
@@ -149,7 +171,20 @@ public class MainActivity : Activity
         }
 
         L("attach()...");
-        _aware.Attach(new AttachCb(this), null);
+        try
+        {
+            _aware.Attach(new AttachCb(this), null);
+        }
+        catch (Java.Lang.SecurityException e)
+        {
+            L($"FAIL: attach() threw SecurityException: {e.Message}");
+            L("  The framework disagrees with checkSelfPermission. If you just ran");
+            L("  `adb shell pm grant`, force-stop the app and start it again.");
+        }
+        catch (Java.Lang.Exception e)
+        {
+            L($"FAIL: attach() threw {e.GetType().Name}: {e.Message}");
+        }
     }
 
     protected override void OnDestroy()
@@ -207,7 +242,22 @@ public class MainActivity : Activity
         }
 
         L($"subscribe(serviceName=\"{_service}\", SUBSCRIBE_TYPE_ACTIVE)...");
-        session.Subscribe(cfg, new DiscoveryCb(this), null);
+        try
+        {
+            session.Subscribe(cfg, new DiscoveryCb(this), null);
+        }
+        catch (Java.Lang.SecurityException e)
+        {
+            L($"FAIL: subscribe() threw SecurityException: {e.Message}");
+            L("  Aware discovery is location-gated. Grant ACCESS_FINE_LOCATION, switch");
+            L("  location services on, then force-stop and relaunch:");
+            L("    adb shell pm grant com.example.nantest android.permission.ACCESS_FINE_LOCATION");
+            L("    adb shell am force-stop com.example.nantest");
+        }
+        catch (Java.Lang.Exception e)
+        {
+            L($"FAIL: subscribe() threw {e.GetType().Name}: {e.Message}");
+        }
     }
 
     // ---------- discovery ----------
@@ -335,7 +385,15 @@ public class MainActivity : Activity
         }
 
         _netCb = new NetCb(this);
-        _cm?.RequestNetwork(req, _netCb);
+        try
+        {
+            _cm?.RequestNetwork(req, _netCb);
+        }
+        catch (Java.Lang.Exception e)
+        {
+            L($"FAIL: requestNetwork() threw {e.GetType().Name}: {e.Message}");
+            _netCb = null;
+        }
     }
 
     sealed class NetCb(MainActivity a) : ConnectivityManager.NetworkCallback

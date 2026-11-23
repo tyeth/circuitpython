@@ -47,10 +47,8 @@ Two project settings are load-bearing; do not drop them:
 
 ## Install and run
 
-No APK is committed to this branch; build one first (see above), then:
-
 ```
-adb install -r bin/Debug/net11.0-android/com.example.nantest-Signed.apk
+adb install -r app-debug.apk
 ```
 
 ```
@@ -116,6 +114,53 @@ The oracle is the TCP connect that follows, which classifies three ways:
   publishes.
 - `targetSdkVersion` 29 against a compile SDK of 37 raises warnings XA1006 and
   XA4211 at build time. Both are expected and harmless here.
+
+## Bench results so far (Samsung Note 9, Android 10, vs ESP32 rev0)
+
+Discovery and messaging work. `onSubscribeStarted` at 0.9 s, `onServiceDiscovered`
+at 10.0 s in one run and 22.6 s in another, follow-up message delivered, and the
+publisher's reply received. **The data path does not come up.**
+
+The ESP rejects it, and the reason is in the closed Wi-Fi blob's availability
+negotiator:
+
+```
+wifi:Avail: missing a conditional or committed entry
+nan_construct_ndp_resp: M2 frame OK
+NDP TX Confirm: msg_type=2 transmission failed
+```
+
+`libnet80211.a` carries exactly nine `Avail:` messages, and which one you get is
+diagnostic:
+
+```
+Avail: direct_accept committed=0x%lx pot=0x%lx ch=%d   <- success
+Avail: counter_propose committed=0x%lx pot=0x%lx ch=%d <- success, counter-offer
+Avail: missing a conditional or committed entry        <- what we hit
+Avail: no 2.4GHz channel overlap in potential
+Avail: no time overlap in potential
+Avail: counter doesn't satisfy immutable
+Avail: failed to allocate counter CRBs
+Avail: entry len %d exceeds remaining %d
+Avail: entry len %d too small
+```
+
+The separate "no 2.4GHz channel overlap" message matters: because we did *not*
+get it, the failure is not the obvious "phone proposed 5 GHz and the ESP32 is
+2.4 GHz only". The ESP parsed the phone's Availability attribute and found no
+entry of type Committed or Conditional at all — Android offers Potential-only
+availability and expects the responder to counter-propose a committed schedule.
+The ESP has counter-propose logic, but does not reach it from a Potential-only
+offer. It then builds M2 anyway and transmits with no agreed NDL slot, so the
+frame goes out when the phone is not listening and the TX is never acked.
+
+That is an ESP-side interop gap, not an app bug. `nan_app.c`'s
+`esp_nan_ndp_tx_done_cb()` only logs the TX failure; the negotiation itself is
+all inside the blob.
+
+Worth trying: reverse the roles. Publish from the phone and have the ESP
+subscribe and initiate the data path, so the ESP builds the committed
+availability itself. This app only subscribes today.
 
 ## Untested
 
