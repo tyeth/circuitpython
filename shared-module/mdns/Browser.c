@@ -378,11 +378,16 @@ size_t shared_module_mdns_find(mp_obj_t network_interface, const char *service_t
         return 0;
     }
 
-    socketpool_socketpool_obj_t pool;
+    // Zero both objects: they live on the C stack, and socketpool_socket() does
+    // not set every field. On espressif it leaves ssl_socket and connected alone
+    // (heap and static sockets are already zeroed), and socketpool_socket_close()
+    // treats a non-NULL ssl_socket as an SSL socket to close, so stack garbage
+    // there crashed the board in close().
+    socketpool_socketpool_obj_t pool = { 0 };
     pool.base.type = &socketpool_socketpool_type;
     common_hal_socketpool_socketpool_construct(&pool, network_interface);
 
-    socketpool_socket_obj_t sock;
+    socketpool_socket_obj_t sock = { 0 };
     if (!socketpool_socket(&pool, SOCKETPOOL_AF_INET, SOCKETPOOL_SOCK_DGRAM, 0, &sock)) {
         mp_raise_RuntimeError(MP_ERROR_TEXT("Unable to start mDNS query"));
     }
