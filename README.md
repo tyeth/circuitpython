@@ -72,6 +72,7 @@ Extras, all optional:
 | `msg` | string | `Hello` | follow-up body sent in subscribe mode |
 | `reply` | string | `Welcome` | reply sent in publish mode |
 | `ndp` | bool | `true` | request a data path |
+| `armnow` | bool | `true` | publish mode: arm an any-peer responder at publish time instead of waiting for a follow-up |
 | `port` | int | `7` | TCP port to probe when the peer advertises none |
 
 ### Role reversal
@@ -85,11 +86,19 @@ from Android's Potential-only offer.
 adb shell am start -n com.example.nantest/.MainActivity --es role publish --es service esp-nan-test
 ```
 
-The phone then publishes `PUBLISH_TYPE_UNSOLICITED` and waits. When the ESP
-discovers it and sends a follow-up, the app logs it, replies (`reply`, default
-`Welcome`), and immediately stands up an open `requestNetwork` built from the
-*publish* session, holding it open so it is listening when the ESP calls
-`esp_wifi_nan_datapath_req()`. Nothing else happens until the ESP initiates.
+The phone publishes `PUBLISH_TYPE_UNSOLICITED` and, by default, immediately
+arms an **any-peer** open responder — `WifiAwareNetworkSpecifier.Builder` with
+a publish session and no peer handle — rather than waiting for a follow-up.
+
+That default matters. If the responder is only armed on `onMessageReceived`
+and the initiator's follow-up never arrives, Android has no pending responder
+request and rejects the incoming M1 with status `0x21`, reason 2 (resource
+limitation). That looks like a data-path fault and is really just an unarmed
+app. Pass `--ez armnow false` to get the old wait-for-follow-up behaviour,
+which is worth doing deliberately if you want to reproduce that rejection.
+
+It still replies (`reply`, default `Welcome`) to any follow-up that does
+arrive. Nothing else happens until the peer initiates.
 
 In this mode the TCP probe is expected to be refused or to time out — the ESP
 runs no listener. The ESP's own pings across the data path are the proof.

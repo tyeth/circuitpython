@@ -35,6 +35,7 @@ public class MainActivity : Activity
     string _message = "Hello";
     string _reply = "Welcome";
     bool _wantNdp = true;
+    bool _armNow = true;
     int _probePort = 7;
     int _msgId = 1;
 
@@ -108,12 +109,13 @@ public class MainActivity : Activity
         _message = Intent?.GetStringExtra("msg") ?? _message;
         _reply = Intent?.GetStringExtra("reply") ?? _reply;
         _wantNdp = Intent?.GetBooleanExtra("ndp", true) ?? true;
+        _armNow = Intent?.GetBooleanExtra("armnow", true) ?? true;
         _probePort = Intent?.GetIntExtra("port", 7) ?? 7;
 
         L($"start: role={_role} service=\"{_service}\" msg=\"{_message}\" reply=\"{_reply}\" " +
           $"ndp={_wantNdp} probe_port={_probePort}");
         L(_role == "publish"
-            ? "  publish mode: we are the NDP RESPONDER. The ESP subscribes, sends a follow-up, then initiates."
+            ? $"  publish mode: we are the NDP RESPONDER (armnow={_armNow})."
             : "  subscribe mode: we are the NDP INITIATOR.");
         L($"device: {Build.Manufacturer} {Build.Model}, Android {Build.VERSION.Release} (SDK {(int)Build.VERSION.SdkInt})");
 
@@ -328,8 +330,22 @@ public class MainActivity : Activity
 
         public override void OnPublishStarted(PublishDiscoverySession? session)
         {
-            a.L("onPublishStarted — waiting for the ESP to discover us and send a follow-up.");
+            a.L("onPublishStarted");
             a._discovery = session;
+
+            // Arm an ANY-PEER responder straight away rather than waiting for a
+            // follow-up. An initiator whose follow-up never arrives still gets
+            // its NDP answered; otherwise Android has no pending responder
+            // request and rejects M1 with reason 2 (resource limitation),
+            // which looks like a datapath fault but is just an unarmed app.
+            if (session is not null && a._wantNdp && a._armNow)
+            {
+                a.ArmAnyPeerResponder(session);
+            }
+            else
+            {
+                a.L("  waiting for a follow-up before arming the responder.");
+            }
         }
 
         public override void OnSessionConfigFailed()
@@ -441,6 +457,53 @@ public class MainActivity : Activity
     }
 
     // ---------- datapath ----------
+
+    void ArmAnyPeerResponder(PublishDiscoverySession session)
+    {
+        if (_ndpRequested)
+        {
+            return;
+        }
+
+        NetworkSpecifier? spec = null;
+        if ((int)Build.VERSION.SdkInt >= 29)
+        {
+            // The single-argument Builder takes a publish session and no peer
+            // handle: an open responder that accepts an NDP from any peer.
+            spec = new WifiAwareNetworkSpecifier.Builder(session).Build();
+        }
+
+        if (spec is null)
+        {
+            L("  any-peer responder needs API 29+; falling back to arming on the follow-up.");
+            return;
+        }
+
+        var req = new NetworkRequest.Builder()
+            .AddTransportType(TransportType.WifiAware)!
+            .SetNetworkSpecifier(spec)!
+            .Build();
+
+        if (req is null)
+        {
+            L("FAIL: NetworkRequest.Builder().build() returned null.");
+            return;
+        }
+
+        _ndpRequested = true;
+        _netCb = new NetCb(this);
+        try
+        {
+            _cm?.RequestNetwork(req, _netCb);
+            L("requestNetwork as RESPONDER (ANY PEER, open) — armed before any follow-up.");
+        }
+        catch (Java.Lang.Exception e)
+        {
+            L($"FAIL: requestNetwork() threw {e.GetType().Name}: {e.Message}");
+            _netCb = null;
+            _ndpRequested = false;
+        }
+    }
 
     void RequestDatapath()
     {
