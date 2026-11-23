@@ -58,6 +58,34 @@ itself committed to** (`crb1=[2,31]`). This is the peer doing the right thing
 and converting a conditional arrangement into a committed one. The ESP ignores
 it.
 
+## Confirmed across every capture
+
+NAN Action Frames are Public Action / Vendor Specific / WFA OUI with **OUI
+type `0x18`** and the subtype in the following byte. (The Service Discovery
+Frame uses OUI type `0x13` instead, and carries attributes directly.)
+Counting subtypes by sender across all ten captures — runs 3 and 8 to 16:
+
+| sender | subtypes ever transmitted |
+|---|---|
+| phone | `0x05` M1, `0x09` NDP-Term, **`0x0a` Schedule Request**, `0x0d` Schedule Update Notification |
+| ESP | **`0x06` M2 — and nothing else, in any run** |
+
+**Subtype `0x0b`, Schedule Response, appears zero times in any capture.** The
+ESP transmits exactly one NAF subtype across every run: the NDP Response. It
+never sends a Schedule Response, never a Schedule Confirm, and never an NDP
+Termination of its own.
+
+Schedule Requests appear only in the three runs that established a data path,
+which is expected — runs 8 (2 frames), 9 (17) and 16 (1). The phone also sends
+Schedule Update Notifications in all three: 3, 5 and 5 frames. None is ever
+answered.
+
+Run 9's 17 frames are worth a note. The bench session reports three *logical*
+Schedule Requests in that run, so the phone appears to retry each one roughly
+five or six times before giving up — the same shape as the ESP's own M2
+bursts. The phone is not asking once and forgetting; it is asking
+insistently and being ignored.
+
 ## Mechanism, from the binary
 
 `ieee80211_nan_datapath.o` in `libnet80211.a` (esp32). The receive dispatcher

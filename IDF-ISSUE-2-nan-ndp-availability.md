@@ -443,6 +443,49 @@ Discovery Window start, median 0.00 ms and standard deviation 0.40 ms across
 593 windows. The proxy anchor is sound and the measurements are not drifting;
 the erratic outcomes are real.
 
+### Every M2 burst, decoded from the raw captures
+
+Read directly from the pcaps for runs 8 to 16 rather than from summaries,
+filtering on NAF OUI type `0x18` subtype `0x06`. Offsets are in slots from the
+preceding group-addressed frame from the phone.
+
+| run | first M2 | second M2 | outcome |
+|---|---|---|---|
+| 8 | 5 fr @ 1.027 | 1 fr @ 0.581 | OK |
+| 9 | 5 fr @ 1.028 | 1 fr @ 0.724 | OK |
+| 10 | 5 fr @ 0.924 | 5 fr @ 0.803 | FAIL |
+| 11 | 5 fr @ 1.001 | 5 fr @ 0.740 | FAIL |
+| 12 | 1 fr @ 0.554 *(w0 burst dropped)* | — | FAIL |
+| 13 | 3 fr @ 1.208 *(truncated)* | 5 fr @ 0.548 | FAIL |
+| 14 | 1 fr @ 0.899 *(truncated)* | — | FAIL |
+| 15 | 5 fr @ 0.925 | 2 fr @ 0.816 | FAIL |
+| 16 | 5 fr @ 1.165 | 1 fr @ 0.395 | OK |
+
+Three things fall out of this that the summaries did not show.
+
+**The retry limit of five is now well supported.** Six independently captured
+first-window bursts — runs 8, 9, 10, 11, 15, 16 — are *exactly* five frames.
+Never four, never six. Adding the second-window bursts in runs 10, 11 and 13
+gives nine bursts of exactly five. Runs 12, 13 and 14 show short first bursts
+and all three had heavy capture loss.
+
+**The first M2 is never acknowledged, in any run.** Every fully captured
+first burst exhausts its five attempts. Measured first-M2 offsets: 0.924,
+0.925, 1.001, 1.027, 1.028, 1.165 slots, plus truncated bursts at 0.899 and
+1.208.
+
+**Success tracks the second burst being acknowledged immediately.** Runs 8, 9
+and 16 each have a single-frame second burst — acknowledged first try. Runs
+10, 11 and 13 run to five again and fail. But position still does not explain
+which: run 11's second burst at 0.740 failed while run 9's at 0.724 succeeded,
+and run 13's at 0.548 failed while run 8's at 0.581 succeeded. Adjacent
+offsets, opposite outcomes. **The threshold stays dead.**
+
+One further observation from the same decode: the phone retransmits its own
+M1 when the ESP does not acknowledge it — 8 frames in run 10 and 3 in run 9
+against 1 elsewhere. The ESP's receive side misses frames in the window too,
+and that is not characterised at all.
+
 ### A capture caveat, and why the central claim survives it
 
 From run 7 onward the monitor also recorded ACK frames, which overflowed its
