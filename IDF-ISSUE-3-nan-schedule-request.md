@@ -1,9 +1,9 @@
 # NAN: Schedule Request from a peer is never answered, and idle data paths are torn down
 
-**Status: draft, ready.** The mechanism is identified in the binary and the
-behaviour is reproduced in three runs under both AP conditions. The impact is
-narrower than first thought: idle data paths are torn down, data paths
-carrying traffic survive.
+**Status: draft, ready.** The mechanism is identified in the binary, and the
+behaviour is reproduced on current silicon (ESP32 rev v3.1 and ESP32-S2) as
+well as on the first board. The impact is narrower than first thought: idle
+data paths are torn down, data paths carrying traffic survive.
 
 ## Summary
 
@@ -20,22 +20,43 @@ The ESP has **no handling for NAF subtypes 10–13 at all**.
 | | |
 |---|---|
 | ESP-IDF | `v6.1-dev-6107` (`cb73317`), `esp_wifi/lib` at `7cd4d7b2` |
-| Target | ESP32-D0WDQ6 **rev v0.0 (ECO0)**, `wifi_aware/nan_publisher`, SOLICITED |
+| Targets | ESP32-U4WDH **rev v3.1** and ESP32-S2FNR2 rev v1.0 (also ESP32-D0WDQ6 rev v0.0, see below) |
+| Firmware | `wifi_aware/nan_publisher`, solicited and unsolicited |
 | Peer | Samsung Galaxy Note 9 (SM-N960F), Android 10 / SDK 29 |
-| Capture | ESP32-S2 monitor on channel 6, with ACK frames recorded |
+| Capture | a separate ESP32 / ESP32-S2 monitor on channel 6, with ACK frames recorded |
 
-> **Chip revision.** The ESP32 under test is a SparkFun ESP32 Thing carrying
-> an **ESP32-D0WDQ6 revision v0.0 (ECO0)**, 26 MHz crystal — first silicon.
-> This is still supported by this IDF (`CONFIG_ESP32_REV_MIN` defaults to
-> `ESP32_REV_MIN_0`), and `esp_wifi`, `esp_phy` and `esp_coex` contain **no
-> revision-conditional code at all** — the only rev-0 workaround anywhere in
-> IDF is the brownout interrupt. So a software-side cause would not be
-> revision-specific. An analogue or RF difference in first silicon cannot be
-> excluded from here, and reproduction on current silicon (v3.x) is a
-> reasonable thing to ask for before treating timing or receive anomalies as
-> firmware defects.
+## Reproduced on current silicon
 
-## Observed, in three runs under both AP conditions
+The first runs (7, 8, 9 below) used an ESP32 rev v0.0 board that later turned
+out to have an RF fault. Everything was therefore repeated on an ESP32 rev
+v3.1 and an ESP32-S2, where the data path itself comes up reliably (16 of 16
+runs). The Schedule Request behaviour is unchanged.
+
+**Idle data path, ESP32 rev v3.1, unsolicited publish, no traffic after
+confirm:**
+
+| run | phone on an AP? | Schedule Requests (after confirm) | ESP response | NDP lifetime | how it ended |
+|---|---|---|---|---|---|
+| 39 | yes | +12.0 s, +18.0 s, both MAC-ACKed | none | 21.0 s | phone HAL `eventDataPathTerminated` |
+| 40 | yes | +12.0 s, +18.0 s, both MAC-ACKed | none | 20.9 s | phone HAL `eventDataPathTerminated` |
+| 41 | no | +12.0 s, +18.0 s, both MAC-ACKed | none | 20.9 s | phone HAL `eventDataPathTerminated` |
+| 42 | no | +12.0 s, +18.0 s, both MAC-ACKed | none | 21.0 s | phone HAL `eventDataPathTerminated` |
+
+In all four, the phone also sent 2–6 Schedule Update Notifications (none
+answered), the ESP logged nothing after `NDP confirmed`, and no NDP
+Termination frame appeared on air from either side.
+
+**Across every current-silicon run** (runs 23–42: six on the ESP32-S2, fourteen
+on the ESP32 rev v3.1, most with a 2 s keepalive), the phone sent a Schedule
+Request in 19 of 20 runs, 23 frames in all, and the ESP MAC-ACKed every one.
+The ESP transmitted only NDP Response (subtype 6) in every run, and never a
+Schedule Response (subtype 11) or any other subtype in `0x0a`–`0x0d`.
+
+The rule is the same in all of them, 12 s, then 6 s, then teardown at 21 s
+when idle. It does not depend on the chip, on publish type, or on whether the
+phone is associated to an AP.
+
+## First observed, ESP32 rev v0.0, in three runs under both AP conditions
 
 Run 7 (phone associated to an AP on channel 64), run 8 (phone not associated
 at all) and run 9 (not associated, with keepalive traffic) all show the ESP
@@ -106,7 +127,9 @@ insistently and being ignored.
 
 ## Mechanism, from the binary
 
-`ieee80211_nan_datapath.o` in `libnet80211.a` (esp32). The receive dispatcher
+`ieee80211_nan_datapath.o` in `libnet80211.a`. The same five parse handlers,
+and no schedule handlers, are present in the `esp32`, `esp32s2`, `esp32c5` and
+`esp32c61` libraries at `7cd4d7b2`. In the esp32 library, the receive dispatcher
 `nan_rx_naf` references exactly **five** parse handlers:
 
 ```
@@ -142,8 +165,9 @@ string lives in `.rodata_wlog_error.144` — it is an **error-level** message.
 string sits in `.rodata_wlog_error.144` — **error level**. If the dispatcher's
 default case were reached, that line should appear.
 
-It does not. Across runs 2, 3, 7, 8 and 9 there are **zero** occurrences of
-`Unknown NAN Action subtype` in any ESP log. In run 9 the console was captured
+It does not. Across runs 2, 3, 7, 8 and 9, and the current-silicon idle
+runs 39–42, there are **zero** occurrences of `Unknown NAN Action subtype`
+in any ESP log. In run 9 the console was captured
 continuously for about 110 s: the last line is `NDP confirmed` at 12.8 s,
 followed by 100 s of silence while three Schedule Requests arrived, at least
 the first of them MAC-acknowledged. Error-level `wifi:` lines are plainly not

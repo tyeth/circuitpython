@@ -1,29 +1,97 @@
-Subject: [PATCH] nan_usd: log entry to the action-frame Rx callback
+Subject: [PATCH] nan_usd: instrument the USD action-frame Rx path (diagnostic)
 
-Diagnostic only; not a fix. NAN-USD discovery never completes because
-nan_de_rx_sdf() is never called, even though the subscriber's own radio
-counts 407 NAN SDFs in 60 s. Review of esp_nan_de_rx_action() shows every
-gate in it should pass for those frames, so the open question is whether the
-callback is entered at all.
+Diagnostic only; not a fix. Applies to cb73317.
 
-Never printed  -> frames are dropped below the supplicant, in the Wi-Fi
-                  libraries or the hardware Rx filter. Note that NAN SDFs
-                  carry the NAN Network ID 51:6f:9a:01:00:00 in A1 and A3,
-                  which is multicast but not broadcast.
-Printed        -> the loss is in the gate chain below, and is fixable here.
+- Logs every entry to esp_nan_de_rx_action() with A1/A2/A3 and the first six
+  body bytes, and which early-return gate failed, if any.
+- Logs every remain-on-channel request with allow_broadcast and its return
+  code, and every WIFI_EVENT_ROC_DONE.
+- With -DLOCALISE_TX_BCAST=1/2/3 (C define), esp_nan_de_tx() replaces the NAN
+  Network ID with ff:ff:ff:ff:ff:ff in A1 / A3 / both, for group-addressed
+  SDFs only. This is the experiment showing A3 decides delivery.
 
-MSG_ERROR rather than MSG_DEBUG so the result does not depend on the
-reporter's configured log level.
+MSG_ERROR so the result does not depend on the configured log level.
 
+diff --git a/components/wpa_supplicant/esp_supplicant/src/esp_nan_usd.c b/components/wpa_supplicant/esp_supplicant/src/esp_nan_usd.c
+index 30d54c8a8e..1ce5f5bcfd 100644
 --- a/components/wpa_supplicant/esp_supplicant/src/esp_nan_usd.c
 +++ b/components/wpa_supplicant/esp_supplicant/src/esp_nan_usd.c
-@@ -141,6 +141,9 @@
- 
- int esp_nan_de_rx_action(uint8_t *hdr, uint8_t *payload, size_t len, uint8_t channel)
- {
-+    wpa_printf(MSG_ERROR, "NAN-USD: rx_action entered, len=%u chan=%u",
-+               (unsigned)len, (unsigned)channel);
-+
+@@ -127,6 +127,7 @@ static void nan_de_tx_event_handler(void *arg, esp_event_base_t event_base,
+     } else if (event_id == WIFI_EVENT_ROC_DONE) {
+         wifi_event_roc_done_t *evt = (wifi_event_roc_done_t *)event_data;
+         int freq = esp_nan_chan_to_freq(evt->channel);
++        wpa_printf(MSG_ERROR, "NAN-USD: ROC_DONE chan=%u", (unsigned)evt->channel);
+         if (freq == -1) {
+             wpa_printf(MSG_ERROR, "Invalid channel received from ROC done handler");
+             return;
+@@ -144,8 +145,18 @@ int esp_nan_de_rx_action(uint8_t *hdr, uint8_t *payload, size_t len, uint8_t cha
      struct ieee80211_hdr *rx_hdr = (struct ieee80211_hdr *)hdr;
      struct nan_de *nan_de = NULL;
      int freq;
++    static unsigned s_rx_count;
++
++    /* LOCALISE: log every entry, MSG_ERROR so it does not depend on log level. */
++    s_rx_count++;
++    wpa_printf(MSG_ERROR, "NAN-USD: rx_action #%u len=%u chan=%u A1=" MACSTR " A2=" MACSTR " A3=" MACSTR
++               " body=%02x %02x %02x%02x%02x %02x",
++               s_rx_count, (unsigned)len, (unsigned)channel, MAC2STR(rx_hdr->addr1), MAC2STR(rx_hdr->addr2),
++               MAC2STR(rx_hdr->addr3), len > 0 ? payload[0] : 0, len > 1 ? payload[1] : 0, len > 2 ? payload[2] : 0,
++               len > 3 ? payload[3] : 0, len > 4 ? payload[4] : 0, len > 5 ? payload[5] : 0);
+ 
+     if (len < 6) {
++        wpa_printf(MSG_ERROR, "NAN-USD: gate len<6");
+         /* Frame too short for NAN-SDF frame */
+         return ESP_FAIL;
+     }
+@@ -169,6 +180,8 @@ int esp_nan_de_rx_action(uint8_t *hdr, uint8_t *payload, size_t len, uint8_t cha
+         /* Received a valid NAN Service Discovery Frame */
+     } else {
+         /* Frame is not a NAN SDF frame */
++        wpa_printf(MSG_ERROR, "NAN-USD: gate not-SDF cat=%u pa=%u oui=%06x type=%u",
++                   category, public_action, (unsigned)oui_value, oui_type);
+         return ESP_FAIL;
+     }
+ 
+@@ -179,8 +192,10 @@ int esp_nan_de_rx_action(uint8_t *hdr, uint8_t *payload, size_t len, uint8_t cha
+     }
+ 
+     if (!nan_usd_try_lock_active(&nan_de)) {
++        wpa_printf(MSG_ERROR, "NAN-USD: gate lock/inactive");
+         return ESP_FAIL;
+     }
++    wpa_printf(MSG_ERROR, "NAN-USD: -> nan_de_rx_sdf freq=%d", freq);
+     nan_de_rx_sdf(nan_de, rx_hdr->addr2, rx_hdr->addr3, freq, payload, len - 6);
+     NAN_USD_DATA_UNLOCK();
+     return ESP_OK;
+@@ -204,6 +219,18 @@ static int esp_nan_de_tx(void *ctx, unsigned int freq, unsigned int wait_time,
+     req->wait_time_ms = wait_time;
+     memcpy(req->dest_mac, dst, ETH_ALEN);
+     memcpy(req->bssid, bssid, ETH_ALEN);
++#ifdef LOCALISE_TX_BCAST
++    /* LOCALISE experiment: replace the NAN Network ID 51:6f:9a:01:00:00 (multicast, not broadcast)
++     * with ff:ff:ff:ff:ff:ff. Bit 0 = A1 (dest), bit 1 = A3 (BSSID). Only group-addressed SDFs are touched. */
++    if (dst[0] & 1) {
++        if (LOCALISE_TX_BCAST & 1) {
++            memset(req->dest_mac, 0xff, ETH_ALEN);
++        }
++        if (LOCALISE_TX_BCAST & 2) {
++            memset(req->bssid, 0xff, ETH_ALEN);
++        }
++    }
++#endif
+     req->no_ack = false;
+     req->data_len = buf_len;
+     req->rx_cb = esp_nan_de_rx_action;
+@@ -250,7 +277,11 @@ static int esp_nan_de_listen(void *ctx, unsigned int freq, unsigned int duration
+     req->done_cb = NULL;
+     req->allow_broadcast = true;
+ 
+-    if (esp_wifi_remain_on_channel(req) != ESP_OK) {
++    esp_err_t roc_err = esp_wifi_remain_on_channel(req);
++    /* LOCALISE: show every listen request the subscriber makes, and whether the library accepted it. */
++    wpa_printf(MSG_ERROR, "NAN-USD: ROC req chan=%d dur=%u allow_bcast=%d -> %d", channel, duration,
++               req->allow_broadcast, roc_err);
++    if (roc_err != ESP_OK) {
+         wpa_printf(MSG_ERROR, "ROC request failure");
+         os_free(req);
+         return ESP_FAIL;
