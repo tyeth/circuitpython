@@ -1,4 +1,4 @@
-# NAN: NDP Response is never acknowledged on its first attempt, and a spurious availability error
+# NAN (esp32 target): NDP Response is transmitted in the wrong Discovery Window; the esp32s2 library gets it right
 
 **Status: draft, not filed.** Asks 1–3 are evidenced and ready. Two further
 observations are recorded but deliberately not asked about, because they rest
@@ -6,14 +6,24 @@ on too little.
 
 ## Summary
 
-An ESP32 running NAN-Sync establishes a Wi-Fi Aware data path with an Android
-phone in **9 of 16 runs**. The failures share a mechanism: the ESP's first
-NDP Response transmission is *never* acknowledged, in any run, and setup
-depends on one of its retries being taken.
+On the **esp32** target an ESP32 running NAN-Sync establishes a Wi-Fi Aware
+data path with an Android phone in **9 of 16 runs**. Its NDP Response is
+transmitted late in the Discovery Window the request arrived in, its first
+attempt is *never* acknowledged, and setup depends on a retry being taken in
+a later window.
 
-Two smaller defects accompany it: an error-level log that fires on successful
-runs, and an M2 that reports ACCEPTED after the parse that built it returned
-an error.
+On the **esp32s2** target, same IDF, same application config, same phone:
+**6 of 6**. The S2 builds M2 once, does not transmit it in the request's own
+window at all, and sends it in the next window at 0.47–0.57 slots, first
+attempt, acknowledged.
+
+So the behaviour ask 1 requests already exists in one Espressif Wi-Fi
+library. This is an esp32-target report with a working reference
+implementation alongside it.
+
+Two smaller defects accompany it on both targets: an error-level log that
+fires on successful runs, and an M2 that reports ACCEPTED after the parse
+that built it returned an error.
 
 ## Environment
 
@@ -45,6 +55,10 @@ Delivery is read from **ACK-by-RA**, with each ACK matched to the frame it
 *immediately* follows. A wider match window credits one ACK to two frames of
 a retry burst and produces false positives.
 
+PHY rates quoted here come from the sniffer's own text output; the pcap
+radiotap headers carry only Channel and signal strength, with **no Rate
+field**, so rates cannot be recovered from the captures alone.
+
 Runs 17–22 used a sniffer with a PSRAM queue and ACKs filtered to known NAN
 NMIs, and recorded **zero drops**. Runs 3–6 predate ACK capture and are also
 drop-free. Runs 7–16 overflowed a 24-entry queue (up to 1761 drops), so for
@@ -52,11 +66,24 @@ those, burst sizes are lower bounds and a missing frame proves nothing.
 
 ---
 
-## Ask 1 — answer the NDP Request on the first attempt
+## Ask 1 — on esp32, defer the NDP Response to the next Discovery Window and send it early, as esp32s2 already does
 
-**The first M2 transmission is never acknowledged.** Across the five
-zero-drop runs that put an M2 on the air, the opening frame of the first
-burst has no ACK immediately following it, every time.
+### The two targets behave differently
+
+| | esp32 (D0WDQ6 rev v0.0) | esp32s2 (Lolin S2 Mini) |
+|---|---|---|
+| M2 constructions logged | **two** per exchange | **one** per exchange |
+| M2 in the request's own DW | yes, at 0.92–2.12 slots | **none** |
+| M2 in the next DW | retry, position varies | one, at 0.47–0.57 slots |
+| first attempt acknowledged | **never**, 5 of 5 clean runs | **always**, first try |
+| data path established | 9 of 16 | **6 of 6** |
+
+Same IDF (`cb73317`), same application configuration, same phone, same
+channel. `libnet80211.a` is per-target, so the difference lies in the esp32
+Wi-Fi library or in rev-0 silicon; a current-revision ESP32 as publisher
+would separate those two.
+
+### esp32: the measurements
 
 | run | first-window M2 | second-window M2 | outcome |
 |---|---|---|---|
@@ -72,23 +99,21 @@ group-addressed frame from the phone, which sits within 1.31 ms of a
 Discovery Window start beacon — median 0.00 ms, sigma 0.40 ms over 593
 windows, so it is a sound anchor.
 
-The first-window M2 starts anywhere from **0.92 to 2.12 slots** after the
-request, frequently past slot 1 entirely, which is where the peer is not
-reliably receiving.
-
 **It is not a position threshold.** Acknowledged and unacknowledged attempts
 overlap throughout the range: run 11's second burst at 0.740 failed where
 run 9's at 0.724 succeeded; run 13's at 0.548 failed where run 8's at 0.581
 succeeded.
 
-**It is not impossible to get right.** Run 21's retry at 0.984 slots was
-acknowledged and the data path came up without a second window ever being
-needed. The ESP *can* close the exchange inside the window the request
-arrived in.
+**The esp32 can occasionally get it right.** Run 21's retry at 0.984 slots
+was acknowledged and the data path came up without a second window. It is a
+reliability problem, not an impossibility.
 
-**The ask:** transmit the NDP Response early enough in the Discovery Window
-that the first attempt has a chance, and leave room for retries within that
-window. At present the first attempt never lands and setup is 9 in 16.
+### The ask
+
+On the esp32 target, adopt the esp32s2 behaviour: construct the NDP Response
+once, and transmit it early in the next Discovery Window rather than late in
+the current one. The esp32s2 library demonstrates this works against the same
+peer with a 6-of-6 success rate.
 
 ## Ask 2 — do not log an error for a map carrying only Potential entries
 
@@ -99,7 +124,9 @@ E (12422) wifi:Avail: missing a conditional or committed entry
 ```
 
 on runs where the NDP **confirms successfully**, so it never indicated a
-negotiation failure. It is an error-level message for a non-error.
+negotiation failure. It is an error-level message for a non-error, and it
+appears on **both targets** — the esp32s2 logs it in all 6 of its 6
+successful runs.
 
 The peer's NDP Request carries two Availability attributes: map 0 with a
 **conditional** channel-6 entry covering all 32 slots, and map 1 with
@@ -127,10 +154,30 @@ The log and the frame disagree.
 
 ## Further observations, not asked about
 
-**The ESP misses M1 repeatedly.** In run 18's first window the phone sent M1
-seven times and the ESP acknowledged none; it took the third copy in the next
-window. Run 20's first M1 went unacknowledged, run 22's first three did. This
-is an ESP receive-side problem and it is uncharacterised.
+**The esp32 misses M1 repeatedly — possibly a high-rate OFDM reception
+weakness.** In run 18's first window the phone sent M1 seven times and the
+ESP acknowledged none; it took the third copy in the next window. Run 20's
+first M1 went unacknowledged, run 22's first three did.
+
+There is now a candidate explanation that is not NAN-specific. The two ends
+transmit at very different PHY rates, confirmed from the capture metadata:
+
+```
+phone  NDP-Request, SchedReq   bg:48M   -37 to -38 dBm
+ESP    NDP-Response            bg:6M    -10 to -11 dBm
+```
+
+When an ESP32 rev v0.0 was used as the *sniffer*, it heard the 6 Mbps
+reference transmitter at 93–97 % of the rate an ESP32-S2 sniffer recorded,
+but the phone's 48 Mbps frames at only about 5/s against 7.6/s, and in three
+runs it missed the phone's M1 entirely. So that part is a weak receiver for
+high-rate OFDM, and the frames the ESP32-as-publisher misses are exactly the
+48 Mbps ones.
+
+**Caveat:** promiscuous-mode reception is not necessarily representative of
+normal station reception, so this is a hypothesis rather than a measurement
+of the publisher's receive path. It would also be a silicon or
+target-library property rather than a NAN defect.
 
 **Run 19: M2 constructed and never transmitted.** With zero capture drops
 there is no M2 on the air at all, although the ESP acknowledged the phone's
