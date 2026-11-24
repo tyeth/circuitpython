@@ -117,14 +117,37 @@ slowest silicon the build supports, which today is rev v0.0.
 ### Confounds, stated plainly
 
 The two ESP32 boards differ in more than silicon revision: **rev v0.0 with a
-26 MHz crystal (`XTAL_FREQ_AUTO`) and external flash**, versus **rev v3.1
-with a 40 MHz crystal and embedded flash**. So "rev 0" here means "this rev-0
-board".
+26 MHz crystal (`XTAL_FREQ_AUTO`) and external SPI flash**, versus **rev
+v3.1 with a 40 MHz crystal and embedded flash**. So "rev 0" here means "this
+rev-0 board".
 
-Of the three differences the **crystal** is the one most worth suspecting for
-a *timing* defect, since Wi-Fi timing derives from it and 26 MHz is the less
-common configuration. That is a hypothesis and it is testable with a rev-0
-board on a 40 MHz crystal, which we do not have.
+For the **timing scatter**, the shape of the data points at execution
+latency rather than at the clock source. A 19.7 ms spread in *when M2 is
+handed to the MAC* is what task preemption, interrupt latency or
+flash-cache misses look like — M2 construction running code or reading
+rodata that is not in IRAM, on a board whose flash is external. A crystal
+frequency error would be expected to produce ppm-scale drift, which NAN TSF
+synchronisation continuously corrects, and a mis-set `XTAL_FREQ` usually
+breaks RF outright rather than adding millisecond jitter. Ordering of
+suspects, most likely first:
+
+1. variable execution latency on the rev-0 board — cache and flash path,
+   core behaviour
+2. revision-specific RF or MAC behaviour
+3. the crystal
+
+No documented IDF-level erratum supports this. `ESP32_ECO3_CACHE_LOCK_FIX`
+is the obvious candidate and does **not** apply: it `depends on
+!ESP_SYSTEM_SINGLE_CORE_MODE && SPIRAM`, and neither board has PSRAM. So the
+ordering above is reasoning from the shape of the measurements, not a
+citation.
+
+For the **48 Mbps receive weakness** the ordering is different: RF or
+silicon behaviour, possibly including the crystal's effect on the PHY, is
+the leading suspect there rather than execution latency.
+
+Separating any of these needs a second rev-0 board, ideally one with
+embedded flash or a 40 MHz crystal, which we do not have.
 
 ## Ask 2 — do not log an error for a map carrying only Potential entries
 
