@@ -55,9 +55,11 @@ Delivery is read from **ACK-by-RA**, with each ACK matched to the frame it
 *immediately* follows. A wider match window credits one ACK to two frames of
 a retry burst and produces false positives.
 
-PHY rates quoted here come from the sniffer's own text output; the pcap
-radiotap headers carry only Channel and signal strength, with **no Rate
-field**, so rates cannot be recovered from the captures alone.
+PHY rates quoted here come from the sniffer's own text output. For runs 3–28
+the pcap radiotap headers carry only Channel and signal strength and **no
+Rate field**, so those captures and their `*-sniff.txt` must travel together.
+The sniffer has since been changed to emit radiotap Rate for non-HT frames
+and MCS for HT frames, so later captures are self-contained.
 
 Runs 17–22 used a sniffer with a PSRAM queue and ACKs filtered to known NAN
 NMIs, and recorded **zero drops**. Runs 3–6 predate ACK capture and are also
