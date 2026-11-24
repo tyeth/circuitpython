@@ -1,4 +1,4 @@
-# NAN (esp32 target): NDP Response is transmitted in the wrong Discovery Window; the esp32s2 library gets it right
+# NAN: the esp32 NDP Response strategy has ~1.8 ms of margin and fails on slower supported hardware
 
 **Status: draft, not filed.** Asks 1–3 are evidenced and ready. Two further
 observations are recorded but deliberately not asked about, because they rest
@@ -6,44 +6,48 @@ on too little.
 
 ## Summary
 
-On the **esp32** target an ESP32 running NAN-Sync establishes a Wi-Fi Aware
-data path with an Android phone in **9 of 16 runs**. Its NDP Response is
-transmitted late in the Discovery Window the request arrived in, its first
-attempt is *never* acknowledged, and setup depends on a retry being taken in
-a later window.
+The esp32 Wi-Fi library answers an NDP Request **inside the Discovery Window
+the request arrived in**. On current silicon that works: an ESP32-U4WDH
+rev v3.1 transmits M2 at 0.884–0.892 slots, about **1.8 ms before the window
+closes**, acknowledged first try, and establishes the data path in **6 of 6**
+runs.
 
-On the **esp32s2** target, same IDF, same application config, same phone:
-**6 of 6**. The S2 builds M2 once, does not transmit it in the request's own
-window at all, and sends it in the next window at 0.47–0.57 slots, first
-attempt, acknowledged.
+The same binary on an ESP32-D0WDQ6 **rev v0.0** board transmits anywhere from
+0.92 to 2.12 slots — a spread **150 times wider** — overshoots the window,
+is never acknowledged on the first attempt, and establishes the data path in
+**9 of 16** runs. Rev v0.0 is a supported target
+(`CONFIG_ESP32_REV_MIN` defaults to `ESP32_REV_MIN_0`).
 
-So the behaviour ask 1 requests already exists in one Espressif Wi-Fi
-library. This is an esp32-target report with a working reference
-implementation alongside it.
+The **esp32s2** library uses a different strategy — defer M2 to the *next*
+Discovery Window and send it early in slot 0 — which does not depend on
+processing latency at all. It is **6 of 6**.
 
-Two smaller defects accompany it on both targets: an error-level log that
-fires on successful runs, and an M2 that reports ACCEPTED after the parse
-that built it returned an error.
+So this is not "esp32 does it wrong". It is a strategy with very little
+margin, which holds on fast hardware and fails on slow hardware that the
+build still supports, next to a sibling library whose strategy has no such
+dependency.
+
+Two smaller defects accompany it on all three targets: an error-level log
+that fires on successful runs, and an M2 that reports ACCEPTED after the
+parse that built it returned an error.
 
 ## Environment
 
 | | |
 |---|---|
 | ESP-IDF | `v6.1-dev-6107` (`cb73317`), `esp_wifi/lib` at `7cd4d7b2` |
-| Target | ESP32-D0WDQ6 **rev v0.0 (ECO0)**, `wifi_aware/nan_publisher`, SOLICITED |
+| Targets | ESP32-D0WDQ6 **rev v0.0**, ESP32-U4WDH **rev v3.1**, ESP32-S2 (Lolin S2 Mini) |
+| Example | `wifi_aware/nan_publisher`, SOLICITED, identical config on all three |
 | Peer | Samsung Galaxy Note 9 (SM-N960F), Android 10 / SDK 29 |
 | Capture | ESP32-S2 monitor on channel 6 with ACK frames recorded |
 
-> **Chip revision.** The ESP32 under test is a SparkFun ESP32 Thing carrying
-> an **ESP32-D0WDQ6 revision v0.0 (ECO0)**, 26 MHz crystal — first silicon.
-> This is still supported by this IDF (`CONFIG_ESP32_REV_MIN` defaults to
-> `ESP32_REV_MIN_0`), and `esp_wifi`, `esp_phy` and `esp_coex` contain **no
-> revision-conditional code at all** — the only rev-0 workaround anywhere in
-> IDF is the brownout interrupt. So a software-side cause would not be
-> revision-specific. An analogue or RF difference in first silicon cannot be
-> excluded from here, and reproduction on current silicon (v3.x) is a
-> reasonable thing to ask for before treating timing or receive anomalies as
-> firmware defects.
+> **Chip revision.** Rev v0.0 is a supported target — `CONFIG_ESP32_REV_MIN`
+> defaults to `ESP32_REV_MIN_0` — and `esp_wifi`, `esp_phy` and `esp_coex`
+> contain **no revision-conditional code at all**; the only rev-0 workaround
+> anywhere in IDF is the brownout interrupt. So the library is byte-identical
+> across revisions, which the v3.1 run confirms directly: the *same binary*
+> succeeds 6 of 6 there and manages 9 of 16 on the rev-0 board. The
+> difference is in the hardware or its timing, not in branching code.
 
 ESP-to-ESP NAN-Sync on the same build works end to end — cluster 3.35 s,
 match 4.40 s, IPv6 data path 4.93 s, ICMPv6 at 2 ms RTT. Only the Android
@@ -68,54 +72,59 @@ those, burst sizes are lower bounds and a missing frame proves nothing.
 
 ---
 
-## Ask 1 — on esp32, defer the NDP Response to the next Discovery Window and send it early, as esp32s2 already does
+## Ask 1 — adopt the esp32s2 defer-to-next-window strategy on esp32
 
-### The two targets behave differently
+### Three targets, two strategies
 
-| | esp32 (D0WDQ6 rev v0.0) | esp32s2 (Lolin S2 Mini) |
-|---|---|---|
-| M2 constructions logged | **two** per exchange | **one** per exchange |
-| M2 in the request's own DW | yes, at 0.92–2.12 slots | **none** |
-| M2 in the next DW | retry, position varies | one, at 0.47–0.57 slots |
-| first attempt acknowledged | **never**, 5 of 5 clean runs | **always**, first try |
-| data path established | 9 of 16 | **6 of 6** |
-
-Same IDF (`cb73317`), same application configuration, same phone, same
-channel. `libnet80211.a` is per-target, so the difference lies in the esp32
-Wi-Fi library or in rev-0 silicon; a current-revision ESP32 as publisher
-would separate those two.
-
-### esp32: the measurements
-
-| run | first-window M2 | second-window M2 | outcome |
+| | ESP32 rev v0.0 | ESP32 rev v3.1 | ESP32-S2 |
 |---|---|---|---|
-| 17 | 5 fr @ 1.58–1.68, none acked | 2 fr @ 0.42–0.46, 1st acked | OK |
-| 18 | 2 fr @ 0.96–1.04, none acked | 3 fr @ 0.75–0.83, 3rd acked | OK |
-| 19 | **no M2 on air at all** | — | FAIL |
-| 20 | 5 fr @ 0.96–1.21, none acked | 1 fr @ 0.24, acked | OK |
-| 21 | 2 fr @ 0.95–0.98, **2nd acked** | — | OK |
-| 22 | 5 fr @ 2.05–2.15, none acked | 5 fr @ 0.22–0.33, 5th acked | OK |
+| Wi-Fi library | esp32 | esp32 (**identical binary**) | esp32s2 |
+| M2 constructions logged | two | one | one |
+| M2 in the request's own DW | yes, 0.92–2.12 slots | yes, 0.884–0.892 slots | **none** |
+| M2 in the next DW | retry, position varies | — | one, 0.47–0.57 slots |
+| first attempt acknowledged | **never** | **always** | **always** |
+| phone M1 retransmissions | up to 7 | none | none |
+| data path established | **9 of 16** | **6 of 6** | **6 of 6** |
 
-Offsets are in slots (1 slot = 16 TU = 16.384 ms) from the preceding
-group-addressed frame from the phone, which sits within 1.31 ms of a
-Discovery Window start beacon — median 0.00 ms, sigma 0.40 ms over 593
-windows, so it is a sound anchor.
+### The margin is the problem
 
-**It is not a position threshold.** Acknowledged and unacknowledged attempts
-overlap throughout the range: run 11's second burst at 0.740 failed where
-run 9's at 0.724 succeeded; run 13's at 0.548 failed where run 8's at 0.581
-succeeded.
+A Discovery Window slot is 16.384 ms. The v3.1 board transmits M2 at
+**14.48–14.61 ms** into it, leaving **1.77 ms**. Its spread across six runs
+is 0.008 slots — **0.13 ms**.
 
-**The esp32 can occasionally get it right.** Run 21's retry at 0.984 slots
-was acknowledged and the data path came up without a second window. It is a
-reliability problem, not an impossibility.
+The rev-0 board, running the *same binary*, spreads over 1.200 slots —
+**19.7 ms**, 150 times wider — and its *best* case (0.92) is already later
+than the v3.1 board's *worst* case (0.892).
+
+That it builds M2 twice where v3.1 builds it once is a symptom of the same
+binary taking the retry path, not a code difference.
+
+**This is not a sharp position cutoff.** A rev-0 retry at 0.984 slots was
+acknowledged in run 21, later than first attempts at 0.92 that were not. The
+variability matters more than the mean.
 
 ### The ask
 
-On the esp32 target, adopt the esp32s2 behaviour: construct the NDP Response
-once, and transmit it early in the next Discovery Window rather than late in
-the current one. The esp32s2 library demonstrates this works against the same
-peer with a 6-of-6 success rate.
+Adopt the esp32s2 strategy on esp32: construct the NDP Response once and
+transmit it early in the *next* Discovery Window, rather than late in the
+current one. The esp32s2 library already demonstrates it against the same
+peer, and unlike the same-window approach it does not depend on how quickly
+the chip can turn a request around.
+
+Failing that, the same-window strategy needs enough margin to survive the
+slowest silicon the build supports, which today is rev v0.0.
+
+### Confounds, stated plainly
+
+The two ESP32 boards differ in more than silicon revision: **rev v0.0 with a
+26 MHz crystal (`XTAL_FREQ_AUTO`) and external flash**, versus **rev v3.1
+with a 40 MHz crystal and embedded flash**. So "rev 0" here means "this rev-0
+board".
+
+Of the three differences the **crystal** is the one most worth suspecting for
+a *timing* defect, since Wi-Fi timing derives from it and 26 MHz is the less
+common configuration. That is a hypothesis and it is testable with a rev-0
+board on a 40 MHz crystal, which we do not have.
 
 ## Ask 2 — do not log an error for a map carrying only Potential entries
 
@@ -127,8 +136,8 @@ E (12422) wifi:Avail: missing a conditional or committed entry
 
 on runs where the NDP **confirms successfully**, so it never indicated a
 negotiation failure. It is an error-level message for a non-error, and it
-appears on **both targets** — the esp32s2 logs it in all 6 of its 6
-successful runs.
+appears on **all three targets** — the esp32s2 and the ESP32 rev v3.1 each
+log it in all 6 of their 6 successful runs.
 
 The peer's NDP Request carries two Availability attributes: map 0 with a
 **conditional** channel-6 entry covering all 32 slots, and map 1 with
@@ -175,6 +184,10 @@ but the phone's 48 Mbps frames at only about 5/s against 7.6/s, and in three
 runs it missed the phone's M1 entirely. So that part is a weak receiver for
 high-rate OFDM, and the frames the ESP32-as-publisher misses are exactly the
 48 Mbps ones.
+
+The v3.1 board supports this: running the identical binary it acknowledged
+every M1 first try, with **no phone retransmissions at all** in six runs.
+Whatever causes the misses travels with the rev-0 board, not with the code.
 
 **Caveat:** promiscuous-mode reception is not necessarily representative of
 normal station reception, so this is a hypothesis rather than a measurement
