@@ -114,40 +114,81 @@ the chip can turn a request around.
 Failing that, the same-window strategy needs enough margin to survive the
 slowest silicon the build supports, which today is rev v0.0.
 
-### Confounds, stated plainly
+### The rev-0 distribution has two parts, and they have different causes
 
-The two ESP32 boards differ in more than silicon revision: **rev v0.0 with a
-26 MHz crystal (`XTAL_FREQ_AUTO`) and external SPI flash**, versus **rev
-v3.1 with a 40 MHz crystal and embedded flash**. So "rev 0" here means "this
-rev-0 board".
+Splitting the rev-0 first-M2 delays rather than treating them as one
+population changes the picture. Measured from M1:
 
-For the **timing scatter**, the shape of the data points at execution
-latency rather than at the clock source. A 19.7 ms spread in *when M2 is
-handed to the MAC* is what task preemption, interrupt latency or
-flash-cache misses look like — M2 construction running code or reading
-rodata that is not in IRAM, on a board whose flash is external. A crystal
-frequency error would be expected to produce ppm-scale drift, which NAN TSF
-synchronisation continuously corrects, and a mis-set `XTAL_FREQ` usually
-breaks RF outright rather than adding millisecond jitter. Ordering of
-suspects, most likely first:
+```
+v3.1 (40 MHz XTAL)   14.485 14.616 14.490 14.541 14.606 14.522
+                     mean 14.543, sd 0.051   guard = 16.384 - 14.543 = 1.841 ms = 1.80 TU
 
-1. variable execution latency on the rev-0 board — cache and flash path,
-   core behaviour
-2. revision-specific RF or MAC behaviour
-3. the crystal
+rev 0 (26 MHz XTAL)  cluster: 15.089 15.184 15.249 15.257 15.305   sd ~0.08
+                     guard = 1.167 ms
+                     tail:    15.77 16.08 16.83 16.93 19.22 19.92 26.09 33.06
+```
 
-No documented IDF-level erratum supports this. `ESP32_ECO3_CACHE_LOCK_FIX`
-is the obvious candidate and does **not** apply: it `depends on
-!ESP_SYSTEM_SINGLE_CORE_MODE && SPIRAM`, and neither board has PSRAM. So the
-ordering above is reasoning from the shape of the measurements, not a
-citation.
+The v3.1 guard is **1.80 TU**, within 2 µs of 1843.2 µs — a constant guard
+before the end of slot 0, not an accident of latency. The rev-0 *cluster* is
+just as tight (sd 0.08 vs 0.051), so it is not jitter either; it is the same
+mechanism with a shorter guard.
 
-For the **48 Mbps receive weakness** the ordering is different: RF or
-silicon behaviour, possibly including the crystal's effect on the PHY, is
-the leading suspect there rather than execution latency.
+**The guard ratio is 1.167 / 1.841 = 0.634.** Against 26/40 = 0.650 that
+predicts a delay of 15.188 ms where 15.217 was measured — a 29 µs miss. 25/40
+predicts 15.234, a 17 µs miss; the two cannot be separated. A factor of ½
+predicts 15.464, about 5 sd out, and 40/26 is nowhere near.
 
-Separating any of these needs a second rev-0 board, ideally one with
-embedded flash or a 40 MHz crystal, which we do not have.
+So the rev-0 *floor* is consistent with a crystal-derived scaling error in
+the guard, which moves the first M2 from 0.887 to 0.927 slots — into the
+region where this phone does not acknowledge. The *tail* above 15.8 ms
+remains execution latency, or rescheduling after the shortened deadline has
+already been missed.
+
+**Direction of the error.** A guard specified in ticks for 40 MHz but
+counted at 26 MHz would run *longer* (2.83 ms) and transmit *earlier*, which
+is the opposite of what is seen. The fit requires the reverse: a guard
+converted to ticks using the real 26 MHz crystal and then consumed against a
+40 MHz timebase, giving 1.196 ms. Anyone looking for this in code should
+expect a multiply by the measured crystal frequency feeding a fixed-40 MHz
+consumer, not a hard-coded 40 being used where the real value belonged.
+
+**What the blob does not show.** Searched for it and came up empty, which is
+worth recording:
+
+- Neither `libnet80211.a` nor `libpp.a` references any crystal or clock
+  frequency helper — no `rtc_clk_xtal_freq_get`, no `esp_clk_xtal_freq`,
+  nothing matching xtal/clk_freq/apb_freq among 1453 and 447 undefined
+  symbols respectively.
+- No literal `40000000`, `26000000`, `73728` or `1843200` appears in any of
+  them.
+- `ieee80211_nan_datapath.o`'s literal pool holds nothing of plausible
+  guard-time magnitude; the few values in range are source line numbers
+  passed to log calls. `hal_tsf.o` has no literals at all.
+- The only clock-dependent external the blobs call is ROM's
+  `ets_delay_us`.
+
+So the guard is not a visible constant in these objects. If the scaling error
+is real it lives in MAC register programming, in ROM, or in a computation the
+literal scan cannot see — and it cannot be confirmed or refuted from the
+blob.
+
+**The decisive test** is a **rev v3.x board with a 26 MHz crystal**. If the
+crystal is the cause, its first M2 should land at about 15.19 ms (0.927
+slots) despite current silicon. That separates crystal from revision cleanly,
+which no board we have can do.
+
+Suspect ordering, by phenomenon:
+
+| phenomenon | leading suspect |
+|---|---|
+| the 15.2 ms floor | crystal-derived scaling of the guard |
+| the tail to 33 ms | execution latency, cache and flash path |
+| 48 Mbps receive misses | RF or silicon behaviour |
+
+**Caveats.** The cluster is n=5 and was chosen post hoc, though there is a
+natural gap from 15.31 to 15.77. 26/40 and 25/40 are indistinguishable at
+this precision. The M1 anchor is common to both boards, so it cannot
+contribute the difference.
 
 ## Ask 2 — do not log an error for a map carrying only Potential entries
 
